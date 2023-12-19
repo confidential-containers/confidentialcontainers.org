@@ -2,25 +2,44 @@
 title: Confidential Containers
 ---
 
-{{< blocks/cover title="Welcome to Confidential Containers!" image_anchor="top" height="full" >}}
-<a class="btn btn-lg btn-primary me-3 mb-4" href="/docs/">
-  Learn More <i class="fas fa-arrow-alt-circle-right ms-2"></i>
-</a>
-<a class="btn btn-lg btn-secondary me-3 mb-4" href="https://github.com/confidential-containers/confidentialcontainers.org">
-  Download <i class="fab fa-github ms-2 "></i>
-</a>
-<p class="lead mt-5">Confidential Computing for &mdash; Kubernetes!</p>
+{{< blocks/cover image_anchor="top" height="auto" >}}
+<p class="fw-bold fa-3x">
+Welcome to Confidential Containers!
+</p>
+<br><br><br><br>
 {{< blocks/link-down color="info" >}}
 {{< /blocks/cover >}}
 
 <!-- Note: The content here is mostly copied / adapted from: https://github.com/confidential-containers/.github/blob/main/profile/README.md. This page shows up when one goes to: https://github.com/confidential-containers/ -->
 
-{{% blocks/lead color="primary" %}}
+{{% blocks/section %}}
+
+The goal of the CoCo project is to standardize confidential computing at the pod level and simplify its consumption in Kubernetes. This enables Kubernetes users to deploy confidential container workloads using familiar workflows and tools without extensive knowledge of the underlying confidential computing technologies.
+{.h4 .text-left}
+<br>
+
+With CoCo, you can deploy your workloads on shared infrastructure yet significantly reduce the risk of unauthorized entities accessing your workload data and extracting your secrets.
+{.h4 .text-left}
+<br>
+
 Confidential Containers is an open source community working to enable cloud native confidential computing by leveraging [Trusted Execution Environments](https://en.wikipedia.org/wiki/Trusted_execution_environment) to protect containers and data.
+{.h4 .text-left}
+
+{{% /blocks/section %}}
+
+{{% blocks/lead height="auto" %}}
+<a class="btn btn-lg btn-primary me-3 mb-4" href="/docs/">
+  Learn More <i class="fas fa-arrow-alt-circle-right ms-2"></i>
+</a>
+<a class="btn btn-lg btn-success me-3 mb-4" href="https://github.com/confidential-containers">
+  Download <i class="fab fa-github ms-2 "></i>
+</a>
 
 {{% /blocks/lead %}}
 
-{{% blocks/section color="dark" type="row" %}}
+<!-- Note: The content here is mostly copied / adapted from: https://github.com/confidential-containers/.github/blob/main/profile/README.md. This page shows up when one goes to: https://github.com/confidential-containers/ -->
+
+{{% blocks/section type="row" %}}
 
 Goals
 {.h1 .text-center}
