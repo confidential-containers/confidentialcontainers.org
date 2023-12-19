@@ -6,82 +6,73 @@ menu:
     weight: 10
 ---
 
-{{% blocks/cover title="About Confidential Containers" image_anchor="bottom" height="auto" %}}
-
-<!-- Content here is adopted from: https://github.com/confidential-containers/confidential-containers -->
-
-# Welcome to confidential-containers
-
+{{% blocks/cover image_anchor="bottom" height="auto" %}}
+<p class="fw-bold fa-3x">
+About Confidential Containers
+</p>
 {{% /blocks/cover %}}
 
-{{% blocks/lead %}}
-
-Confidential Containers is an open source community working to leverage [Trusted Execution Environments](https://en.wikipedia.org/wiki/Trusted_execution_environment) to protect containers and data and to deliver cloud native confidential computing.
-
-**We have a new release every 6 weeks!**
-See [Release Notes](./releases/) or [Quickstart Guide](./quickstart.md)
-
-{{% /blocks/lead %}}
-
 {{% blocks/section %}}
 
-## Key Considerations
+## Confidential Containers - WHAT
 
-- Allow cloud native application owners to enforce application security requirements
-{.h4 .text-left}
+<br>
 
-- Transparent deployment of unmodified containers
-{.h4 .text-left}
+- [Confidential Containers](https://github.com/confidential-containers) (CoCo) is a sandbox project in [Cloud Native Computing Foundation](https://www.cncf.io/) (CNCF)
 
-- Support for multiple TEE and hardware platforms
-{.h4 .text-left}
+- It enables cloud-native [confidential computing](https://confidentialcomputing.io/faq/) by taking advantage of a variety of hardware platforms and technologies
 
-- A trust model which separates Cloud Service Providers (CSPs) from guest applications
-{.h4 .text-left}
+- The CoCo project builds on existing and emerging hardware security technologies such as Intel SGX, Intel TDX, AMD SEV and IBM Z Secure Execution, in combination with new software frameworks **to protect data in use**
 
-- Least privilege principles for the Kubernetes cluster administration capabilities which impact delivering Confidential Computing for guest applications or data inside the TEE
-{.h4 .text-left}
-
-{.text-center}
+- The project brings together software and hardware companies including Alibaba-cloud, AMD, ARM, IBM, Intel, Microsoft, Red Hat, Rivos, Edgeless Systems and others
 
 {{% /blocks/section %}}
 
 {{% blocks/section %}}
 
-## Get started quickly
+## Confidential Containers - WHY
 
-[Kubernetes Operator for Confidential Computing](https://github.com/confidential-containers/confidential-containers-operator) : An operator to deploy confidential containers runtime (and required configs) on a Kubernetes cluster
-{.h4 .text-left}
+<br>
 
-{{% /blocks/section %}}
+- A [Trusted Execution Environments](https://en.wikipedia.org/wiki/Trusted_execution_environment) (TEE) is at the heart of a confidential computing solution
+  - _TEEs are isolated environments with enhanced security, provided by confidential computing (CC) capable hardware that prevents unauthorized access or modification of applications and data while in use_
 
-{{% blocks/section %}}
+- The CoCo project integrates TEE infrastructure with the cloud-native world
 
-## Further Detail
+- The **goal** of CoCo is to **standardize** confidential computing at the container level and **simplify** its consumption in Kubernetes
 
-[![asciicast](https://asciinema.org/a/eGHhZdQY3uYnDalFAfuB7VYqF.svg)](https://asciinema.org/a/eGHhZdQY3uYnDalFAfuB7VYqF)
-
-[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fconfidential-containers%2Fcommunity.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fconfidential-containers%2Fcommunity?ref=badge_shield)
-
-- [Project Overview](./overview.md)
-- [Project Architecture](./architecture.md)
-- [Our Roadmap](./roadmap.md)
-- [Alignment with other Projects](alignment.md)
+- This is in order to enable Kubernetes users to deploy confidential container workloads using familiar workflows and tools without extensive knowledge of underlying confidential computing technologies
 
 {{% /blocks/section %}}
 
 {{% blocks/section %}}
 
-## Contribute
+## Confidential Containers - HOW
 
-[CONTRIBUTING](CONTRIBUTING.md)
+<br>
+
+- CoCo enables you to deploy your workload on infrastructure owned by someone else
+
+- The infrastructure can be managed by a cloud provider, a different division in your organization such as the IT department or even an untrusted third party
+
+- This is achieved by encrypting your workload memory and protecting other low level resources the workload requires at the hardware level
+
+- Cryptography-based proofs is used to confirm that your software runs without being tampered with or fails your workload from running if that isn’t the case
 
 {{% /blocks/section %}}
 
 {{% blocks/section %}}
 
-## License
+## A project which aims to be usable
 
-[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fconfidential-containers%2Fcommunity.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2Fconfidential-containers%2Fcommunity?ref=badge_large)
+<br>
+
+- The project puts a strong emphasis on delivering practical cloud native solution:
+
+  - **Simplicity** - Using a dedicated Kubernetes operator for deployment and configuration. Making this technology as accessible as possible hiding away most of the hardware-dependent parts
+
+  - **Stability** - Supporting continuous integration (CI) for the key workflows of the release
+
+  - **Use case driven development** - focusing the community around a few key use cases including supporting CI/CD instead of feature based development
 
 {{% /blocks/section %}}
