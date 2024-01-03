@@ -1,7 +1,7 @@
 ---
 title: Cloud API Adaptor
 description: Documentation for Cloud API Adaptor a.k.a Peer Pods
-weight: 53
+weight: 54
 categories:
 - docs
 tags:
