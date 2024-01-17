@@ -1,0 +1,16 @@
+version: 2
+updates:
+- package-ecosystem: "gomod"
+  directory: "/"
+  labels:
+  - dependency
+  - golang
+  schedule:
+    interval: daily
+- package-ecosystem: "npm"
+  directory: "/"
+  labels:
+  - dependency
+  - npm
+  schedule:
+    interval: daily
