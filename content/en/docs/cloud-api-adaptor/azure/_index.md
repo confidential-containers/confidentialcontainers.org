@@ -17,9 +17,23 @@ This documentation will walk you through setting up CAA (a.k.a. Peer Pods) on Az
 
 ## Pre-requisites
 
+### Install Azure CLI
+
+Follow the instructions [here](https://learn.microsoft.com/en-us/cli/azure/install-azure-cli) to install Azure CLI.
+
+### Install kubectl
+
+Follow the instructions [here](https://kubernetes.io/docs/tasks/tools/#kubectl) to install kubectl.
+
 ### Azure login
 
-There are a bunch of steps that require you to be logged into your Azure account via `az login`. Retrieve your "Subscription ID" and set your preferred region:
+There are a bunch of steps that require you to be logged into your Azure account:
+
+```bash
+az login
+```
+
+Retrieve your "Subscription ID" and set your preferred region:
 
 ```bash
 export CAA_VERSION="0.8.0"
