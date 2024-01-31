@@ -63,7 +63,7 @@ export AKS_RG="${AZURE_RESOURCE_GROUP}-aks"
 export SSH_KEY=~/.ssh/id_rsa.pub
 ```
 
-> **Note**: Optionally, deploy the worker nodes into an existing Azure Virtual Network (VNet) and Subnet by adding the following flag: `--vnet-subnet-id $SUBNET_ID`.
+> **Note**: Optionally, deploy the worker nodes into an existing Azure Virtual Network (VNet) and subnet by adding the following flag: `--vnet-subnet-id $SUBNET_ID`.
 
 Deploy AKS with single worker node to the same resource group you created earlier:
 
@@ -172,7 +172,7 @@ export AZURE_VNET_NAME=$(az network vnet list \
   --output tsv)
 ```
 
-Export the Subnet ID to be used for CAA daemonset deployment:
+Export the subnet ID to be used for CAA DaemonSet deployment:
 
 ```bash
 export AZURE_SUBNET_ID=$(az network vnet subnet list \
@@ -186,7 +186,7 @@ export AZURE_SUBNET_ID=$(az network vnet subnet list \
 
 > **Note**: If you are using Calico Container Network Interface (CNI) on the Kubernetes cluster, then, [configure](https://projectcalico.docs.tigera.io/networking/vxlan-ipip#configure-vxlan-encapsulation-for-all-inter-workload-traffic) Virtual Extensible LAN (VXLAN) encapsulation for all inter workload traffic.
 
-### Download the CAA configs
+### Download the CAA deployment artifacts
 
 {{< tabpane text=true right=true persist=header >}}
 {{% tab header="**Versions**:" disabled=true /%}}
@@ -214,7 +214,7 @@ cd "cloud-api-adaptor-${CAA_BRANCH}"
 {{% /tab %}}
 
 {{% tab header="DIY" %}}
-This assumes that you already have the code ready to use. On your terminal change directory to the CAA's code base.
+This assumes that you already have the code ready to use. On your terminal change directory to the Cloud API Adaptor's code base.
 {{% /tab %}}
 
 {{< /tabpane >}}
@@ -253,7 +253,7 @@ Above image version is in the format `YYYY.MM.DD`, so to use the latest image sh
 
 {{% tab header="DIY" %}}
 
-If you have made changes to the CAA code that affects the pod VM image and you want to deploy those changes then follow [these instructions](https://github.com/confidential-containers/cloud-api-adaptor/blob/main/azure/build-image.md) to build the pod-vm image. Once image build is finished then export image id to the environment variable `AZURE_IMAGE_ID`.
+If you have made changes to the CAA code that affects the pod VM image and you want to deploy those changes then follow [these instructions](https://github.com/confidential-containers/cloud-api-adaptor/blob/main/azure/build-image.md) to build the pod VM image. Once image build is finished then export image id to the environment variable `AZURE_IMAGE_ID`.
 
 {{% /tab %}}
 
@@ -303,7 +303,7 @@ If you have made changes to the CAA code and you want to deploy those changes th
 
 ### Annotate Service Account
 
-Annotate the CAA Service Account with the workload identity's `CLIENT_ID` and make the CAA daemonset use workload identity for authentication:
+Annotate the CAA Service Account with the workload identity's `CLIENT_ID` and make the CAA DaemonSet use workload identity for authentication:
 
 ```yaml
 cat <<EOF > install/overlays/azure/workload-identity.yaml
