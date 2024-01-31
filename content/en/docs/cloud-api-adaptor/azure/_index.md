@@ -17,13 +17,11 @@ This documentation will walk you through setting up CAA (a.k.a. Peer Pods) on Az
 
 ## Pre-requisites
 
-### Install Azure CLI
+- Install Azure CLI by following instructions [here](https://learn.microsoft.com/en-us/cli/azure/install-azure-cli).
+- Install kubectl by following the instructions [here](https://kubernetes.io/docs/tasks/tools/#kubectl).
+- Ensure that the tools `curl`, `git` and `jq` are installed.
 
-Follow the instructions [here](https://learn.microsoft.com/en-us/cli/azure/install-azure-cli) to install Azure CLI.
-
-### Install kubectl
-
-Follow the instructions [here](https://kubernetes.io/docs/tasks/tools/#kubectl) to install kubectl.
+## Azure Preparation
 
 ### Azure login
 
@@ -36,7 +34,6 @@ az login
 Retrieve your "Subscription ID" and set your preferred region:
 
 ```bash
-export CAA_VERSION="0.8.0"
 export AZURE_SUBSCRIPTION_ID=$(az account show --query id --output tsv)
 export AZURE_REGION="eastus"
 ```
@@ -55,15 +52,7 @@ az group create \
   --location "${AZURE_REGION}"
 ```
 
-### Download the CAA configs
-
-```bash
-curl -LO "https://github.com/confidential-containers/cloud-api-adaptor/archive/refs/tags/v${CAA_VERSION}.tar.gz"
-tar -xvzf "v${CAA_VERSION}.tar.gz"
-cd "cloud-api-adaptor-${CAA_VERSION}"
-```
-
-## Deploy Kubernetes using AKS
+### Deploy Kubernetes using AKS
 
 Make changes to the following environment variable as you see fit:
 
@@ -102,10 +91,6 @@ az aks get-credentials \
   --name "${CLUSTER_NAME}"
 ```
 
-## Deploy CAA
-
-> **Note**: If you are using Calico Container Network Interface (CNI) on the Kubernetes cluster, then, [configure](https://projectcalico.docs.tigera.io/networking/vxlan-ipip#configure-vxlan-encapsulation-for-all-inter-workload-traffic) Virtual Extensible LAN (VXLAN) encapsulation for all inter workload traffic.
-
 ### User assigned identity and federated credentials
 
 CAA needs privileges to talk to Azure API. This privilege is granted to CAA by associating a workload identity to the CAA service account. This workload identity (a.k.a. user assigned identity) is given permissions to create VMs, fetch images and join networks in the next step.
@@ -129,31 +114,6 @@ export USER_ASSIGNED_CLIENT_ID="$(az identity show \
   --name "${AZURE_WORKLOAD_IDENTITY_NAME}" \
   --query 'clientId' \
   -otsv)"
-```
-
-Annotate the CAA Service Account with the workload identity's `CLIENT_ID` and make the CAA daemonset use workload identity for authentication:
-
-```bash
-cat <<EOF > install/overlays/azure/workload-identity.yaml
-apiVersion: apps/v1
-kind: DaemonSet
-metadata:
-  name: cloud-api-adaptor-daemonset
-  namespace: confidential-containers-system
-spec:
-  template:
-    metadata:
-      labels:
-        azure.workload.identity/use: "true"
----
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: cloud-api-adaptor
-  namespace: confidential-containers-system
-  annotations:
-    azure.workload.identity/client-id: "$USER_ASSIGNED_CLIENT_ID"
-EOF
 ```
 
 ### AKS resource group permissions
@@ -222,7 +182,49 @@ export AZURE_SUBNET_ID=$(az network vnet subnet list \
   --output tsv)
 ```
 
+## Deploy CAA
+
+> **Note**: If you are using Calico Container Network Interface (CNI) on the Kubernetes cluster, then, [configure](https://projectcalico.docs.tigera.io/networking/vxlan-ipip#configure-vxlan-encapsulation-for-all-inter-workload-traffic) Virtual Extensible LAN (VXLAN) encapsulation for all inter workload traffic.
+
+### Download the CAA configs
+
+{{< tabpane text=true right=true persist=header >}}
+{{% tab header="**Versions**:" disabled=true /%}}
+
+{{% tab header="Last Release" %}}
+
+```bash
+export CAA_VERSION="0.8.0"
+curl -LO "https://github.com/confidential-containers/cloud-api-adaptor/archive/refs/tags/v${CAA_VERSION}.tar.gz"
+tar -xvzf "v${CAA_VERSION}.tar.gz"
+cd "cloud-api-adaptor-${CAA_VERSION}"
+```
+
+{{% /tab %}}
+
+{{% tab header="Latest Build" %}}
+
+```bash
+export CAA_BRANCH="main"
+curl -LO "https://github.com/confidential-containers/cloud-api-adaptor/archive/refs/heads/${CAA_BRANCH}.tar.gz"
+tar -xvzf "${CAA_BRANCH}.tar.gz"
+cd "cloud-api-adaptor-${CAA_BRANCH}"
+```
+
+{{% /tab %}}
+
+{{% tab header="DIY" %}}
+This assumes that you already have the code ready to use. On your terminal change directory to the CAA's code base.
+{{% /tab %}}
+
+{{< /tabpane >}}
+
 ### CAA pod VM image
+
+{{< tabpane text=true right=true persist=header >}}
+{{% tab header="**Versions**:" disabled=true /%}}
+
+{{% tab header="Last Release" %}}
 
 Export this environment variable to use for the peer pod VM:
 
@@ -230,19 +232,101 @@ Export this environment variable to use for the peer pod VM:
 export AZURE_IMAGE_ID="/CommunityGalleries/cococommunity-42d8482d-92cd-415b-b332-7648bd978eff/Images/peerpod-podvm-ubuntu2204-cvm-snp/Versions/${CAA_VERSION}"
 ```
 
-> **Note**:
->
-> - If you want to use the nightly build of pod VM image then follow the instructions [here](azure-advanced#use-nightly-builds).
-> - If you want to build the pod VM image yourself then follow the instructions [here](azure-advanced#build-a-custom-pod-vm-image).
+{{% /tab %}}
+
+{{% tab header="Latest Build" %}}
+
+An automated job builds the pod VM image each night at 00:00 UTC. You can use that image by exporting the following environment variable:
+
+```bash
+SUCCESS_TIME=$(curl -s \
+  -H "Accept: application/vnd.github+json" \
+  "https://api.github.com/repos/confidential-containers/cloud-api-adaptor/actions/workflows/azure-podvm-image-nightly-build.yml/runs?status=success" \
+  | jq -r '.workflow_runs[0].updated_at')
+
+export AZURE_IMAGE_ID="/CommunityGalleries/cocopodvm-d0e4f35f-5530-4b9c-8596-112487cdea85/Images/podvm_image0/Versions/$(date -u -jf "%Y-%m-%dT%H:%M:%SZ" "$SUCCESS_TIME" "+%Y.%m.%d" 2>/dev/null || date -d "$SUCCESS_TIME" +%Y.%m.%d)"
+```
+
+Above image version is in the format `YYYY.MM.DD`, so to use the latest image should be today's date or yesterday's date.
+
+{{% /tab %}}
+
+{{% tab header="DIY" %}}
+
+If you have made changes to the CAA code that affects the pod VM image and you want to deploy those changes then follow [these instructions](https://github.com/confidential-containers/cloud-api-adaptor/blob/main/azure/build-image.md) to build the pod-vm image. Once image build is finished then export image id to the environment variable `AZURE_IMAGE_ID`.
+
+{{% /tab %}}
+
+{{< /tabpane >}}
 
 ### CAA container image
+
+{{< tabpane text=true right=true persist=header >}}
+{{% tab header="**Versions**:" disabled=true /%}}
+
+{{% tab header="Last Release" %}}
+
+Export the following environment variable to use the latest release image of CAA:
 
 ```bash
 export CAA_IMAGE="quay.io/confidential-containers/cloud-api-adaptor"
 export CAA_TAG="d4496d008b65c979a4d24767979a77ed1ba21e76"
 ```
 
-> **Note**: If you have made changes to the CAA code and you want to deploy those changes then follow [these instructions](https://github.com/confidential-containers/cloud-api-adaptor/blob/main/install/README.md#building-custom-cloud-api-adaptor-image) to build the container image. Once the image is built export the environment variables accordingly.
+{{% /tab %}}
+
+{{% tab header="Latest Build" %}}
+
+Export the following environment variable to use the image built by the CAA CI on each merge to main:
+
+```bash
+export CAA_IMAGE="quay.io/confidential-containers/cloud-api-adaptor"
+```
+
+Find an appropriate tag of pre-built image suitable to your needs [here](https://quay.io/repository/confidential-containers/cloud-api-adaptor?tab=tags&tag=latest).
+
+```bash
+export CAA_TAG=""
+```
+
+> **Caution**: You can also use the `latest` tag but it is **not** recommended, because of its lack of version control and potential for unpredictable updates, impacting stability and reproducibility in deployments.
+
+{{% /tab %}}
+
+{{% tab header="DIY" %}}
+
+If you have made changes to the CAA code and you want to deploy those changes then follow [these instructions](https://github.com/confidential-containers/cloud-api-adaptor/blob/main/install/README.md#building-custom-cloud-api-adaptor-image) to build the container image. Once the image is built export the environment variables `CAA_IMAGE` and `CAA_TAG`.
+
+{{% /tab %}}
+
+{{< /tabpane >}}
+
+### Annotate Service Account
+
+Annotate the CAA Service Account with the workload identity's `CLIENT_ID` and make the CAA daemonset use workload identity for authentication:
+
+```yaml
+cat <<EOF > install/overlays/azure/workload-identity.yaml
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: cloud-api-adaptor-daemonset
+  namespace: confidential-containers-system
+spec:
+  template:
+    metadata:
+      labels:
+        azure.workload.identity/use: "true"
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: cloud-api-adaptor
+  namespace: confidential-containers-system
+  annotations:
+    azure.workload.identity/client-id: "$USER_ASSIGNED_CLIENT_ID"
+EOF
+```
 
 ### Populate the `kustomization.yaml` file
 
@@ -252,7 +336,7 @@ Replace the values as needed for the following environment variables:
 
 Run the following command to update the [`kustomization.yaml`](https://github.com/confidential-containers/cloud-api-adaptor/blob/main/install/overlays/azure/kustomization.yaml) file:
 
-```bash
+```yaml
 cat <<EOF > install/overlays/azure/kustomization.yaml
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
@@ -295,10 +379,18 @@ cp $SSH_KEY install/overlays/azure/id_rsa.pub
 
 ### Deploy CAA on the Kubernetes cluster
 
+Deploy coco operator:
+
+```bash
+export COCO_OPERATOR_VERSION="0.8.0"
+kubectl apply -k "github.com/confidential-containers/operator/config/release?ref=v${COCO_OPERATOR_VERSION}"
+kubectl apply -k "github.com/confidential-containers/operator/config/samples/ccruntime/peer-pods?ref=v${COCO_OPERATOR_VERSION}"
+```
+
 Run the following command to deploy CAA:
 
 ```bash
-CLOUD_PROVIDER=azure make deploy
+kubectl apply -k "install/overlays/azure"
 ```
 
 Generic CAA deployment instructions are also described [here](https://github.com/confidential-containers/cloud-api-adaptor/blob/main/install/README.md).
