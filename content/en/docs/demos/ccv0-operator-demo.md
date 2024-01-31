@@ -10,10 +10,6 @@ tags:
 - demo
 ---
 
-{{% alert title="Warning" color="warning" %}}
-TODO: This was copied with few adaptations from here: <https://github.com/confidential-containers/confidential-containers/tree/main/demos/operator-demo>. This needs to be tested and verified if the instructions still work and needs a rework.
-{{% /alert %}}
-
 ## Demo Video
 
 [Watch the demo in youtube](https://www.youtube.com/watch?v=4cM3IhfnJLQ)
@@ -38,7 +34,7 @@ kcli create kube generic -P image=ubuntu2004 -P workers=1 testk8s
 
 ### Replace containerd
 
-Replace containerd on the worker node by building a new containerd from the following branch: [https://github.com/confidential-containers/containerd/tree/ali-CCv0](https://github.com/confidential-containers/containerd/tree/ali-CCv0).
+Replace containerd on the worker node by building a new containerd from the following branch: [https://github.com/confidential-containers/containerd/tree/CC-main](https://github.com/confidential-containers/containerd/tree/CC-main) ([build instructions](https://github.com/confidential-containers/containerd/blob/CC-main/BUILDING.md))
 
 Modify systemd configuration to use the new binary and restart `containerd` and `kubelet`.
 
@@ -57,15 +53,22 @@ cck8s-demo-master-0   Ready    control-plane,master   25d   v1.22.3
 cck8s-demo-worker-0   Ready    worker                 25d   v1.22.3
 ```
 
+Make sure at least one Kubernetes node in the cluster has the label `node.kubernetes.io/worker=`.
+
+```bash
+kubectl label node $NODENAME node.kubernetes.io/worker=
+```
+
 ## Operator Setup
 
 ```bash
-kubectl apply -f https://raw.githubusercontent.com/confidential-containers/operator/ccv0-demo/deploy/deploy.yaml
+RELEASE_VERSION="main"
+kubectl apply -k "github.com/confidential-containers/operator/config/release?ref=${RELEASE_VERSION}"
 ```
 
 The operator installs everything under the `confidential-containers-system` namespace:
 
-Verify if the operator is running by runngint the following command:
+Verify if the operator is running by running the following command:
 
 ```bash
 kubectl get pods -n confidential-containers-system
@@ -83,20 +86,9 @@ cc-operator-controller-manager-7f8d6dd988-t9zdm   2/2     Running   0          1
 
 Creating a `CCruntime` object sets up the container runtime. The default payload image sets up the CCv0 demo image of the kata-containers runtime.
 
-```yaml
-cat << EOF | kubectl create -f -
-apiVersion: confidentialcontainers.org/v1beta1
-kind: CcRuntime
-metadata:
-  name: ccruntime-sample
-  namespace: confidential-containers-system
-spec:
-  # Add fields here
-  runtimeName: kata
-  config:
-    installType: bundle
-    payloadImage: quay.io/confidential-containers/runtime-payload:ccv0-ssh-demo
-EOF
+```bash
+RELEASE_VERSION="main"
+kubectl apply -k "github.com/confidential-containers/operator/config/samples/ccruntime/default?ref=${RELEASE_VERSION}"
 ```
 
 This will create an install daemonset targeting the worker nodes for installation. You can verify the status under the `confidential-containers-system` namespace.
@@ -120,4 +112,4 @@ kata-qemu   kata-qemu   92s
 
 `kata-cc` runtimeclass uses CCv0 specific configurations.
 
-Now you can deploy the PODs targeting the specific runtimeclasses. The [SSH demo](/demos/ssh-demo) can be used as a compatible workload.
+Now you can deploy the PODs targeting the specific runtimeclasses. The [SSH demo](/docs/demos/ssh-demo) can be used as a compatible workload.
