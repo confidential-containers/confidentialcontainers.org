@@ -2,3 +2,9 @@ Rivos
 Skopeo
 untrusted
 VM
+Nginx
+kubectl
+kubeconfig
+VNet
+[Ss]ubnet
+DaemonSet
