@@ -1,4 +1,16 @@
-# Trust Model for Confidential Containers
+---
+title: Trust Model for Confidential Containers
+date: 2024-01-23
+description: >
+  Definitions, references, and scope
+categories:
+- docs
+tags:
+- docs
+- trust-model
+weight: 1
+---
+
 A clear definition of trust for the confidential containers project is needed to ensure the
 components and architecture deliver the security principles expected for cloud native
 confidential computing. It provides the solid foundations and unifying security principles
@@ -6,7 +18,7 @@ against which we can assess architecture and implementation ideas and discussion
 
 ## Trust Model Definition
 The [Trust Modeling for Security Architecture Development article](https://www.informit.com/articles/article.aspx?p=31546)
-defines Trust Modeling as :
+defines Trust Modeling as:
 
 >    A trust model identifies the specific mechanisms that are necessary to respond to a specific
 >    threat profile.
@@ -31,9 +43,9 @@ native approaches when they use an underlying TEE technology and
 identifying where there may be considerations to preserve the value of using a TEE.
 
 ### Trust Model Considerations
-- [Personas](./trust_model_personas.md)
+- [Personas](../trust_model_personas)
 
-Further documentation will highlight specific [threat vectors](./threats_overview.md) in detail,
+Further documentation will highlight specific [threat vectors](../threats_overview) in detail,
 considering risk,
 impact, mitigation etc as the project progresses. The Security Assurance section, Page 31, of
 Cloud Native Computing Foundation (CNCF)

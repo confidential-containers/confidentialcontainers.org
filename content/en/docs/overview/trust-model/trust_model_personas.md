@@ -1,4 +1,16 @@
-# Trust Model Considerations - Personas
+---
+title: Personas
+date: 2024-01-23
+description: >
+  Description and discussion of relevant agents/actors in the context of Confidential Containers
+categories:
+- docs
+tags:
+- docs
+- trust-model
+- personas
+weight: 2
+---
 
 ## Personas
 Otherwise referred to as actors or agents, these are individuals or groups capable of
@@ -28,7 +40,7 @@ explore how the least privilege principle (as described on Page 40 of
  details Lifecycle aspects that relate to the security of the code being placed into containers
  such as Static/Dynamic Analysis, Security Tests, Code Review etc which must still be followed.
 
-![Personas Model](./images/persona_model.svg)
+![Personas model](/persona_model.svg)
 
 Any of these personas could attempt to perform malicious actions:
 
@@ -42,7 +54,7 @@ They are responsible for availability of infrastructure used by the cloud native
 - Have control over TEE hardware availability/type.
 - Responsibility for applying firmware updates to infrastructure including the TEE Technology.
 
-Example : Cloud Service Provider (CSP), Infrastructure as a Service (IaaS), Site Reliability Engineer, etc.
+Examples: Cloud Service Provider (CSP), Site Reliability Engineer, etc.
 (SRE)
 
 ### Orchestration Operator
@@ -54,25 +66,24 @@ For managed cluster this would also include the administration of the cluster co
 - Control webhooks and deployment of workloads.
 - Control availability of cluster resources (data/networking/storage) and cluster
   services (Logging/Monitoring/Load Balancing) for the workloads.
-- Control the deployment of runtime artifacts initially required by the TEE during
-  initialisation.
- These boot images once initialised will receive the workload.
+- Control the deployment of runtime artifacts required by the TEE during
+  initialisation, before hosting the confidential workload.
 
-Example : A kubernetes administrator responsible for deploying pods to a cluster and
+Example: A Kubernetes administrator responsible for deploying pods to a cluster and
 maintaining the cluster.
 
 ### Workload Provider
 This persona designs and creates the orchestration objects comprising the solution (e.g.
-kubernetes pod descriptions etc). These objects reference containers published by Container Image Providers.
+Kubernetes Pod spec, etc). These objects reference containers published by Container Image Providers.
 In some cases the Workload and Container Image Providers may be the same entity.
 The solution defined is intended to provide the Application or Workload which in turn provides
-value to the data owners (customers and clients).
-The workload provider and data owner could be part of same company/organisation but
-following the least privilege principle the workload provider should not be able to view or
+value to the Data Owners (customers and clients).
+The Workload Provider and Data Owner could be part of same company/organisation but
+following the least privilege principle the Workload Provider should not be able to view or
 manipulate end user data without informed consent.
 - Need to prove to customer aspects of compliance.
 - Defines what the solution requires in order to run and maintain compliance (resources, utility
-  containers/services,  storage).
+  containers/services, storage).
 - Chooses the method of verifying the container images (from those supported by Container Image
   Provider) and obtains artifacts needed to allow verification to be completed within
   the TEE.
@@ -81,7 +92,7 @@ manipulate end user data without informed consent.
 - Provide the attestation verification service, or designate a trusted party to provide the
   attestation verification service.
 
-Example : 3rd party software vendor, cloud solution provider
+Examples: 3rd party software vendor, CSP
 
 ### Container Image Provider
 
@@ -108,7 +119,7 @@ For example the workload provider may choose to protect their supply chain by
 signing/encrypting their own container images after following the build patterns already
 established by the container image provider.
 
-Example : Sidecar Container Provider
+Example : Istio
 
 
 ### Data Owner
@@ -153,7 +164,7 @@ must be permitted to cross the TEE boundary otherwise orchestration cannot occur
 *deprivilege orchestration* and restrict the
 Orchestration Operators privileges across the boundary. However indirect threats exist
 from the Infrastructure Operator who would not be permitted to exercise orchestration APIs but
-could exploit the low level hardware or firmware capabilities to access or impact the  contents
+could exploit the low-level hardware or firmware capabilities to access or impact the  contents
 of a TEE.
 
 ### Workload Provider vs. Data Owner
