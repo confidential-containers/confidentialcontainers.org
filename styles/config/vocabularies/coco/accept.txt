@@ -1,3 +1,5 @@
+Entra
+Namespace
 Rivos
 Skopeo
 untrusted
