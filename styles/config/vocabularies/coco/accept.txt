@@ -10,3 +10,7 @@ kubeconfig
 VNet
 [Ss]ubnet
 DaemonSet
+Whitepaper
+Istio
+deprivilege
+APIs
