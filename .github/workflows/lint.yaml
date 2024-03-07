@@ -12,3 +12,12 @@ jobs:
         with:
           files: content/en/docs
           fail_on_error: true
+  lint-blog:
+    name: Lint blog posts
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: errata-ai/vale-action@reviewdog
+        with:
+          files: content/en/blog
+          fail_on_error: true
