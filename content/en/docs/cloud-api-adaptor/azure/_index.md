@@ -208,7 +208,7 @@ cd "cloud-api-adaptor-${CAA_VERSION}"
 export CAA_BRANCH="main"
 curl -LO "https://github.com/confidential-containers/cloud-api-adaptor/archive/refs/heads/${CAA_BRANCH}.tar.gz"
 tar -xvzf "${CAA_BRANCH}.tar.gz"
-cd "cloud-api-adaptor-${CAA_BRANCH}"
+cd "cloud-api-adaptor-${CAA_BRANCH}/src/cloud-api-adaptor"
 ```
 
 {{% /tab %}}
