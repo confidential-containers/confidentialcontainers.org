@@ -194,10 +194,10 @@ export AZURE_SUBNET_ID=$(az network vnet subnet list \
 {{% tab header="Last Release" %}}
 
 ```bash
-export CAA_VERSION="0.8.0"
+export CAA_VERSION="0.8.2"
 curl -LO "https://github.com/confidential-containers/cloud-api-adaptor/archive/refs/tags/v${CAA_VERSION}.tar.gz"
 tar -xvzf "v${CAA_VERSION}.tar.gz"
-cd "cloud-api-adaptor-${CAA_VERSION}"
+cd "cloud-api-adaptor-${CAA_VERSION}/src/cloud-api-adaptor"
 ```
 
 {{% /tab %}}
@@ -253,7 +253,7 @@ Above image version is in the format `YYYY.MM.DD`, so to use the latest image sh
 
 {{% tab header="DIY" %}}
 
-If you have made changes to the CAA code that affects the pod VM image and you want to deploy those changes then follow [these instructions](https://github.com/confidential-containers/cloud-api-adaptor/blob/main/azure/build-image.md) to build the pod VM image. Once image build is finished then export image id to the environment variable `AZURE_IMAGE_ID`.
+If you have made changes to the CAA code that affects the pod VM image and you want to deploy those changes then follow [these instructions](https://github.com/confidential-containers/cloud-api-adaptor/blob/main/src/cloud-api-adaptor/azure/build-image.md) to build the pod VM image. Once image build is finished then export image id to the environment variable `AZURE_IMAGE_ID`.
 
 {{% /tab %}}
 
@@ -270,7 +270,7 @@ Export the following environment variable to use the latest release image of CAA
 
 ```bash
 export CAA_IMAGE="quay.io/confidential-containers/cloud-api-adaptor"
-export CAA_TAG="d4496d008b65c979a4d24767979a77ed1ba21e76"
+export CAA_TAG="v0.8.2-amd64"
 ```
 
 {{% /tab %}}
@@ -295,7 +295,7 @@ export CAA_TAG=""
 
 {{% tab header="DIY" %}}
 
-If you have made changes to the CAA code and you want to deploy those changes then follow [these instructions](https://github.com/confidential-containers/cloud-api-adaptor/blob/main/install/README.md#building-custom-cloud-api-adaptor-image) to build the container image. Once the image is built export the environment variables `CAA_IMAGE` and `CAA_TAG`.
+If you have made changes to the CAA code and you want to deploy those changes then follow [these instructions](https://github.com/confidential-containers/cloud-api-adaptor/blob/main/src/cloud-api-adaptor/install/README.md#building-custom-cloud-api-adaptor-image) to build the container image. Once the image is built export the environment variables `CAA_IMAGE` and `CAA_TAG`.
 
 {{% /tab %}}
 
@@ -418,7 +418,7 @@ kata-remote   kata-remote   7m18s
 Create an `nginx` deployment:
 
 ```yaml
-echo '
+cat <<EOF | kubectl apply -f -
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -441,7 +441,7 @@ spec:
         ports:
         - containerPort: 80
         imagePullPolicy: Always
-' | kubectl apply -f -
+EOF
 ```
 
 Ensure that the pod is up and running:
