@@ -37,6 +37,7 @@ reputational
 rootfs
 runc
 swtpm
+tabpane
 transformative
 untrusted
 userland
