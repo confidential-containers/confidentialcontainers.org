@@ -31,12 +31,46 @@ There are a bunch of steps that require you to be logged into your Azure account
 az login
 ```
 
-Retrieve your "Subscription ID" and set your preferred region:
+Retrieve your subscription ID:
 
 ```bash
 export AZURE_SUBSCRIPTION_ID=$(az account show --query id --output tsv)
+```
+
+Set the region:
+
+{{< tabpane text=true right=true persist=header >}}
+
+{{% tab header="AMD SEV-SNP" %}}
+
+```bash
 export AZURE_REGION="eastus"
 ```
+
+> **Note:** We selected the `eastus` region as it not only offers AMD SEV-SNP machines but also has prebuilt pod VM images readily available.
+
+{{% /tab %}}
+
+{{% tab header="Intel TDX" %}}
+
+```bash
+export AZURE_REGION="eastus2"
+```
+
+> **Note:** We selected the `eastus2` region as it not only offers Intel TDX machines but also has prebuilt pod VM images readily available.
+
+{{% /tab %}}
+
+{{% tab header="Non-Confidential" %}}
+
+```bash
+export AZURE_REGION="eastus"
+```
+
+> **Note:** We have chose region `eastus` because it has prebuilt pod VM images readily available.
+
+{{% /tab %}}
+{{< /tabpane >}}
 
 ### Resource group
 
@@ -328,11 +362,42 @@ metadata:
 EOF
 ```
 
+### Select peer-pods machine type
+
+{{< tabpane text=true right=true persist=header >}}
+{{% tab header="AMD SEV-SNP" %}}
+
+```bash
+export AZURE_INSTANCE_SIZE="Standard_DC2as_v5"
+export DISABLECVM="false"
+```
+
+Find more AMD SEV-SNP machine types on [this](https://learn.microsoft.com/en-us/azure/virtual-machines/dasv5-dadsv5-series) Azure documentation.
+
+{{% /tab %}}
+
+{{% tab header="Intel TDX" %}}
+
+```bash
+export AZURE_INSTANCE_SIZE="Standard_DC2es_v5"
+export DISABLECVM="false"
+```
+
+Find more Intel TDX machine types on [this](https://learn.microsoft.com/en-us/azure/virtual-machines/dcesv5-dcedsv5-series) Azure documentation.
+
+{{% /tab %}}
+
+{{% tab header="Non-Confidential" %}}
+
+```bash
+export AZURE_INSTANCE_SIZE="Standard_D2as_v5"
+export DISABLECVM="true"
+```
+
+{{% /tab %}}
+{{< /tabpane >}}
+
 ### Populate the `kustomization.yaml` file
-
-Replace the values as needed for the following environment variables:
-
-> **Note**: For non-Confidential VMs use `AZURE_INSTANCE_SIZE="Standard_D2as_v5"`.
 
 Run the following command to update the [`kustomization.yaml`](https://github.com/confidential-containers/cloud-api-adaptor/blob/main/install/overlays/azure/kustomization.yaml) file:
 
@@ -355,10 +420,11 @@ configMapGenerator:
   - CLOUD_PROVIDER="azure"
   - AZURE_SUBSCRIPTION_ID="${AZURE_SUBSCRIPTION_ID}"
   - AZURE_REGION="${AZURE_REGION}"
-  - AZURE_INSTANCE_SIZE="Standard_DC2as_v5"
+  - AZURE_INSTANCE_SIZE="${AZURE_INSTANCE_SIZE}"
   - AZURE_RESOURCE_GROUP="${AZURE_RESOURCE_GROUP}"
   - AZURE_SUBNET_ID="${AZURE_SUBNET_ID}"
   - AZURE_IMAGE_ID="${AZURE_IMAGE_ID}"
+  - DISABLECVM="${DISABLECVM}"
 secretGenerator:
 - name: peer-pods-secret
   namespace: confidential-containers-system
