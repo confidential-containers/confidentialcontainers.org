@@ -2,7 +2,10 @@ APIs
 CRD[s]
 DaemonSet
 Entra
+Hygon
 Istio
+KBS
+KBSes
 KServe
 Kubecon
 LLM[s]
@@ -31,6 +34,7 @@ deprivilege
 initrd
 kubeconfig
 kubectl
+middleware
 ramdisk
 replayable
 reputational
