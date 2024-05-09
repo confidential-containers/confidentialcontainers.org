@@ -8,7 +8,6 @@ tags:
 - kbs
 - azure
 - akv
-
 ---
 
 ## Premise
@@ -69,7 +68,7 @@ By default KBS is deployed into a `coco-tenant` Namespace:
 ```bash
 export NAMESPACE=coco-tenant
 kubectl create namespace $NAMESPACE
-``` 
+```
 
 ### KBS identity and Service Account
 
@@ -78,11 +77,11 @@ Workload Identity provides individual pods with IAM privileges to access Azure i
 ```bash
 export AKS_OIDC_ISSUER="$(az aks show --resource-group "$RESOURCE_GROUP" --name "$CLUSTER_NAME" --query "oidcIssuerProfile.issuerUrl" -o tsv)"
 az identity federated-credential create \
-	--name kbsfederatedidentity \
-	--identity-name kbs \
-	--resource-group "$RESOURCE_GROUP" \
-	--issuer "$AKS_OIDC_ISSUER" \
-	--subject "system:serviceaccount:${NAMESPACE}:kbs"
+ --name kbsfederatedidentity \
+ --identity-name kbs \
+ --resource-group "$RESOURCE_GROUP" \
+ --issuer "$AKS_OIDC_ISSUER" \
+ --subject "system:serviceaccount:${NAMESPACE}:kbs"
 ```
 
 Create a Service Account object and annotate it with the identity's client id.
