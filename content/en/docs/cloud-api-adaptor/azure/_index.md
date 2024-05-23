@@ -134,7 +134,7 @@ CAA needs privileges to talk to Azure API. This privilege is granted to CAA by a
 Start by creating an identity for CAA:
 
 ```bash
-export AZURE_WORKLOAD_IDENTITY_NAME="caa-identity"
+export AZURE_WORKLOAD_IDENTITY_NAME="caa-${CLUSTER_NAME}"
 
 az identity create \
   --name "${AZURE_WORKLOAD_IDENTITY_NAME}" \
@@ -179,7 +179,7 @@ Create the federated credential for the CAA ServiceAccount using the OIDC endpoi
 
 ```bash
 export AKS_OIDC_ISSUER="$(az aks show \
-  --name "$CLUSTER_NAME" \
+  --name "${CLUSTER_NAME}" \
   --resource-group "${AZURE_RESOURCE_GROUP}" \
   --query "oidcIssuerProfile.issuerUrl" \
   -otsv)"
@@ -187,8 +187,8 @@ export AKS_OIDC_ISSUER="$(az aks show \
 
 ```bash
 az identity federated-credential create \
-  --name caa-fedcred \
-  --identity-name caa-identity \
+  --name "caa-${CLUSTER_NAME}" \
+  --identity-name "${AZURE_WORKLOAD_IDENTITY_NAME}" \
   --resource-group "${AZURE_RESOURCE_GROUP}" \
   --issuer "${AKS_OIDC_ISSUER}" \
   --subject system:serviceaccount:confidential-containers-system:cloud-api-adaptor \
