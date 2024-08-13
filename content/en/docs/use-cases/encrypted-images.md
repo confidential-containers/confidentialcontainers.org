@@ -36,8 +36,9 @@ EOF
 The encryption key needs to be a 32 byte sequence and provided to the encryption step as base64-encoded string.
 
 ```bash
-head -c 32 /dev/urandom | openssl enc > image_key
-KEY_B64="$(base64 < image_key)"
+KEY_FILE="image_key"
+head -c 32 /dev/urandom | openssl enc > "$KEY_FILE"
+KEY_B64="$(base64 < $KEY_FILE)"
 ```
 
 The key id is a generic resource descriptor used by the key broker to look up secrets in its storage. For KBS this is composed of three segments: `$repository_name/$resource_type/$resource_tag`
@@ -68,7 +69,7 @@ We can inspect layer annotations to confirm the expected encryption was applied:
 ```bash
 skopeo inspect dir:./oci/output | jq '.LayersData[0].Annotations["org.opencontainers.image.enc.keys.provider.attestation-agent"] | @base64d | fromjson'
 {
-  "kid": "kbs:///default/image_key/one",
+  "kid": "kbs:///default/image_key/nginx",
   "wrapped_data": "lGaLf2Ge5bwYXHO2g2riJRXyr5a2zrhiXLQnOzZ1LKEQ4ePyE8bWi1GswfBNFkZdd2Abvbvn17XzpOoQETmYPqde0oaYAqVTMcnzTlgdYYzpWZcb3X0ymf9bS0gmMkqO3dPH+Jf4axXuic+ITOKy7MfSVGTLzay6jH/PnSc5TJ2WuUJY2rRtNaTY65kKF2K9YP6mtYBqcHqvPDlFiVNNeTAGv2w1zwaMlgZaSHV+Z1y+xxbOV5e98bxuo6861rMchjCiE7FY37PHD3a5ISogq90=",
   "iv": "Z8bGQL7r6qxSpd4L",
   "wrap_type": "A256GCM"
