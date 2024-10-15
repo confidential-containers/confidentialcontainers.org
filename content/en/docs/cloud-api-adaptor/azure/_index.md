@@ -19,7 +19,7 @@ This documentation will walk you through setting up CAA (a.k.a. Peer Pods) on Az
 
 - Install Azure CLI by following instructions [here](https://learn.microsoft.com/en-us/cli/azure/install-azure-cli).
 - Install kubectl by following the instructions [here](https://kubernetes.io/docs/tasks/tools/#kubectl).
-- Ensure that the tools `curl`, `git` and `jq` are installed.
+- Ensure that the tools `curl`, `git`, `jq` and `sipcalc` are installed.
 
 ## Azure Preparation
 
@@ -97,7 +97,7 @@ export AKS_RG="${AZURE_RESOURCE_GROUP}-aks"
 export SSH_KEY=~/.ssh/id_rsa.pub
 ```
 
-> **Note**: Optionally, deploy the worker nodes into an existing Azure Virtual Network (VNet) and subnet by adding the following flag: `--vnet-subnet-id $SUBNET_ID`.
+> **Note**: Optionally, deploy the worker nodes into an existing Azure Virtual Network (VNet) and subnet by adding the following flag: `--vnet-subnet-id $MY_SUBNET_ID`.
 
 Deploy AKS with single worker node to the same resource group you created earlier:
 
@@ -150,6 +150,25 @@ export USER_ASSIGNED_CLIENT_ID="$(az identity show \
   -otsv)"
 ```
 
+### Networking
+
+The VMs that will host Pods will commonly require access to internet services, e.g. to pull images from a public OCI registry. A discrete subnet can be created next to the AKS cluster subnet in the same VNet. We then attach a NAT gateway with a public IP to that subnet:
+
+
+```bash
+export AZURE_VNET_NAME="$(az network vnet list -g ${AKS_RG} --query '[].name' -o tsv)"
+export AKS_CIDR="$(az network vnet show -n $AZURE_VNET_NAME -g $AKS_RG --query "subnets[?name == 'aks-subnet'].addressPrefix" -o tsv)"
+# 10.224.0.0/16
+export MASK="${AKS_CIDR#*/}"
+# 16
+PEERPOD_CIDR="$(sipcalc $AKS_CIDR -n 2 | grep ^Network | grep -v current | cut -d' ' -f2)/${MASK}"
+# 10.225.0.0/16
+az network public-ip create -g "$AKS_RG" -n peerpod
+az network nat gateway create -g "$AKS_RG" -l "$AZURE_REGION" --public-ip-addresses peerpod -n peerpod
+az network vnet subnet create -g "$AKS_RG" --vnet-name "$AZURE_VNET_NAME" --nat-gateway peerpod --address-prefixes "$PEERPOD_CIDR" -n peerpod
+export AZURE_SUBNET_ID="$(az network vnet subnet show -g "$AKS_RG" --vnet-name "$AZURE_VNET_NAME" -n peerpod --query id -o tsv)"
+```
+
 ### AKS resource group permissions
 
 For CAA to be able to manage VMs assign the identity VM and Network contributor roles, privileges to spawn VMs in `$AZURE_RESOURCE_GROUP` and attach to a VNet in `$AKS_RG`.
@@ -195,27 +214,6 @@ az identity federated-credential create \
   --audience api://AzureADTokenExchange
 ```
 
-### AKS subnet ID
-
-Fetch the AKS created VNet name:
-
-```bash
-export AZURE_VNET_NAME=$(az network vnet list \
-  --resource-group "${AKS_RG}" \
-  --query "[0].name" \
-  --output tsv)
-```
-
-Export the subnet ID to be used for CAA DaemonSet deployment:
-
-```bash
-export AZURE_SUBNET_ID=$(az network vnet subnet list \
-  --resource-group "${AKS_RG}" \
-  --vnet-name "${AZURE_VNET_NAME}" \
-  --query "[0].id" \
-  --output tsv)
-```
-
 ## Deploy CAA
 
 > **Note**: If you are using Calico Container Network Interface (CNI) on the Kubernetes cluster, then, [configure](https://projectcalico.docs.tigera.io/networking/vxlan-ipip#configure-vxlan-encapsulation-for-all-inter-workload-traffic) Virtual Extensible LAN (VXLAN) encapsulation for all inter workload traffic.
@@ -228,7 +226,7 @@ export AZURE_SUBNET_ID=$(az network vnet subnet list \
 {{% tab header="Last Release" %}}
 
 ```bash
-export CAA_VERSION="0.8.2"
+export CAA_VERSION="0.10.0"
 curl -LO "https://github.com/confidential-containers/cloud-api-adaptor/archive/refs/tags/v${CAA_VERSION}.tar.gz"
 tar -xvzf "v${CAA_VERSION}.tar.gz"
 cd "cloud-api-adaptor-${CAA_VERSION}/src/cloud-api-adaptor"
@@ -304,7 +302,7 @@ Export the following environment variable to use the latest release image of CAA
 
 ```bash
 export CAA_IMAGE="quay.io/confidential-containers/cloud-api-adaptor"
-export CAA_TAG="v0.8.2-amd64"
+export CAA_TAG="v0.10.0-amd64"
 ```
 
 {{% /tab %}}
@@ -448,7 +446,7 @@ cp $SSH_KEY install/overlays/azure/id_rsa.pub
 Deploy coco operator:
 
 ```bash
-export COCO_OPERATOR_VERSION="0.8.0"
+export COCO_OPERATOR_VERSION="0.10.0"
 kubectl apply -k "github.com/confidential-containers/operator/config/release?ref=v${COCO_OPERATOR_VERSION}"
 kubectl apply -k "github.com/confidential-containers/operator/config/samples/ccruntime/peer-pods?ref=v${COCO_OPERATOR_VERSION}"
 ```
