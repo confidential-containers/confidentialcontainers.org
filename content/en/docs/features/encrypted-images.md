@@ -1,13 +1,11 @@
 ---
-title: Encrypted images
+title: Encrypted Images
 date: 2023-01-24
 description: Procedures to encrypt and consume OCI images in a TEE
 categories:
-- use case
+- feature 
 tags:
-- coco-keyprovider
 - images
-- kbs
 ---
 
 # Context
