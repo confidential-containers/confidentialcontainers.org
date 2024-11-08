@@ -1,12 +1,12 @@
 ---
-title: Trustee
+title: Attestation 
 description: Trusted Components for Attestation and Secret Management
 weight: 50
 categories:
-- docs
+- attestation
 tags:
-- docs
 - trustee
+- attestation
 ---
 
 Trustee contains tools and components for attesting confidential guests and providing secrets to them. Collectively, these components are known as Trustee. Trustee typically operates on behalf of the ["workload provider"](../overview/trust-model/trust_model_personas/#workload-provider) / ["data owner"](../overview/trust-model/trust_model_personas/#data-owner) and interacts remotely with [guest components](../guest-components/).
