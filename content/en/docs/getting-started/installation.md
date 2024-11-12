@@ -34,26 +34,26 @@ kubectl get pods -n confidential-containers-system --watch
 
 ### Create the custom resource
 
-#### Create custom resource for kata
-
 Creating a custom resource installs the required CC runtime pieces into the cluster node and creates
-the `RuntimeClasses`
+the runtime classes. 
 
-```
-kubectl apply -k github.com/confidential-containers/operator/config/samples/ccruntime/<CCRUNTIME_OVERLAY>?ref=<RELEASE_VERSION>
-```
+{{< tabpane text=true right=true >}}
+ {{% tab header="x86" lang="bash" %}}
+	kubectl apply -k github.com/confidential-containers/operator/config/samples/ccruntime/default?ref=<RELEASE_VERSION>
+  {{% /tab %}}
+  {{% tab header="s390x" lang="bash" %}}
+	kubectl apply -k github.com/confidential-containers/operator/config/samples/ccruntime/s390x?ref=<RELEASE_VERSION>
+  {{% /tab %}}
+  {{% tab header="SGX" lang="bash" %}}
+	kubectl apply -k github.com/confidential-containers/operator/config/samples/enclave-cc/hw?ref=<RELEASE_VERSION>
+  {{% /tab %}}
+{{< /tabpane >}}
 
-The current present overlays are: `default` and `s390x`
+{{% alert title="Note" color="primary" %}}
+If using enclave-cc with SGX, please refer to [this guide](./guides/enclave-cc.md#configuring-enclave-cc-custom-resource-to-use-a-different-kbc)
+for more information on setting the custom resource.
+{{% /alert %}}
 
-For example, to deploy the `v0.10.0` release for `x86_64`, run:
-```
-kubectl apply -k github.com/confidential-containers/operator/config/samples/ccruntime/default?ref=v0.10.0
-```
-
-And to deploy `v0.10.0` release for `s390x`, run:
-```
-kubectl apply -k github.com/confidential-containers/operator/config/samples/ccruntime/s390x?ref=v0.10.0
-```
 
 Wait until each pod has the STATUS of Running.
 
@@ -61,63 +61,53 @@ Wait until each pod has the STATUS of Running.
 kubectl get pods -n confidential-containers-system --watch
 ```
 
-#### Create custom resource for enclave-cc
-
-**Note** For `enclave-cc` certain configuration changes, such as setting the
-URI of the KBS, must be made **before** applying the custom resource. 
-Please refer to the [guide](./guides/enclave-cc.md#configuring-enclave-cc-custom-resource-to-use-a-different-kbc)
-to modify the enclave-cc configuration.
-
-Please see the [enclave-cc guide](./guides/enclave-cc.md) for more information.
-
-`enclave-cc` is a form of Confidential Containers that uses process-based isolation.
-`enclave-cc` can be installed with the following custom resources.
-```
-kubectl apply -k github.com/confidential-containers/operator/config/samples/enclave-cc/sim?ref=<RELEASE_VERSION>
-```
-or
-```
-kubectl apply -k github.com/confidential-containers/operator/config/samples/enclave-cc/hw?ref=<RELEASE_VERSION>
-```
-for the **simulated** SGX mode build or **hardware** SGX mode build, respectively.
-
 ### Verify Installation
 
-Check the `RuntimeClasses` that got created.
-
+See if the expected runtime classes were created.
 ```
 kubectl get runtimeclass
 ```
-Output:
-```
-NAME                 HANDLER              AGE
-kata                 kata-qemu            8d
-kata-clh             kata-clh             8d
-kata-qemu            kata-qemu            8d
-kata-qemu-coco-dev   kata-qemu-coco-dev   8d
-kata-qemu-sev        kata-qemu-sev        8d
-kata-qemu-snp        kata-qemu-snp        8d
-kata-qemu-tdx        kata-qemu-tdx        8d
-```
+Should return
 
-Details on each of the runtime classes:
+{{< tabpane text=true right=true >}}
+ {{% tab header="x86" lang="bash" %}}
+	NAME                 HANDLER              AGE
+	kata                 kata-qemu            8d
+	kata-clh             kata-clh             8d
+	kata-qemu            kata-qemu            8d
+	kata-qemu-coco-dev   kata-qemu-coco-dev   8d
+	kata-qemu-sev        kata-qemu-sev        8d
+	kata-qemu-snp        kata-qemu-snp        8d
+	kata-qemu-tdx        kata-qemu-tdx        8d
+  {{% /tab %}}
+  {{% tab header="s390x" lang="bash" %}}
+	NAME           HANDLER        AGE
+	kata           kata-qemu      60s
+	kata-qemu      kata-qemu      61s
+	kata-qemu-se   kata-qemu-se   61s
+  {{% /tab %}}
+  {{% tab header="SGX" lang="bash" %}}
+	NAME            HANDLER         AGE
+	enclave-cc      enclave-cc      9m55s
+  {{% /tab %}}
+{{< /tabpane >}}
 
-- `kata` - Convenience runtime that uses the handler of the default runtime
-- `kata-clh` - standard kata runtime using the cloud hypervisor
-- `kata-qemu` - same as kata
-- `kata-qemu-coco-dev` - standard kata runtime using the QEMU hypervisor including all CoCo building blocks for a non CC HW
-- `kata-qemu-sev` - using QEMU, and support for AMD SEV HW
-- `kata-qemu-snp` - using QEMU, and support for AMD SNP HW
-- `kata-qemu-tdx` - using QEMU, and support Intel TDX HW based on what's provided by [Ubuntu](https://github.com/canonical/tdx) and [CentOS 9 Stream](https://sigs.centos.org/virt/tdx/).
+#### Runtime Classes
 
+CoCo supports many different runtime classes.
+Different deployment types install different sets of runtime classes.
+The operator may install some runtime classes that are not valid for your system.
+For example, if you run the operator on a TDX machine, you might have TDX and SEV
+runtime classes. Use the runtime classes that match your hardware.
 
-If you are using `enclave-cc` you should see the following runtime classes.
-
-```
-kubectl get runtimeclass
-```
-Output:
-```
-NAME            HANDLER         AGE
-enclave-cc      enclave-cc      9m55s
-```
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| `kata` | x86  | Alias of the default runtime handler (usually the same as `kata-qemu`) |
+| `kata-clh` | x86 | Kata Containers (non-confidential) using Cloud Hypervisor |
+| `kata-qemu` | x86 | Kata Containers (non-confidential) using QEMU |
+| `kata-qemu-coco-dev` | x86 | CoCo without an enclave (for testing only) |
+| `kata-qemu-sev` | x86 | CoCo with QEMU for AMD SEV HW |
+| `kata-qemu-snp` | x86 | CoCo with QEMU for AMD SNP HW |
+| `kata-qemu-tdx` | x86 | CoCo with QEMU for Intel TDX HW |
+| `kata-qemu-se` | s390x | CoCO with QEMU for Secure Execution |
+| `enclave-cc` | SGX | CoCo with enclave-cc (process-based isolation without Kata) |
