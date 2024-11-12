@@ -13,10 +13,11 @@ Kubecon
 LLM[s]
 Namespace
 Nginx
+nginx
 OCI
 PCR
 Peerpod
-Qemu
+(?i)qemu
 Rego
 RTMR
 Rivos
@@ -24,6 +25,7 @@ Sched
 SKLearn
 Skopeo
 Unencrypted
+unencrypted
 URI
 VM
 VNet
@@ -55,3 +57,7 @@ transformative
 untrusted
 userland
 virtualized
+(?i)yaml
+[Hh]ypervisor
+Minikube
+SELinux
