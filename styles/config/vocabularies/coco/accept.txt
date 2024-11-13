@@ -12,8 +12,7 @@ KServe
 Kubecon
 LLM[s]
 Namespace
-Nginx
-nginx
+[nN]ginx
 OCI
 PCR
 Peerpod
@@ -24,8 +23,7 @@ Rivos
 Sched
 SKLearn
 Skopeo
-Unencrypted
-unencrypted
+[uU]nencrypted
 URI
 VM
 VNet
@@ -61,3 +59,7 @@ virtualized
 [Hh]ypervisor
 Minikube
 SELinux
+config
+containerd
+kubelet
+misconfiguration
