@@ -46,13 +46,13 @@ middleware
 ramdisk
 replayable
 reputational
-rootfs
+[rR]ootfs
 runc
 seccomp
 swtpm
 tabpane
 transformative
-untrusted
+[uU]ntrusted
 userland
 virtualized
 (?i)yaml
@@ -70,3 +70,4 @@ rebase
 passthrough
 [sS]napshotter
 [nN]ydus
+runtimes
