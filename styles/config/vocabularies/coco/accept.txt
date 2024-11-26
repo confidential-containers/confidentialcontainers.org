@@ -71,3 +71,7 @@ passthrough
 [sS]napshotter
 [nN]ydus
 runtimes
+runtimeclass
+(?i)kms
+KMSes
+aliyun
