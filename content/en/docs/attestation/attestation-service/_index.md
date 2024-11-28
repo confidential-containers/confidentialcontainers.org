@@ -24,19 +24,21 @@ Today, the AS can validate evidence from the following TEEs:
 ## Overview
 
 ```
-                                      ┌───────────────────────┐
-┌───────────────────────┐ Evidence    │  Attestation Service  │
-│                       ├────────────►│                       │
-│ Verification Demander │             │ ┌────────┐ ┌──────────┴───────┐
-│    (Such as KBS)      │             │ │ Policy │ │ Reference Value  │◄───Reference Value
-│                       │◄────────────┤ │ Engine │ │ Provider Service │
-└───────────────────────┘ Attestation │ └────────┘ └──────────┬───────┘
-                        Results Token │                       │
-                                      │ ┌───────────────────┐ │
-                                      │ │  Verifier Drivers │ │
-                                      │ └───────────────────┘ │
-                                      │                       │
-                                      └───────────────────────┘
+                                                                                                   
+                                                                                                   
+                                         ┌───────────────────────────────────┐                     
+   ┌───────────────────────┐ Evidence    │  Attestation Service              │                     
+   │                       ├────────────►│                                   │                     
+   │ Verification Demander │             │ ┌───────────┐┌──────────────────┐ │                     
+   │    (Such as KBS)      │             │ │┌────────┐ ││ Reference Value  │◄┼────Reference Value  
+   │                       │◄────────────┤ ││ Policy │ ││ Provider Service │ │                     
+   └───────────────────────┘ Attestation │ ││ Engine │ │└──────────────────┘ │                     
+                           Results Token │ │└────────┘ │                     │                     
+                                         │ │Attestation│                     │                     
+                                         │ │   Token   │  ┌────────────────┐ │                     
+                                         │ │  Broker   │  │Verifier Drivers│ │                     
+                                         │ └───────────┘  └────────────────┘ │                     
+                                         └───────────────────────────────────┘                     
 ```
 
 The Attestation Service (AS) has a simple API. It receives attestation evidence and returns an attestation token containing the results of a two-step verification process. The AS can be consumed directly as a Rust crate (library) or built as a standalone service, exposing a REST or gRPC API. In Confidential Containers, the client of the AS is the Key Broker Service (KBS), but the evidence originates from the Attestation Agent inside the guest.
@@ -47,4 +49,4 @@ The AS has a two-step verification process.
 2. Appraise the claims presented in the evidence (e.g. check that measurements match reference values).
 
 The first step is accomplished by one of the platform-specific [Verifier Drivers](#verifier-drivers).
-The second step is driven by the [Policy Engine](#policy-engine) with help from the [Reference Value Provider Service (RVPS)](#reference-value-provider-service).
+The second step is driven by the Attestation Token Broker with help from the [Reference Value Provider Service (RVPS)](#reference-value-provider-service).
