@@ -74,4 +74,10 @@ runtimes
 runtimeclass
 (?i)kms
 KMSes
-aliyun
+[aA]liyun
+[aA]libaba
+[gG]it[hH]ub
+grpc
+gRPC
+proto
+protobuf
