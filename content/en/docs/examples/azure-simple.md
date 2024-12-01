@@ -225,7 +225,7 @@ az identity federated-credential create \
 {{% tab header="Last Release" %}}
 
 ```bash
-export CAA_VERSION="0.10.0"
+export CAA_VERSION="0.11.0"
 curl -LO "https://github.com/confidential-containers/cloud-api-adaptor/archive/refs/tags/v${CAA_VERSION}.tar.gz"
 tar -xvzf "v${CAA_VERSION}.tar.gz"
 cd "cloud-api-adaptor-${CAA_VERSION}/src/cloud-api-adaptor"
@@ -260,7 +260,7 @@ This assumes that you already have the code ready to use. On your terminal chang
 Export this environment variable to use for the peer pod VM:
 
 ```bash
-export AZURE_IMAGE_ID="/CommunityGalleries/cococommunity-42d8482d-92cd-415b-b332-7648bd978eff/Images/peerpod-podvm-ubuntu2204-cvm-snp/Versions/${CAA_VERSION}"
+export AZURE_IMAGE_ID="/CommunityGalleries/cococommunity-42d8482d-92cd-415b-b332-7648bd978eff/Images/peerpod-podvm-fedora/Versions/${CAA_VERSION}"
 ```
 
 {{% /tab %}}
