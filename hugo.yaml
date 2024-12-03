@@ -197,3 +197,9 @@ params:
   - tags
   - categories
 
+menu:
+  main:
+    - name:
+      weight: 50
+      pre: <i class='fa-brands fa-github'></i>
+      url: 'https://github.com/confidential-containers'
