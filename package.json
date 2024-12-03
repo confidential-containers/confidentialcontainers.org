@@ -3,5 +3,8 @@
         "autoprefixer": "^10.4.20",
         "postcss": "^8.4.41",
         "postcss-cli": "^11.0.0"
+    },
+    "dependencies": {
+        "scss": "^0.2.4"
     }
 }
