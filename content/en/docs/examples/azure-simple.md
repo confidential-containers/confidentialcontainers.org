@@ -301,7 +301,7 @@ Export the following environment variable to use the latest release image of CAA
 
 ```bash
 export CAA_IMAGE="quay.io/confidential-containers/cloud-api-adaptor"
-export CAA_TAG="v0.10.0-amd64"
+export CAA_TAG="v${CAA_VERSION}-amd64"
 ```
 
 {{% /tab %}}
@@ -442,10 +442,10 @@ cp $SSH_KEY install/overlays/azure/id_rsa.pub
 
 ### Deploy CAA on the Kubernetes cluster
 
-Deploy coco operator:
+Deploy coco operator. Usually it's the same version as CAA, but it can be adjusted.
 
 ```bash
-export COCO_OPERATOR_VERSION="0.10.0"
+export COCO_OPERATOR_VERSION="${CAA_VERSION}"
 kubectl apply -k "github.com/confidential-containers/operator/config/release?ref=v${COCO_OPERATOR_VERSION}"
 kubectl apply -k "github.com/confidential-containers/operator/config/samples/ccruntime/peer-pods?ref=v${COCO_OPERATOR_VERSION}"
 ```
