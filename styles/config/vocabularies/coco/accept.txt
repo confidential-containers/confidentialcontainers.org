@@ -75,3 +75,6 @@ runtimeclass
 (?i)kms
 KMSes
 aliyun
+gpg
+skopeo
+keypair
