@@ -12,7 +12,7 @@ languages:
     weight: 1
     params:
       title: Confidential Containers
-      description: Documentation for Confidential Containers
+      description: Cloud Native Confidential Computing; Run Confidential Containers on Kubernetes
 
 enableRobotsTXT: true
 enableEmoji: true
