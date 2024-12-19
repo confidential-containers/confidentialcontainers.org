@@ -176,7 +176,7 @@ Confidential Containers integrates many components. Here is a brief overview of 
 | Operator  | operator | Installs Confidential Containers |
 | Kata Shim | kata-containers/kata-containers | Starts PodVM and proxies requests to Kata Agent |
 | Kata Agent | kata-containers/kata-containers | Sets up and runs the workload inside of a VM |
-| image-rs | guest-componenents | Downloads and unpacks container images |
+| image-rs | guest-components | Downloads and unpacks container images |
 | ocicrypt-rs | guest-components | Decrypts encrypted container layers |
 | confidential-data-hub | guest-components | Handles secret resources |
 | attestation-agent | guest-components | Attests guest |
@@ -193,7 +193,7 @@ Confidential Containers integrates many components. Here is a brief overview of 
 Many of the above components depend on each other either directly in the source,
 during packaging, or at runtime.
 The basic premise is that the operator deploys a special configuration of Kata containers
-that uses a rootfs (build by the Kata CI) that includes the guest components.
+that uses a rootfs (built by the Kata CI) that includes the guest components.
 This diagram shows these relationships in more detail.
 The diagram does not capture runtime interactions.
 
