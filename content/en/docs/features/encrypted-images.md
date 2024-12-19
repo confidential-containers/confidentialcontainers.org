@@ -18,7 +18,9 @@ The project provides the means to encrypt an image with a symmetric key that is 
 
 The following steps require a functional CoCo installation on a Kubernetes cluster. A Key Broker Client (KBC) has to be configured for TEEs to be able to retrieve confidential secrets. We assume `cc_kbc` as a KBC for the CoCo project's Key Broker Service (KBS) in the following instructions, but image encryption should work with other Key Broker implementations in a similar fashion.
 
-Please ensure you have a recent version of [Skopeo](https://github.com/containers/skopeo/releases) (v1.14.2+) installed locally.
+{{% alert title="Note" color="primary" %}}
+Please ensure you have a recent version of [Skopeo](https://github.com/containers/skopeo/releases) (v1.13.3+) installed locally.
+{{% /alert %}}
 
 ## Encrypt an image
 
@@ -66,6 +68,11 @@ We can inspect layer annotations to confirm the expected encryption was applied:
 
 ```bash
 skopeo inspect dir:./oci/output | jq '.LayersData[0].Annotations["org.opencontainers.image.enc.keys.provider.attestation-agent"] | @base64d | fromjson'
+```
+
+Sample output:
+
+```json
 {
   "kid": "kbs:///default/image_key/nginx",
   "wrapped_data": "lGaLf2Ge5bwYXHO2g2riJRXyr5a2zrhiXLQnOzZ1LKEQ4ePyE8bWi1GswfBNFkZdd2Abvbvn17XzpOoQETmYPqde0oaYAqVTMcnzTlgdYYzpWZcb3X0ymf9bS0gmMkqO3dPH+Jf4axXuic+ITOKy7MfSVGTLzay6jH/PnSc5TJ2WuUJY2rRtNaTY65kKF2K9YP6mtYBqcHqvPDlFiVNNeTAGv2w1zwaMlgZaSHV+Z1y+xxbOV5e98bxuo6861rMchjCiE7FY37PHD3a5ISogq90=",
@@ -74,7 +81,7 @@ skopeo inspect dir:./oci/output | jq '.LayersData[0].Annotations["org.opencontai
 }
 ```
 
-Finally the resulting encrypted image can be provisioned to an image registry.
+Finally, the resulting encrypted image can be provisioned to an image registry.
 
 ```bash
 ENCRYPTED_IMAGE=some-private.registry.io/coco/nginx:encrypted
@@ -90,18 +97,42 @@ kubectl exec deploy/kbs -- mkdir -p "/opt/confidential-containers/kbs/repository
 cat "$KEY_FILE" | kubectl exec -i deploy/kbs -- tee "/opt/confidential-containers/kbs/repository/${KEY_PATH}" > /dev/null
 ```
 
+> **Note:** If you're not using KBS deployment using trustee operator additional namespace may be needed `-n coco-tenant`.
+
 ## Launch a Pod
+
+We create a simple deployment using our encrypted image. As the image is being pulled and the CoCo components in the TEE encounter the layer annotations that we saw above, the image key will be retrieved from the Key Broker using the annotated Key ID and the layers will be decrypted transparently and the container should come up.
 
 In this example we default to the Cloud API Adaptor runtime, adjust this depending on the CoCo installation.
 
 ```bash
 kubectl get runtimeclass -o jsonpath='{.items[].handler}'
+```
+
+Sample output:
+
+```bash
 kata-remote
+```
+
+Export variable:
+
+```bash
 CC_RUNTIMECLASS=kata-remote
 ```
 
-We create a simple deployment using our encrypted image. As the image is being pulled and the CoCo components in the TEE encounter the layer annotations that we saw above, the image key will be retrieved from the Key Broker using the annotated Key ID and the layers will be decrypted transparently and the container should come up.
-  
+Export KBS address:
+
+```bash
+KBS_ADDRESS=scheme://host:port
+```
+
+Deploy sample pod:
+
+{{< tabpane text=true right=true persist=header >}}
+
+{{% tab header="Bare metal" %}}
+
 ```bash
 cat <<EOF> nginx-encrypted.yaml
 apiVersion: apps/v1
@@ -120,15 +151,89 @@ spec:
       labels:
         app: nginx
       annotations:
+        io.katacontainers.config.hypervisor.kernel_params: "agent.aa_kbc_params=cc_kbc::${KBS_ADDRESS}"
         io.containerd.cri.runtime-handler: ${CC_RUNTIMECLASS}
     spec:
       runtimeClassName: ${CC_RUNTIMECLASS}
       containers:
       - image: ${ENCRYPTED_IMAGE}
         name: nginx
+        imagePullPolicy: Always
 EOF
 kubectl apply -f nginx-encrypted.yaml
-``` 
+```
+
+{{% /tab %}}
+
+{{% tab header="Cloud Api Adaptor" %}}
+
+- Create file `$HOME/initdata.toml`
+   ```bash
+   cat <<EOF> initdata.toml
+   algorithm = "sha256"
+   version = "0.1.1"
+   
+   [data]
+   "aa.toml" = '''
+   [token_configs]
+   [token_configs.coco_as]
+   url = '${KBS_ADDRESS}'
+   
+   [token_configs.kbs]
+   url = '${KBS_ADDRESS}'
+   '''
+   
+   "cdh.toml"  = '''
+   socket = 'unix:///run/confidential-containers/cdh.sock'
+   credentials = []
+   
+   [kbc]
+   name = 'cc_kbc'
+   url = '${KBS_ADDRESS}'
+   '''
+   EOF
+   ```
+
+- Export variable:
+
+   ```bash
+   INIT_DATA_B64=$(cat $HOME/initdata.toml | base64 -w0)
+   ```
+
+- Deploy:
+   ```bash
+   cat <<EOF> nginx-encrypted.yaml
+   apiVersion: apps/v1
+   kind: Deployment
+   metadata:
+     labels:
+       app: nginx
+     name: nginx-encrypted
+   spec:
+     replicas: 1
+     selector:
+       matchLabels:
+         app: nginx
+     template:
+       metadata:
+         labels:
+           app: nginx
+         annotations:
+           io.katacontainers.config.runtime.cc_init_data: "${INIT_DATA_B64}"
+           io.containerd.cri.runtime-handler: ${CC_RUNTIMECLASS}
+       spec:
+         runtimeClassName: ${CC_RUNTIMECLASS}
+         containers:
+         - image: ${ENCRYPTED_IMAGE}
+           name: nginx
+           imagePullPolicy: Always
+   EOF
+   kubectl apply -f nginx-encrypted.yaml
+   ```
+
+{{% /tab %}}
+
+{{< /tabpane >}}
 
 We can confirm that the image key has been retrieved from KBS.
 
@@ -136,3 +241,6 @@ We can confirm that the image key has been retrieved from KBS.
 kubectl logs -f deploy/kbs | grep "$KEY_PATH"
 [2024-01-23T10:24:52Z INFO  actix_web::middleware::logger] 10.244.0.1 "GET /kbs/v0/resource/default/image_key/nginx HTTP/1.1" 200 530 "-" "attestation-agent-kbs-client/0.1.0" 0.000670
 ```
+
+> **Note:** If you're not using KBS deployment using trustee operator additional namespace may be needed `-n coco-tenant`.
+

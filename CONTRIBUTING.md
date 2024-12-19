@@ -6,13 +6,16 @@ This repository follows the usual Github workflow of pull request to make change
 
 ### Using Hugo
 
+- Make sure You have installed:
+  - GO [here](https://go.dev/doc/install) and include it in PATH
+  - NodeJS [here](https://nodejs.org/en/download/package-manager) and include it in PATH
+  - PostCSS plugin [here](https://gohugo.io/functions/css/postcss/#setup)
 - Install Hugo by following the instructions [here](https://gohugo.io/installation/).
 
 - Start a local server from the root of this repository:
-
-```bash
-hugo server
-```
+  ```bash
+  hugo server
+  ```
 
 ### Using Docker Compose
 
