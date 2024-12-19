@@ -93,3 +93,5 @@ grpc
 gRPC
 proto
 protobuf
+[uU]ltravisor
+[bB]ootloader
