@@ -19,7 +19,7 @@ that the untrusted host cannot access guest data or manipulate guest control flo
 Confidential Containers maps pods to confidential VMs, meaning that everything inside a pod is
 within an enclave. In addition to the workload pod, the guest also contains helper processes
 and daemons to setup and control the pod.
-These include the `kata-agent`, and guest components as described in the architecture section.
+These include the `kata-agent` and guest components as described in the architecture section.
 
 More specifically, the guest is defined as four components.
 - Guest firmware
