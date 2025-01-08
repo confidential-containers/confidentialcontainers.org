@@ -1,5 +1,5 @@
 ---
-date: 2024-06-10
+date: 2025-02-19
 title: Deploy Trustee in Kubernetes
 linkTitle: Deploy Trustee in Kubernetes
 description: >
@@ -41,42 +41,13 @@ If we don't have a running cluster yet, we can easily bring it up with [kind](ht
 ```bash
 kind create cluster -n trustee
 # install the olm operator
-kubectl create -f https://raw.githubusercontent.com/operator-framework/operator-lifecycle-manager/master/deploy/upstream/quickstart/crds.yaml
-kubectl create -f https://raw.githubusercontent.com/operator-framework/operator-lifecycle-manager/master/deploy/upstream/quickstart/olm.yaml
+curl -sL https://github.com/operator-framework/operator-lifecycle-manager/releases/download/v0.31.0/install.sh | bash -s v0.31.0
 ```
 
 {{% alert color="info" %}}
 For more information on the Operator Lifecycle Manager (OLM) and the operator installation procedure from OperatorHub.io, please consult this [guide](https://operatorhub.io/how-to-install-an-operator).
 {{% /alert %}}
 
-
-### Namespace creation
-
-This is the default Namespace, where all the relevant Trustee objects will be created.
-
-```bash
-kubectl apply -f - << EOF
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: kbs-operator-system
-EOF
-```
-
-### Operator Group
-
-An Operator group, defined by the OperatorGroup resource, provides multi-tenant configuration to OLM-installed Operators:
-
-```bash
-kubectl apply -f - << EOF
-apiVersion: operators.coreos.com/v1
-kind: OperatorGroup
-metadata:
-  name: kbs-operator-system
-  namespace: kbs-operator-system
-spec:
-EOF
-```
 
 ### Subscription
 
@@ -86,21 +57,20 @@ A subscription, defined by a Subscription object, represents an intention to ins
 kubectl apply -f - << EOF
 apiVersion: operators.coreos.com/v1alpha1
 kind: Subscription
-metadata:
-  name: kbs-operator-system
-  namespace: kbs-operator-system
-spec:
+metadata: 
+  name: my-trustee-operator 
+  namespace: operators
+spec: 
   channel: alpha
-  installPlanApproval: Automatic
   name: trustee-operator
   source: operatorhubio-catalog
   sourceNamespace: olm
-  startingCSV: trustee-operator.v0.1.0
 EOF
 ```
 
 {{% alert color="info" %}}
 Note that the Trustee operator has been already published in the operator [hub catalog](https://operatorhub.io/).
+Trustee operator v0.3.0 is aligned to CoCo v.0.12.0 release.
 {{% /alert %}}
 
 ### Check Trustee Operator installation
@@ -108,14 +78,14 @@ Note that the Trustee operator has been already published in the operator [hub c
 Now it is time to check if the Trustee operator has been installed properly, by running the command:
 
 ```bash
-kubectl get csv -n kbs-operator-system
+kubectl get csv -n operators
 ```
 
 We should expect something like:
 
 ```bash
-NAME                      DISPLAY            VERSION   REPLACES   PHASE
-trustee-operator.v0.1.0   Trustee Operator   0.1.0                Succeeded
+NAME                      DISPLAY            VERSION   REPLACES                  PHASE
+trustee-operator.v0.3.0   Trustee Operator   0.3.0     trustee-operator.v0.1.0   Succeeded
 ```
 
 ## Configuration
@@ -132,7 +102,7 @@ Create secret for client authorization:
 ```bash
 openssl genpkey -algorithm ed25519 > privateKey
 openssl pkey -in privateKey -pubout -out publicKey
-kubectl create secret generic kbs-auth-public-key --from-file=publicKey -n kbs-operator-system
+kubectl create secret generic kbs-auth-public-key --from-file=publicKey -n operators
 ```
 
 ### HTTPS configuration
@@ -184,8 +154,8 @@ Create secret for self-signed certificate:
 openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout https.key -out https.crt \
     -config kbs-service-509.conf -passin pass:\
     -subj "/C=UK/ST=England/L=Bristol/O=Red Hat/OU=Development/CN=kbs-service"
-kubectl create secret generic kbs-https-certificate --from-file=https.crt -n kbs-operator-system
-kubectl create secret generic kbs-https-key --from-file=https.key -n kbs-operator-system
+kubectl create secret generic kbs-https-certificate --from-file=https.crt -n operators
+kubectl create secret generic kbs-https-key --from-file=https.key -n operators
 ```
 
 ### Trustee ConfigMap object
@@ -198,40 +168,49 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: kbs-config
-  namespace: kbs-operator-system
+  namespace: operators
 data:
-  kbs-config.json: |
-    {
-        "insecure_http" : false,
-        "private_key": "/etc/https-key/https.key",
-        "certificate": "/etc/https-cert/https.crt",
-        "sockets": ["0.0.0.0:8080"],
-        "auth_public_key": "/etc/auth-secret/publicKey",
-        "attestation_token_config": {
-          "attestation_token_type": "CoCo"
-        },
-        "repository_config": {
-          "type": "LocalFs",
-          "dir_path": "/opt/confidential-containers/kbs/repository"
-        },
-        "as_config": {
-          "work_dir": "/opt/confidential-containers/attestation-service",
-          "policy_engine": "opa",
-          "attestation_token_broker": "Simple",
-          "attestation_token_config": {
-            "duration_min": 5
-          },
-          "rvps_config": {
-            "store_type": "LocalJson",
-            "store_config": {
-              "file_path": "/opt/confidential-containers/rvps/reference-values/reference-values.json"
-            }
-          }
-        },
-        "policy_engine_config": {
-          "policy_path": "/opt/confidential-containers/opa/policy.rego"
-        }
-    }
+  kbs-config.toml: |
+    [http_server]
+    sockets = ["0.0.0.0:8080"]
+    insecure_http = false
+    private_key = "/etc/https-key/https.key"
+    certificate = "/etc/https-cert/https.crt"
+
+    [admin]
+    insecure_api = true
+    auth_public_key = "/etc/auth-secret/publicKey"
+
+    [attestation_token]
+    insecure_key = true
+    attestation_token_type = "CoCo"
+
+    [attestation_service]
+    type = "coco_as_builtin"
+    work_dir = "/opt/confidential-containers/attestation-service"
+    policy_engine = "opa"
+
+      [attestation_service.attestation_token_broker]
+      type = "Ear"
+      policy_dir = "/opt/confidential-containers/attestation-service/policies"
+
+      [attestation_service.attestation_token_config]
+      duration_min = 5
+
+      [attestation_service.rvps_config]
+      type = "BuiltIn"
+      
+        [attestation_service.rvps_config.storage]
+        type = "LocalJson"
+        file_path = "/opt/confidential-containers/rvps/reference-values/reference-values.json"
+
+    [[plugins]]
+    name = "resource"
+    type = "LocalFs"
+    dir_path = "/opt/confidential-containers/kbs/repository"
+
+    [policy_engine]
+    policy_path = "/opt/confidential-containers/opa/policy.rego"
 EOF
 ```
 
@@ -250,7 +229,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: rvps-reference-values
-  namespace: kbs-operator-system
+  namespace: operators
 data:
   reference-values.json: |
     [
@@ -265,10 +244,35 @@ In this example we create a secret *kbsres1* with two entries. These resources (
 You can add more secrets as per your requirements.
 
 ```bash
-kubectl create secret generic kbsres1 --from-literal key1=res1val1 --from-literal key2=res1val2 -n kbs-operator-system
+kubectl create secret generic kbsres1 --from-literal key1=res1val1 --from-literal key2=res1val2 -n operators
 ```
 
-### Create KbsConfig CRD
+### Create Resource policy
+
+The resource policy can be injected in the trustee configuration by creating a ConfigMap.
+
+{{% alert color="info" %}}
+The chosen ConfigMap name has to be part of the KbsConfig CR definition.
+{{% /alert %}}
+
+In the following example, the policy is very permissive and allows each client to retrieve a secret/key without checking for the EAR attestation token.
+In a production environment it is recommended to check the content of the EAR token and authorize the client only if the *ear.status* is not *contraindicated*.
+
+```bash
+kubectl apply -f - << EOF
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: resource-policy
+  namespace: operators
+data:
+  policy.rego:
+    package policy
+    default allow = true
+EOF
+```
+
+### Create KbsConfig CR
 
 Finally, the CRD for the operator is created:
 
@@ -284,7 +288,7 @@ metadata:
     app.kubernetes.io/managed-by: kustomize
     app.kubernetes.io/created-by: kbs-operator
   name: kbsconfig-sample
-  namespace: kbs-operator-system
+  namespace: operators
 spec:
   kbsConfigMapName: kbs-config
   kbsAuthSecretName: kbs-auth-public-key
@@ -293,19 +297,20 @@ spec:
   kbsSecretResources: ["kbsres1"]
   kbsHttpsKeySecretName: kbs-https-key
   kbsHttpsCertSecretName: kbs-https-certificate
+  kbsResourcePolicyConfigMapName: resource-policy
 EOF
 ```
 
 ### Set Namespace for the context entry
 
 ```bash
-kubectl config set-context --current --namespace=kbs-operator-system
+kubectl config set-context --current --namespace=operators
 ```
 
 ### Check if the PODs are running
 
 ```bash
-kubectl get pods -n kbs-operator-system
+kubectl get pods -n operators
 NAME                                                   READY   STATUS    RESTARTS   AGE
 trustee-deployment-7bdc6858d7-bdncx                    1/1     Running   0          69s
 trustee-operator-controller-manager-6c584fc969-8dz2d   2/2     Running   0          4h7m
@@ -314,36 +319,20 @@ trustee-operator-controller-manager-6c584fc969-8dz2d   2/2     Running   0      
 Also, the log should report something like:
 
 ```bash
-POD_NAME=$(kubectl get pods -l app=kbs -o jsonpath='{.items[0].metadata.name}' -n kbs-operator-system)
-kubectl logs -n kbs-operator-system $POD_NAME
-[2024-06-10T13:38:01Z INFO  kbs] Using config file /etc/kbs-config/kbs-config.json
-[2024-06-10T13:38:01Z WARN  attestation_service::rvps] No RVPS address provided and will launch a built-in rvps
-[2024-06-10T13:38:01Z INFO  attestation_service::token::simple] No Token Signer key in config file, create an ephemeral key and without CA pubkey cert
-[2024-06-10T13:38:01Z INFO  api_server] Starting HTTPS server at [0.0.0.0:8080]
-[2024-06-10T13:38:01Z INFO  actix_server::builder] starting 12 workers
-[2024-06-10T13:38:01Z INFO  actix_server::server] Tokio runtime found; starting in existing Tokio runtime
+POD_NAME=$(kubectl get pods -l app=kbs -o jsonpath='{.items[0].metadata.name}' -n operators)
+kubectl logs -n operators $POD_NAME
+[2025-01-07T12:05:03Z INFO  kbs] Using config file /etc/kbs-config/kbs-config.toml
+[2025-01-07T12:05:03Z WARN  kbs::admin] insecure admin APIs are enabled
+[2025-01-07T12:05:03Z INFO  attestation_service::rvps] launch a built-in RVPS.
+[2025-01-07T12:05:03Z INFO  attestation_service::token::ear_broker] Loading default AS policy "ear_default_policy.rego"
+[2025-01-07T12:05:03Z INFO  attestation_service::token::ear_broker] No Token Signer key in config file, create an ephemeral key and without CA pubkey cert
+[2025-01-07T12:05:03Z INFO  kbs::api_server] Starting HTTPS server at [0.0.0.0:8080]
+[2025-01-07T12:05:03Z INFO  actix_server::builder] starting 12 workers
+[2025-01-07T12:05:03Z INFO  actix_server::server] Tokio runtime found; starting in existing Tokio runtime
+[2025-01-07T12:05:03Z INFO  actix_server::server] starting service: "actix-web-service-0.0.0.0:8080", workers: 12, listening on: 0.0.0.0:8080
 ```
 
 ## End-to-End Attestation
-
-Since we're running this tutorial in a regular machine (no HW endorsement), we need to customize the default resource policy when using the sample attester (no real HW TEE platform).
-In the default policy, claims originating from a `sample` TEE would be rejected. This restriction should not be removed in a production scenario.
-
-To showcase how we can assert properties of a TEE, we assert the sample TEE's "security version number". For a real TEE this could be a minimum firmware revision, or similar properties of a TEE.
-
-```bash
-cat << EOF > policy.rego
-package policy
-
-default allow = false
-allow {
-        input["tcb-status"]["sample.svn"] == "1"
-}
-EOF
-
-POD_NAME=$(kubectl get pods -l app=kbs -o jsonpath='{.items[0].metadata.name}' -n kbs-operator-system)
-kubectl cp --no-preserve policy.rego $POD_NAME:/opt/confidential-containers/opa/policy.rego
-```
 
 We create a pod using an already existing image where the kbs-client is deployed:
 
@@ -353,10 +342,11 @@ apiVersion: v1
 kind: Pod
 metadata:
   name: kbs-client
+  namespace: operators
 spec:
   containers:
   - name: kbs-client
-    image: quay.io/confidential-containers/kbs-client:latest
+    image: quay.io/confidential-containers/kbs-client:v0.11.0
     imagePullPolicy: IfNotPresent
     command:
       - sleep
@@ -370,8 +360,8 @@ EOF
 Finally we are able to test the entire attestation protocol, when fetching one of the aforementioned secret:
 
 ```bash
-kubectl cp https.crt kbs-client:/
-kubectl exec -it kbs-client -- kbs-client --cert-file https.crt --url https://kbs-service:8080 get-resource --path default/kbsres1/key1
+kubectl cp -n operators https.crt kbs-client:/
+kubectl exec -it -n operators kbs-client -- kbs-client --cert-file https.crt --url https://kbs-service:8080 get-resource --path default/kbsres1/key1
 cmVzMXZhbDE=
 ```
 
