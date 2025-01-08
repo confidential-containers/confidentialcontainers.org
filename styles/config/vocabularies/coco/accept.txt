@@ -95,3 +95,10 @@ proto
 protobuf
 [uU]ltravisor
 [bB]ootloader
+gpg
+skopeo
+keypair
+plaintext
+Dockerfile
+ghcr
+repo
