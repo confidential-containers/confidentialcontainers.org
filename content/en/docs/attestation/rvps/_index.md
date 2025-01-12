@@ -25,7 +25,7 @@ RVPS contains the following components:
 
 The message flow of RVPS is like the following figure:
 
-![](https://raw.githubusercontent.com/confidential-containers/trustee/main/attestation-service/rvps/diagrams/rvps.svg)
+![](https://raw.githubusercontent.com/confidential-containers/trustee/main/rvps/diagrams/rvps.svg)
 
 ### Message
 
