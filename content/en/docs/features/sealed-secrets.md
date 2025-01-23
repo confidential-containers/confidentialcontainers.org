@@ -49,7 +49,7 @@ The locator of your secret is specified by `resource-uri`.
 This command should return a base64 string which you will use in the next step.
 
 {{% alert title="Note" color="primary" %}}
-For vault secrets, the secret-cli tool does not upload your resource to the KBSs
+For vault secrets, the secret-cli tool does not upload your resource to the KBS
 automatically.
 In addition to generating the secret string, you must also upload the resource
 to your KBS.

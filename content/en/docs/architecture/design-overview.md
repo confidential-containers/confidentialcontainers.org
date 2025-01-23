@@ -152,8 +152,8 @@ or would like to have virtual worker nodes.
 
 To alleviate this, Confidential Containers supports a deployment mode known as Peer Pods,
 where a component called the Cloud API Adaptor takes the place of a conventional hypervisor.
-Rather than starting a confidential podvm locally, the CAA reaches out to a cloud API.
-Since the podvm is no longer started locally the worker node can be virtualized.
+Rather than starting a confidential PodVM locally, the CAA reaches out to a cloud API.
+Since the PodVM is no longer started locally the worker node can be virtualized.
 This also allows confidential containers to integrate with cloud confidential VM offerings. 
 
 Peer Pods deployments share most of the same properties that are described in this guide.

@@ -23,11 +23,13 @@ OCI
 oras
 PCR
 Peerpod
+PodVM
 (?i)qemu
 [rR]ego
 respin
 RTMR
 Rivos
+RVPSConfiguration
 Sched
 SKLearn
 [sS]kopeo
