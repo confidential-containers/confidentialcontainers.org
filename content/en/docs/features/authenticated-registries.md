@@ -104,7 +104,7 @@ EOF
 Where:
 
  * `KBS_ADDRESS` is the `host:port` address of KBS
- * `RUNTIMECLASS` is any of available CoCo runtimeclassess (e.g. `kata-qemu-tdx`, `kata-qemu-snp`). For this example, `kata-qemu-coco-dev` allows to create CoCo pod on systems without confidential hardware. It should be replaced with a class matching the TEE in use.
+ * `RUNTIMECLASS` is any of available CoCo runtimeclasses (e.g. `kata-qemu-tdx`, `kata-qemu-snp`). For this example, `kata-qemu-coco-dev` allows to create CoCo pod on systems without confidential hardware. It should be replaced with a class matching the TEE in use.
 
 What distinguish the pod specification for authenticated registry from a regular CoCo pod is:
 

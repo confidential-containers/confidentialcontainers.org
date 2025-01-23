@@ -165,7 +165,7 @@ kubectl apply -f nginx-encrypted.yaml
 
 {{% /tab %}}
 
-{{% tab header="Cloud Api Adaptor" %}}
+{{% tab header="Cloud API Adaptor" %}}
 
 - Create file `$HOME/initdata.toml`
    ```bash
