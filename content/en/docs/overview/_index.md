@@ -39,7 +39,8 @@ The following platforms are supported.
 | TDX | Azure ||
 | Secure Execution | IBM ||
 | None | AWS | Under development |
-| None | GCP | Under development |
+| SNP | GCP ||
+| TDX | GCP | Under development |
 | None | LibVirt | For local testing |
 
 Confidential Containers provides an attestation and key-management engine, called Trustee
