@@ -119,3 +119,6 @@ auditable
 Makefile
 [Mm]aximalist
 Src
+[bB]ootup
+hoc
+[hH]omomorphic
