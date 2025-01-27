@@ -162,3 +162,5 @@ rollingUpdate
 Occlum
 RTMR[s]
 vTPM[s]
+SBOM[s]
+Tekton
