@@ -30,16 +30,8 @@ spec:
   runtimeClassName: kata-qemu-coco-dev
 ```
 
-Setting the `runtimeClassName` is usually the only change needed to the pod yaml, but some platforms
-support additional annotations for configuring the enclave. See the [guides](../guides) for
-more details.
-
-With Confidential Containers, the workload container images are never downloaded on the host.
-For verifying that the container image doesn’t exist on the host, you should log into the k8s node and ensure the following command returns an empty result:
-```
-root@cluster01-master-0:/home/ubuntu# crictl -r unix:///run/containerd/containerd.sock image ls | grep bitnami/nginx
-```
-You will run this command again after the container has started.
+For the most basic workloads, setting the `runtimeClassName` and `runtime-handler` annotation is usually
+the only requirement for the pod YAML.
 
 Create a pod YAML file as previously described (we named it `nginx.yaml`) .
 
