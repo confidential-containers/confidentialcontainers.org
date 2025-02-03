@@ -10,31 +10,16 @@ tags:
 
 ## Platform Setup
 
-In order to launch SNP memory encrypted guests, the host must be prepared with a compatible kernel, `6.8.0-rc5-next-20240221-snp-host-cc2568386`. AMD custom changes and required components and repositories will eventually be taken upstream. 
+The host BIOS and kernel must be capable of supporting AMD SEV-SNP and the host must be configured accordingly.
 
-[Sev-utils](https://github.com/amd/sev-utils/blob/coco-202402240000/docs/snp.md) is an easy way to install the required host kernel, but it will unnecessarily build AMD compatible guest kernel, OVMF, and QEMU components. The additional components can be used with the script utility to test launch and attest a base QEMU SNP guest. However, for the CoCo use case, make sure to use the coco tagged version because they are already packaged and delivered with Kata.
+The latest SEV Firmware version is available on AMD's [SEV Developer Webpage](https://www.amd.com/en/developer/sev.html). It can also be updated via a platform OEM BIOS update.
 
-Alternatively, refer to the [AMDESE guide](https://github.com/confidential-containers/amdese-amdsev/tree/amd-snp-202402240000?tab=readme-ov-file#prepare-host) to manually build the host kernel and other components.
+The host kernel must be equal to or later than upstream version [6.11](https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-6.11.tar.xz).
 
-### Create the Certificate-Chain
-
-Certificate chains (cert-chain) are an essential piece for creating a secure and trusted environment, ensuring that data is processed securely and that all components involved are verified and trustworthy. Use the following commands to create a cert-chain for SNP.
+To build just the upstream compatible host kernel, use the Confidential Containers fork of [AMDESE AMDSEV](https://github.com/confidential-containers/amdese-amdsev/tree/amd-snp-202501150000). Individual components can be built by running the following command:
 
 ```
-git clone -b snphost-0.5.0 https://github.com/virtee/snphost.git && cd snphost/
-cargo build
-mkdir /tmp/certs
-./target/debug/snphost fetch vcek der /tmp/certs
-./target/debug/snphost import /tmp/certs /opt/snp/cert_chain.cert
+./build.sh kernel host --install
 ```
 
-
-### *Optional* Edit the SNP config File
-
-The previous section installs the cert-chain in the default path, if you would like to install the cert-chains in a custom directory, it will need to be specified in the SNP config file. But first, you will need to install the operator first before being able to edit the SNP config file. Follow these [instructions](https://confidentialcontainers.org/docs/getting-started/installation/) to setup the operator. In order to use cert chain that was made for SNP, the Kata SNP configuration file needs to be edited first. The config file can be found under ``` /opt/kata/share/defaults/kata-containers/configuration-qemu-snp.toml ```.
-
-The location of the certificate chain needs to be specified under ```snp_certs_path```.
-
-```
-snp_certs_path = "{PATH TO cert_chain.cert}"
-```
+Additionally, [sev-utils](https://github.com/amd/sev-utils/blob/coco-202501150000/docs/snp.md) can be used to install the required host kernel, but it will unnecessarily build AMD compatible guest kernel, OVMF, and QEMU components as these packages are already packaged with Kata. The additional components can be used with the script utility to test launch and attest a base QEMU SNP guest.
