@@ -20,7 +20,7 @@ When using the KBS Client to retrieve resources, it must be built with an additi
 which is described below.
 
 Generally, the KBS Client should not be used for retrieving secrets from
-inside a confidential container. Instead see, [secret resources](../features/get-resource).
+inside a confidential container. Instead see, [secret resources](../../features/get-resource).
 
 ### Install
 
