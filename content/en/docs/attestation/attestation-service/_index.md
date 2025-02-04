@@ -1,7 +1,7 @@
 ---
 title: Attestation Service (AS)
 description: This service verifies TEE evidence
-weight: 2
+weight: 30
 categories:
 - docs
 tags:

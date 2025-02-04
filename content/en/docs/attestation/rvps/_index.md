@@ -1,7 +1,7 @@
 ---
 title: Reference Value Provider Service (RVPS)
 description: This service manages reference values used to verify TEE evidence
-weight: 2
+weight: 50
 categories:
 - docs
 tags:
