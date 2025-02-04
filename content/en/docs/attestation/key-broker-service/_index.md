@@ -1,7 +1,7 @@
 ---
 title: Key Broker Service (KBS)
 description: This service facilitates remote attestation and secret delivery
-weight: 1
+weight: 40
 categories:
 - docs
 tags:

@@ -1,7 +1,7 @@
 ---
 title: KBS Client Tool
 description: Simple tool to test or configure Key Broker Service and Attestation Service
-weight: 4
+weight: 20
 categories:
 - docs
 tags:
