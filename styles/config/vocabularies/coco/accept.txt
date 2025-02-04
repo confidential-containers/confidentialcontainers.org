@@ -108,3 +108,4 @@ ghcr
 repo
 ORAS
 attesters
+HSM[s]
