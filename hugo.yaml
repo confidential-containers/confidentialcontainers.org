@@ -164,6 +164,7 @@ params:
     # add "hide_readingtime: true" to the page's front matter
     readingtime:
       enable: false
+    showLightDarkModeMenu: true
 
   links:
     # user:
