@@ -272,7 +272,7 @@ An automated job builds the pod VM image each night at 00:00 UTC. You can use th
 ```bash
 SUCCESS_TIME=$(curl -s \
   -H "Accept: application/vnd.github+json" \
-  "https://api.github.com/repos/confidential-containers/cloud-api-adaptor/actions/workflows/azure-podvm-image-nightly-build.yml/runs?status=success" \
+  "https://api.github.com/repos/confidential-containers/cloud-api-adaptor/actions/workflows/azure-nightly-build.yml/runs?status=success" \
   | jq -r '.workflow_runs[0].updated_at')
 
 export AZURE_IMAGE_ID="/CommunityGalleries/cocopodvm-d0e4f35f-5530-4b9c-8596-112487cdea85/Images/podvm_image0/Versions/$(date -u -jf "%Y-%m-%dT%H:%M:%SZ" "$SUCCESS_TIME" "+%Y.%m.%d" 2>/dev/null || date -d "$SUCCESS_TIME" +%Y.%m.%d)"
