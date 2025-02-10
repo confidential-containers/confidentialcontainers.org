@@ -106,3 +106,5 @@ plaintext
 Dockerfile
 ghcr
 repo
+SBOM[s]
+Tekton
