@@ -119,7 +119,7 @@ aws ec2 authorize-security-group-ingress --group-id "$EKS_CLUSTER_SG" --protocol
 {{% tab header="Last Release" %}}
 
 ```bash
-export CAA_VERSION="0.11.0"
+export CAA_VERSION="0.12.0"
 curl -LO "https://github.com/confidential-containers/cloud-api-adaptor/archive/refs/tags/v${CAA_VERSION}.tar.gz"
 tar -xvzf "v${CAA_VERSION}.tar.gz"
 cd "cloud-api-adaptor-${CAA_VERSION}/src/cloud-api-adaptor"
@@ -151,10 +151,16 @@ This assumes that you already have the code ready to use. On your terminal chang
 
 {{% tab header="Last Release" %}}
 
-Export this environment variable to use for the peer pod VM:
+We have a pre-built debug pod VM image available in `us-east-2` for PoCs. You can find the AMI id for the release specific image
+by running the following CLI:
 
 ```bash
-export PODVM_AMI_ID="ami-0af256cec444be636"
+export PODVM_AMI_ID=$(aws ec2 describe-images \
+    --filters "Name=tag:Name,Values=fedora-mkosi-debug-tee-amd" "Name=tag:Version,Values=${CAA_VERSION}" \
+    --query 'Images[*].[ImageId]' \
+    --output text)
+
+echo $PODVM_AMI_ID
 ```
 
 {{% /tab %}}
