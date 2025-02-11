@@ -1,5 +1,5 @@
 ---
-title: KBS backed by AKV
+title: Azure Key Vault Integration
 description: This documentation describes how to mount secrets stored in Azure Key Vault into a KBS deployment
 categories:
 - docs
