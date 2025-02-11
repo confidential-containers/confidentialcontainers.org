@@ -14,6 +14,9 @@ This documentation will walk you through setting up CAA (a.k.a. Peer Pods) on Az
 - CAA on that Kubernetes cluster
 - An Nginx pod backed by CAA pod VM
 
+Confidential Containers also supports using Azure Key Vault as a resource backend for Trustee.
+[More info](../../attestation/resources/kbs-backed-by-akv)
+
 ## Pre-requisites
 
 - Install Azure CLI by following instructions [here](https://learn.microsoft.com/en-us/cli/azure/install-azure-cli).
