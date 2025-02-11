@@ -9,6 +9,7 @@ DaemonSet
 Entra
 Hygon
 Istio
+Initdata
 JSON
 KBS
 KBSes
