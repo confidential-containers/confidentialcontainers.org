@@ -49,7 +49,7 @@ Build the client
 ```
 cd kbs
 make CLI_FEATURES=sample_only cli
-sudo make install cli
+sudo make install-cli
 ```
 
 The `sample_only` feature is used to avoid building hardware attesters into the KBS Client.
