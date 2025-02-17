@@ -118,7 +118,7 @@ default allow = false
 allow if {
     input["submods"]["cpu"]["ear.status"] != "contraindicated"
     input["submods"]["cpu"]["ear.veraison.annotated-evidence"]["snp"]
-    input["submods"]["cpu"]["ear.status.executables"] == 3
+    input["submods"]["cpu"]["ear.status.executables"] == 2
 }
 ```
 
