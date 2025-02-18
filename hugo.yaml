@@ -51,7 +51,8 @@ markup:
     # See a complete list of available styles at https://xyproto.github.io/splash/docs/all.html
     style: friendly
     # Uncomment if you want your chosen highlight style used for code blocks without a specified language
-    # guessSyntax: true
+    guessSyntax: true
+    noClasses: false
 
 outputs:
   section:
