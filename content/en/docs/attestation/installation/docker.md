@@ -1,6 +1,6 @@
 ---
 title: Trustee in Docker 
-description: Installing Trustee on Kubernetes
+description: Installing Trustee on Docker compose
 weight: 30
 categories:
 - attestation
