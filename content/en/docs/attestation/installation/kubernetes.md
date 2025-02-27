@@ -18,11 +18,11 @@ When running Trustee in Kubernetes with the operator, the cluster must be Truste
 
 The operator (release v0.3.0 at the time of writing) is available in the [Operator Hub](https://operatorhub.io/operator/trustee-operator).
 
-Please follow the installation steps detailed [here](https://confidentialcontainers.org/blog/2024/06/10/deploy-trustee-in-kubernetes/#kubernetes-deployment).
+Please follow the installation steps detailed [here](https://confidentialcontainers.org/blog/2025/02/19/deploy-trustee-in-kubernetes/#kubernetes-deployment).
 
 Verify that the controller is running.
 ```bash
-kubectl get pods -n trustee-operator-system --watch
+kubectl get pods -n operators --watch
 ```
 
 The operator controller should be running.
@@ -33,11 +33,11 @@ trustee-operator-controller-manager-77cb448dc-7vxck    1/1     Running   0      
 
 ### Deploy Trustee
 
-An example on how to configure trustee is provided in this [blog](https://confidentialcontainers.org/blog/2024/06/10/deploy-trustee-in-kubernetes/#configuration).
+An example on how to configure trustee is provided in this [blog](https://confidentialcontainers.org/blog/2025/02/19/deploy-trustee-in-kubernetes/#configuration).
 
 After the last configuration step, check that the Trustee deployment is running.
 ```bash
-kubectl get pods -n trustee-operator-system --selector=app=kbs
+kubectl get pods -n operators --selector=app=kbs
 ```
 
 The Trustee deployment should be running.
@@ -50,10 +50,11 @@ trustee-deployment-f97fb74d6-w5qsm    1/1     Running   0          25m
 
 Remove the Trustee CRD.
 ```bash
-CR_NAME=$(kubectl get kbsconfig -n trustee-operator-system -o=jsonpath='{.items[0].metadata.name}') && kubectl delete KbsConfig $CR_NAME -n trustee-operator-system
+CR_NAME=$(kubectl get kbsconfig -n operators -o=jsonpath='{.items[0].metadata.name}') && kubectl delete KbsConfig $CR_NAME -n operators
 ```
 
 Remove the controller.
 ```bash
-kubectl delete Subscription -n trustee-operator-system my-trustee-operator
+kubectl delete Subscription -n operators my-trustee-operator
+kubectl delete csv -n operators trustee-operator.v0.3.0
 ```
