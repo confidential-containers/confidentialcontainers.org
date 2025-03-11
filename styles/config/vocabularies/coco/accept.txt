@@ -1,11 +1,14 @@
 # Refer to vale vocabularies page: https://vale.sh/docs/topics/vocab/
 #
 APIs
+[bB]lockchain
 [bB]usybox
 ccruntime
 Cgroups
+CPU[s]
 CRD
 DaemonSet
+[Dd]evnet
 Entra
 Hygon
 Istio
@@ -17,6 +20,7 @@ KBSes
 KServe
 Kubecon
 LLM[s]
+[Mm]ainnet
 [Nn]amespace
 [nN]ginx
 [nN]odeport
