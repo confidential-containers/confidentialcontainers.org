@@ -2,28 +2,28 @@
 title: GCP
 description: Cloud API Adaptor (CAA) on GCP
 categories:
-- examples
+  - examples
 tags:
-- caa
-- gcp
-- gke
+  - caa
+  - gcp
+  - gke
 ---
 
 This documentation will walk you through setting up CAA (a.k.a. Peer Pods) on
 Google Kubernetes Engine (GKE). It explains how to deploy:
 
-- A single worker node Kubernetes cluster using GKE 
+- A single worker node Kubernetes cluster using GKE
 - CAA on that Kubernetes cluster
 - A sample application backed by a CAA pod VM
 
 ## Pre-requisites
 
 1. **Install Required Tools**:
-   - [Google Cloud CLI (`gcloud`)](https://cloud.google.com/sdk/docs/install)
-   - [kubectl](https://kubernetes.io/docs/tasks/tools/)
+    - [Google Cloud CLI (`gcloud`)](https://cloud.google.com/sdk/docs/install)
+    - [kubectl](https://kubernetes.io/docs/tasks/tools/)
 2. **Google Cloud Project**:
-   - Ensure you have a Google Cloud project created.
-   - Note the Project ID (export it as `GCP_PROJECT_ID`).
+    - Ensure you have a Google Cloud project created.
+    - Note the Project ID (export it as `GCP_PROJECT_ID`).
 
 ## GCP Preparation
 
@@ -76,7 +76,7 @@ Set the region:
 ```bash
 export GCP_REGION="us-central1"
 ```
- 
+
 {{% alert title="Note" color="primary" %}}
 "us-central1" was chosen because supports Confidential VMs. For a
 complete list of supported regions visit
@@ -91,6 +91,17 @@ Set the PodVM instance type:
 ```bash
 export PODVM_INSTANCE_TYPE="n2d-standard-4"
 export DISABLECVM=false
+export GCP_CONFIDENTIAL_TYPE="SEV" # SEV or SEV_SNP
+export GCP_DISK_TYPE="pd-standard"
+```
+{{% /tab %}}
+
+{{% tab header="Intel TDX" %}}
+```bash
+export PODVM_INSTANCE_TYPE="c3-standard-4"
+export DISABLECVM=false
+export GCP_CONFIDENTIAL_TYPE="TDX"
+export GCP_DISK_TYPE="pd-balanced"
 ```
 {{% /tab %}}
 
@@ -98,6 +109,8 @@ export DISABLECVM=false
 ```bash
 export PODVM_INSTANCE_TYPE="e2-medium"
 export DISABLECVM=true
+export GCP_CONFIDENTIAL_TYPE=""
+export GCP_DISK_TYPE="pd-standard"
 ```
 {{% /tab %}}
 
@@ -123,12 +136,13 @@ xargs -I{} kubectl label {} node.kubernetes.io/worker=
 ```
 
 {{% alert title="Note" color="primary" %}}
-Starting with GKE version 1.27, GCP configures containerd with the
-`discard_unpacked_layers=true` flag to optimize disk usage by removing
-compressed image layers after they are unpacked. However, this can cause
-issues with PeerPods, as the workload may fail to locate required layers. To
-avoid this, disable the `discard_unpacked_layers` setting in the containerd
-configuration.
+Starting with GKE version 1.27, GCP configures containerd with the `discard_unpacked_layers=true` flag to optimize disk 
+usage by removing compressed image layers after they are unpacked. However, this can cause issues with PeerPods, 
+as the workload may fail to locate required layers. 
+To avoid this, disable the `discard_unpacked_layers` setting in the containerd configuration.
+
+If you encounter problem with VM's not running check [Troubleshooting](#troubleshooting) section on this page.
+
 {{% /alert %}}
 
 ### Configure VPC network
@@ -160,7 +174,7 @@ Deploy the CoCo operator. Usually it’s the same version as CAA, but it can be
 adjusted.
 
 ```bash
-export CAA_VERSION="0.11.0"
+export CAA_VERSION="0.13.0"
 export COCO_OPERATOR_VERSION="${CAA_VERSION}"
 
 kubectl apply -k "github.com/confidential-containers/operator/config/release?ref=v${COCO_OPERATOR_VERSION}"
@@ -177,7 +191,7 @@ kubectl apply -k "github.com/confidential-containers/operator/config/samples/ccr
 {{% tab header="Last Release" %}}
 
 ```bash
-export CAA_VERSION="0.11.0"
+export CAA_VERSION="0.13.0"
 curl -LO "https://github.com/confidential-containers/cloud-api-adaptor/archive/refs/tags/v${CAA_VERSION}.tar.gz"
 tar -xvzf "v${CAA_VERSION}.tar.gz"
 cd "cloud-api-adaptor-${CAA_VERSION}/src/cloud-api-adaptor"
@@ -197,11 +211,11 @@ cd "cloud-api-adaptor-${CAA_BRANCH}/src/cloud-api-adaptor"
 {{% /tab %}}
 
 {{% tab header="DIY" %}}
-This assumes that you already have the code ready to use. On your terminal change directory to the Cloud API Adaptor's code base.
+This assumes that you already have the code ready to use. On your terminal change directory to the Cloud API Adaptor's
+code base.
 {{% /tab %}}
 
 {{< /tabpane >}}
-
 
 ### Configure the CAA PodVM image
 
@@ -265,7 +279,8 @@ on each merge to main:
 export CAA_IMAGE="quay.io/confidential-containers/cloud-api-adaptor"
 ```
 
-Find an appropriate tag of pre-built image suitable to your needs [here](https://quay.io/repository/confidential-containers/cloud-api-adaptor?tab=tags&tag=latest).
+Find an appropriate tag of pre-built image suitable to your
+needs [here](https://quay.io/repository/confidential-containers/cloud-api-adaptor?tab=tags&tag=latest).
 
 ```bash
 export CAA_TAG=""
@@ -330,6 +345,8 @@ configMapGenerator:
   - GCP_MACHINE_TYPE="${PODVM_INSTANCE_TYPE}"
   - DISABLECVM="${DISABLECVM}"
   - GCP_NETWORK="global/networks/default"
+  - GCP_CONFIDENTIAL_TYPE="${GCP_CONFIDENTIAL_TYPE}"
+  - GCP_DISK_TYPE="${GCP_DISK_TYPE}"
 secretGenerator:
 - name: peer-pods-secret
   namespace: confidential-containers-system
@@ -534,6 +551,7 @@ spec:
           type: RuntimeDefault
 EOF
 ```
+
 ### Fetching Secrets from Trustee
 
 Once the pod is successfully deployed with the `initdata`, you can retrieve
@@ -578,6 +596,7 @@ spec:
         imagePullPolicy: Always
 EOF
 ```
+
 {{% /tab %}}
 
 {{< /tabpane >}}
@@ -623,3 +642,24 @@ Delete the GKE cluster by running the following command:
 ```bash
 gcloud container clusters delete my-cluster --zone ${GCP_REGION}-a
 ```
+
+## Troubleshooting
+
+### VM Doesn't Start
+
+Starting with GKE version **1.27**, GCP configures containerd with the `discard_unpacked_layers=true` flag to optimize disk
+usage by removing compressed image layers after they are unpacked. However, this can cause issues with PeerPods,
+as the workload may fail to locate required layers.
+To avoid this, disable the `discard_unpacked_layers` setting in the containerd configuration.
+
+Most of the time you will see a generic message such as the following:
+```text
+Error: failed to create containerd container: error unpacking image: failed to extract layer sha256:<SHA>: failed to get reader from content store: content digest sha256:<SHA>: not found
+```
+
+To disable the `discard_unpacked_layers` setting in the `containerd` configuration on **Google Kubernetes Engine (GKE) version 1.27 or later**, follow these steps:
+
+1. SSH to worker node [Google console](https://console.cloud.google.com/compute/instances)
+2. Run command `sudo sed -i 's/discard_unpacked_layers = true/discard_unpacked_layers = false/' /etc/containerd/config.toml`
+3. Verify changed property `sudo cat /etc/containerd/config.toml | grep discard_unpacked_layers`
+4. Restart containerd `sudo systemctl restart containerd`
