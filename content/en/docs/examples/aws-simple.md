@@ -119,7 +119,7 @@ aws ec2 authorize-security-group-ingress --group-id "$EKS_CLUSTER_SG" --protocol
 {{% tab header="Last Release" %}}
 
 ```bash
-export CAA_VERSION="0.12.0"
+export CAA_VERSION="0.13.0"
 curl -LO "https://github.com/confidential-containers/cloud-api-adaptor/archive/refs/tags/v${CAA_VERSION}.tar.gz"
 tar -xvzf "v${CAA_VERSION}.tar.gz"
 cd "cloud-api-adaptor-${CAA_VERSION}/src/cloud-api-adaptor"
@@ -261,7 +261,7 @@ export DISABLECVM="true"
 Run the following command to update the [`kustomization.yaml`](https://github.com/confidential-containers/cloud-api-adaptor/blob/main/install/overlays/aws/kustomization.yaml) file:
 
 ```yaml
-cat <<EOF > install/overlays/azure/kustomization.yaml
+cat <<EOF > install/overlays/aws/kustomization.yaml
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
