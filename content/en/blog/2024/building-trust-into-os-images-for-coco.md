@@ -107,7 +107,11 @@ Modern OS Image build tools for Linux like systemd's [mkosi](https://github.com/
 
 ### Creating reference values
 
-To retrieve the expected measurements, for a dm-verity protected OS image, we can boot the resulting image in a trusted environment locally. The [swtpm](https://github.com/stefanberger/swtpm) project is a great option to provide the virtual machine with a vTPM.
+To retrieve the expected measurements, for a dm-verity protected OS image, we can boot the resulting image in a trusted environment locally. The [swtpm](https://github.com/stefanberger/swtpm) project is a great option to provide a local qemu VM with a vTPM, so we can produce the measurements that we expect at runtime.
+
+{{% alert title="Warning" color="primary" %}}
+In a TEE the vTPM would have to be isolated from both the Host and the Guest OS. We use `swtpm` to retrieve reference values here. 
+{{% /alert %}}
 
 ```bash
 $ swtpm socket \
