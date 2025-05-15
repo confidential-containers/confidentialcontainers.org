@@ -524,7 +524,7 @@ Service.
 Now, encode the `initdata.toml` and store it in a variable
 
 ```bash
-INITDATA=$(base64 -w0 initdata.toml)
+INITDATA=$(cat initdata.toml | gzip | base64 -w0)
 ```
 
 Deploy the pod with:

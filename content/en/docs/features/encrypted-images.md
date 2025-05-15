@@ -197,7 +197,7 @@ kubectl apply -f nginx-encrypted.yaml
 - Export variable:
 
    ```bash
-   INIT_DATA_B64=$(cat $HOME/initdata.toml | base64 -w0)
+   INIT_DATA_B64=$(cat $HOME/initdata.toml | gzip | base64 -w0)
    ```
 
 - Deploy:
