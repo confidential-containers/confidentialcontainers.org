@@ -148,7 +148,7 @@ package agent_policy
 
 ```
 
-A user is supposed to specify Init-Data to a Confidential Guest in the form of a base64-encoded string in a specific Pod annotation. The Kata Containers runtime will then pass this data on to the Agent in the Guest VM, which will decode the Init-Data and use it to configure the runtime environment of the workload. Crucially, since Init-Data is not trusted at launch we need a way to establish that the policy has not been tampered with in the process.
+A user is supposed to specify Init-Data to a Confidential Guest in the form of a `gzip` compressed and base64-encoded string in a specific Pod annotation. The Kata Containers runtime will then pass this data on to the Agent in the Guest VM, which will decode the Init-Data and use it to configure the runtime environment of the workload. Crucially, since Init-Data is not trusted at launch we need a way to establish that the policy has not been tampered with in the process.
 
 ## Integrity of Init-Data
 
@@ -220,7 +220,7 @@ An Init-Data file is authored, then encoded in base64 and added to the Pod annot
 
 ```bash
 vim init-data.toml
-INIT_DATA_B64="$(cat "init-data.toml" | base64 -w0)"
+INIT_DATA_B64="$(cat "init-data.toml" | gzip | base64 -w0)"
 cat nginx-cc.yaml | jq \
 	--arg initdata "$INIT_DATA_B64" \
 	'.spec.template.metadata.annotations = { "io.katacontainers.config.runtime.cc_init_data": $initdata }' \
