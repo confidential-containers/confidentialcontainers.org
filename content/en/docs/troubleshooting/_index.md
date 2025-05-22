@@ -57,7 +57,7 @@ chroot /host
 journalctl -xeu containerd
 ```
 
-`Edit kata config`
+`Edit kata containerd 2.0 config`
 ```sh
 vi /host/opt/kata/containerd/config.d/kata-deploy.toml
 ```
@@ -208,7 +208,7 @@ Warning  Failed     8m51s (x7 over 10m)  kubelet            Error: failed to cre
 If you encounter this error, first check if the `discard_unpacked_layers`
 setting is enabled in the containerd configuration. This setting removes
 compressed image layers after unpacking, which can cause issues because
-Confidential Containers Operator workloads rely on those layers. To disable it, update
+Confidential container workloads rely on those layers. To disable it, update
 `/etc/containerd/config.toml` with:
 
 ```toml
