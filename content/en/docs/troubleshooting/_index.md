@@ -51,6 +51,7 @@ When in a debug container host system are mounted under */host*
 vi /host/etc/containerd/config.toml
 ```
 
+>ℹ️ If chroot'ed, theres no acess to debug containers tools etc
 `Show containerd log`
 ```sh
 chroot /host
