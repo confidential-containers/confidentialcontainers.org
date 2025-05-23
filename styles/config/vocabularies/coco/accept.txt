@@ -119,3 +119,6 @@ auditable
 Makefile
 [Mm]aximalist
 Src
+prefetched
+[kK]ubernetes
+chroot'ed

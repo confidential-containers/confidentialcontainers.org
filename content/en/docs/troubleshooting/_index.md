@@ -51,7 +51,7 @@ When in a debug container host system are mounted under */host*
 vi /host/etc/containerd/config.toml
 ```
 {{% alert color="info" %}}
-If chroot'ed, theres no acess to debug containers tools etc
+If chroot'ed, there's no access to debug containers tools etc
 {{% /alert %}}
 `Show containerd log`
 ```sh
@@ -218,17 +218,19 @@ Confidential container workloads rely on those layers. To disable it, update
   discard_unpacked_layers = false
 ```
 
-
->ℹ️ Previously failed images needs to be prefetched
+{{% alert color="info" %}}
+Previously failed images needs to be prefetched
+{{% /alert %}}
 ```sh
 ctr -n k8s.io content fetch <image>
 ```
 Restart containerd after making the change:
-
+{{% alert color="info" %}}
+If on a remote, it will kill the connection.
+{{% /alert %}}
 ```bash
 sudo systemctl restart containerd
 ```
->ℹ️ If on a remote, it will kill the connection.
 
 #### failed to create shim task: failed to mount "/run/kata-containers/shared/containers/CONTAINER_NAME/rootfs"
 
