@@ -37,7 +37,7 @@ what is going on.
 
 ### Debug container
 
-It can be quite usefull to start a debug container, usually kubernetes nodes are stripped / hardened, which means no tools are installed, a debug container can be any image.
+It can be quite useful to start a debug container, usually kubernetes nodes are stripped / hardened, which means no tools are installed, a debug container can be any image.
 
 `Debug container`
 ```sh
@@ -50,8 +50,9 @@ When in a debug container host system are mounted under */host*
 ```sh
 vi /host/etc/containerd/config.toml
 ```
-
->ℹ️ If chroot'ed, theres no acess to debug containers tools etc
+{{% alert color="info" %}}
+If chroot'ed, theres no acess to debug containers tools etc
+{{% /alert %}}
 `Show containerd log`
 ```sh
 chroot /host
