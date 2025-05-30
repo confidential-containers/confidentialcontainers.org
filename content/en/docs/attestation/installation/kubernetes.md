@@ -31,9 +31,25 @@ NAME                                                   READY   STATUS    RESTART
 trustee-operator-controller-manager-77cb448dc-7vxck    1/1     Running   0          11m
 ```
 
+#### How to override the Trustee image
+
+First of all we need to know which Trustee image is running:
+
+```bash
+kubectl get csv -n operators trustee-operator.v0.3.0 -o json | jq '.spec.install.spec.deployments[0].spec.template.spec.containers[0].env[1].value'
+"ghcr.io/confidential-containers/key-broker-service:built-in-as-v0.11.0"
+```
+
+The default image can be replaced with an updated version, for example Trustee v0.12.0:
+
+```bash
+NEW_IMAGE=ghcr.io/confidential-containers/key-broker-service:built-in-as-v0.12.0
+kubectl patch csv -n operators trustee-operator.v0.3.0 --type='json' -p="[{'op': 'replace', 'path': '/spec/install/spec/deployments/0/spec/template/spec/containers/0/env/1/value', 'value':$NEW_IMAGE}]"
+```
+
 ### Deploy Trustee
 
-An example on how to configure trustee is provided in this [blog](https://confidentialcontainers.org/blog/2025/02/19/deploy-trustee-in-kubernetes/#configuration).
+An example on how to configure Trustee is provided in this [blog](https://confidentialcontainers.org/blog/2025/02/19/deploy-trustee-in-kubernetes/#configuration).
 
 After the last configuration step, check that the Trustee deployment is running.
 ```bash
