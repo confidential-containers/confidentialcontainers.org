@@ -174,7 +174,7 @@ Deploy the CoCo operator. Usually it’s the same version as CAA, but it can be
 adjusted.
 
 ```bash
-export CAA_VERSION="0.13.0"
+export CAA_VERSION="0.14.0"
 export COCO_OPERATOR_VERSION="${CAA_VERSION}"
 
 kubectl apply -k "github.com/confidential-containers/operator/config/release?ref=v${COCO_OPERATOR_VERSION}"
@@ -191,7 +191,7 @@ kubectl apply -k "github.com/confidential-containers/operator/config/samples/ccr
 {{% tab header="Last Release" %}}
 
 ```bash
-export CAA_VERSION="0.13.0"
+export CAA_VERSION="0.14.0"
 curl -LO "https://github.com/confidential-containers/cloud-api-adaptor/archive/refs/tags/v${CAA_VERSION}.tar.gz"
 tar -xvzf "v${CAA_VERSION}.tar.gz"
 cd "cloud-api-adaptor-${CAA_VERSION}/src/cloud-api-adaptor"

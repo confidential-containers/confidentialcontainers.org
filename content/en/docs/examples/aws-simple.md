@@ -119,7 +119,7 @@ aws ec2 authorize-security-group-ingress --group-id "$EKS_CLUSTER_SG" --protocol
 {{% tab header="Last Release" %}}
 
 ```bash
-export CAA_VERSION="0.13.0"
+export CAA_VERSION="0.14.0"
 curl -LO "https://github.com/confidential-containers/cloud-api-adaptor/archive/refs/tags/v${CAA_VERSION}.tar.gz"
 tar -xvzf "v${CAA_VERSION}.tar.gz"
 cd "cloud-api-adaptor-${CAA_VERSION}/src/cloud-api-adaptor"
@@ -276,9 +276,9 @@ configMapGenerator:
 - name: peer-pods-cm
   namespace: confidential-containers-system
   literals:
-  - CLOUD_PROVIDER="aws"  
-  - DISABLECVM="${DISABLECVM}"  
-  - VXLAN_PORT="${VXLAN_PORT}"  
+  - CLOUD_PROVIDER="aws"
+  - DISABLECVM="${DISABLECVM}"
+  - VXLAN_PORT="9000"
   - PODVM_AMI_ID="${PODVM_AMI_ID}"
   - PODVM_INSTANCE_TYPE="${PODVM_INSTANCE_TYPE}"  
 secretGenerator:
@@ -286,6 +286,7 @@ secretGenerator:
   namespace: confidential-containers-system  
   envs:
     - aws-cred.env
+EOF
 ```
 
 ### Deploy CAA on the Kubernetes cluster
@@ -399,5 +400,5 @@ aws ec2 describe-instances --filters "Name=tag:Name,Values=podvm*" \
 Delete the EKS cluster by running the following command:
 
 ```bash
-eksctl delete cluster --name=$EKS_CLUSTER_NAME 
+eksctl delete cluster --name=$CLUSTER_NAME 
 ```
