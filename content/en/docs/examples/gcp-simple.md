@@ -168,7 +168,7 @@ gcloud compute firewall-rules create allow-port-15150-restricted \
    --source-ranges=[YOUR_EXTERNAL_IP]
 ```
 
-## Deploy the CoCo Operator with PeerPods Runtime
+## Deploy the CoCo Operator with Peerpods Runtime
 
 Deploy the CoCo operator. Usually it’s the same version as CAA, but it can be
 adjusted.
@@ -388,12 +388,12 @@ kata-remote   kata-remote   7m18s
 Generic CAA deployment instructions are also described
 [here](https://github.com/confidential-containers/cloud-api-adaptor/tree/main/src/cloud-api-adaptor/install).
 
-## Deploy the PeerPod controller for garbage collecting pod VMs
+## Deploy the Peerpod controller for garbage collecting pod VMs
 
 Change the working directory from `cloud-api-adaptor-${CAA_VERSION}/src/cloud-api-adaptor`
 to `cloud-api-adaptor-${CAA_VERSION}/src/peerpod-ctrl`
 
-Run the following command to deploy the peerpod CRD
+Run the following command to deploy the Peerpod CRD
 
 ```bash
 kubectl apply -k "config/default"
@@ -410,7 +410,7 @@ pod and retrieve a secret securely within a confidential computing environment.
 
 ### Prepare the init data configuration
 
-PeerPods now supports init data, you can pass the required configuration files
+Peerpods now supports init data, you can pass the required configuration files
 (`aa.toml`, `cdh.toml`, and `policy.rego`) via the
 `io.katacontainers.config.runtime.cc_init_data` annotation. Below is an example
 of the configuration and usage.

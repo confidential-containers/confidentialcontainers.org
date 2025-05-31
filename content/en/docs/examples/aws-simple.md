@@ -333,12 +333,12 @@ NAME          HANDLER       AGE
 kata-remote   kata-remote   7m18s
 ```
 
-## Deploy the PeerPod controller for garbage collecting pod VMs
+## Deploy the Peerpod controller for garbage collecting pod VMs
 
 Change the working directory from `cloud-api-adaptor-${CAA_VERSION}/src/cloud-api-adaptor`
 to `cloud-api-adaptor-${CAA_VERSION}/src/peerpod-ctrl`
 
-Run the following command to deploy the peerpod CRD
+Run the following command to deploy the Peerpod CRD
 
 ```bash
 kubectl apply -k "config/default"
