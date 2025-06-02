@@ -28,6 +28,7 @@ OCI
 oras
 PCR
 Peerpod
+Peerpods
 PodVM
 (?i)qemu
 [rR]ego

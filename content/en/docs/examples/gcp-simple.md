@@ -168,13 +168,13 @@ gcloud compute firewall-rules create allow-port-15150-restricted \
    --source-ranges=[YOUR_EXTERNAL_IP]
 ```
 
-## Deploy the CoCo Operator with PeerPods Runtime
+## Deploy the CoCo Operator with Peerpods Runtime
 
 Deploy the CoCo operator. Usually it’s the same version as CAA, but it can be
 adjusted.
 
 ```bash
-export CAA_VERSION="0.13.0"
+export CAA_VERSION="0.14.0"
 export COCO_OPERATOR_VERSION="${CAA_VERSION}"
 
 kubectl apply -k "github.com/confidential-containers/operator/config/release?ref=v${COCO_OPERATOR_VERSION}"
@@ -191,7 +191,7 @@ kubectl apply -k "github.com/confidential-containers/operator/config/samples/ccr
 {{% tab header="Last Release" %}}
 
 ```bash
-export CAA_VERSION="0.13.0"
+export CAA_VERSION="0.14.0"
 curl -LO "https://github.com/confidential-containers/cloud-api-adaptor/archive/refs/tags/v${CAA_VERSION}.tar.gz"
 tar -xvzf "v${CAA_VERSION}.tar.gz"
 cd "cloud-api-adaptor-${CAA_VERSION}/src/cloud-api-adaptor"
@@ -388,6 +388,17 @@ kata-remote   kata-remote   7m18s
 Generic CAA deployment instructions are also described
 [here](https://github.com/confidential-containers/cloud-api-adaptor/tree/main/src/cloud-api-adaptor/install).
 
+## Deploy the Peerpod controller for garbage collecting pod VMs
+
+Change the working directory from `cloud-api-adaptor-${CAA_VERSION}/src/cloud-api-adaptor`
+to `cloud-api-adaptor-${CAA_VERSION}/src/peerpod-ctrl`
+
+Run the following command to deploy the Peerpod CRD
+
+```bash
+kubectl apply -k "config/default"
+```
+
 ## Run a sample application
 
 {{< tabpane text=true right=true persist=header >}}
@@ -399,7 +410,7 @@ pod and retrieve a secret securely within a confidential computing environment.
 
 ### Prepare the init data configuration
 
-PeerPods now supports init data, you can pass the required configuration files
+Peerpods now supports init data, you can pass the required configuration files
 (`aa.toml`, `cdh.toml`, and `policy.rego`) via the
 `io.katacontainers.config.runtime.cc_init_data` annotation. Below is an example
 of the configuration and usage.
