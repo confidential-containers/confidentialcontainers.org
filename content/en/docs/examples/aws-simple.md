@@ -315,6 +315,17 @@ kubectl apply -k "install/overlays/aws"
 
 Generic CAA deployment instructions are also described [here](https://github.com/confidential-containers/cloud-api-adaptor/blob/main/install/README.md).
 
+## Deploy the Peerpod controller for garbage collecting pod VMs
+
+Change the working directory from `cloud-api-adaptor-${CAA_VERSION}/src/cloud-api-adaptor`
+to `cloud-api-adaptor-${CAA_VERSION}/src/peerpod-ctrl`
+
+Run the following command to deploy the Peerpod CRD
+
+```bash
+kubectl apply -k "config/default"
+```
+
 ## Run sample application
 
 ### Ensure runtimeclass is present
@@ -331,17 +342,6 @@ Once you can find a `runtimeclass` named `kata-remote` then you can be sure that
 $ kubectl get runtimeclass
 NAME          HANDLER       AGE
 kata-remote   kata-remote   7m18s
-```
-
-## Deploy the Peerpod controller for garbage collecting pod VMs
-
-Change the working directory from `cloud-api-adaptor-${CAA_VERSION}/src/cloud-api-adaptor`
-to `cloud-api-adaptor-${CAA_VERSION}/src/peerpod-ctrl`
-
-Run the following command to deploy the Peerpod CRD
-
-```bash
-kubectl apply -k "config/default"
 ```
 
 ### Deploy workload
