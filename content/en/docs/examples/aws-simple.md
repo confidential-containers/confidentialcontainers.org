@@ -98,15 +98,15 @@ echo $EKS_VPC_CIDR
 aws ec2 authorize-security-group-ingress --group-id "$EKS_CLUSTER_SG" --protocol tcp --port 15150 --cidr "$EKS_VPC_CIDR"
 
 # vxlan port
-aws ec2 authorize-security-group-ingress --group-id "$EKS_CLUSTER_SG" --protocol tcp --port 9000 --cidr "$EKS_VPC_CIDR"
-aws ec2 authorize-security-group-ingress --group-id "$EKS_CLUSTER_SG" --protocol udp --port 9000 --cidr "$EKS_VPC_CIDR"
+aws ec2 authorize-security-group-ingress --group-id "$EKS_CLUSTER_SG" --protocol tcp --port 4789 --cidr "$EKS_VPC_CIDR"
+aws ec2 authorize-security-group-ingress --group-id "$EKS_CLUSTER_SG" --protocol udp --port 4789 --cidr "$EKS_VPC_CIDR"
 ```
 
 > **Note:**
 >
 > - Port `15150` is the default port for CAA to connect to the `agent-protocol-forwarder`
 > running inside the pod VM.
-> - Port `9000` is the VXLAN port used by CAA. Ensure it doesn't conflict with the VXLAN port
+> - Port `4789` is the VXLAN port used by CAA. Ensure it doesn't conflict with the VXLAN port
 > used by the Kubernetes CNI.
 
 ## Deploy CAA
@@ -276,16 +276,16 @@ configMapGenerator:
 - name: peer-pods-cm
   namespace: confidential-containers-system
   literals:
-  - CLOUD_PROVIDER="aws"  
-  - DISABLECVM="${DISABLECVM}"  
-  - VXLAN_PORT="${VXLAN_PORT}"  
+  - CLOUD_PROVIDER="aws"
+  - DISABLECVM="${DISABLECVM}"
   - PODVM_AMI_ID="${PODVM_AMI_ID}"
-  - PODVM_INSTANCE_TYPE="${PODVM_INSTANCE_TYPE}"  
+  - PODVM_INSTANCE_TYPE="${PODVM_INSTANCE_TYPE}"
 secretGenerator:
 - name: peer-pods-secret
-  namespace: confidential-containers-system  
+  namespace: confidential-containers-system
   envs:
     - aws-cred.env
+EOF
 ```
 
 ### Deploy CAA on the Kubernetes cluster
