@@ -42,6 +42,7 @@ SKLearn
 [uU]nencrypt
 [uU]nencrypted
 URI
+URIs
 vcpus
 VM
 VMs
