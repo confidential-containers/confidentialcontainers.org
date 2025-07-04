@@ -2,6 +2,7 @@
 title: Signed Images
 date: 2023-01-24
 description: Procedures to generate and deploy signed OCI images with CoCo
+weight: 21
 categories:
 - feature 
 tags:

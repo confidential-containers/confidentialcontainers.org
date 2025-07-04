@@ -2,6 +2,7 @@
 title: Get Attestation
 date: 2025-01-08
 description: Workloads that request attestation evidence
+weight: 10
 categories:
 - feature 
 tags:

@@ -2,6 +2,7 @@
 title: Local Registries
 date: 2025-07-02
 description: Pull containers from self-hosted registries 
+weight: 33
 categories:
 - feature 
 tags:
