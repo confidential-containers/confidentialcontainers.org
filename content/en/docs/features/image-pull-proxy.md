@@ -2,6 +2,7 @@
 title: Image Pull Proxy
 date: 2025-07-02
 description: Pull containers from self-hosted registries 
+weight: 32
 categories:
 - feature 
 tags:

@@ -2,6 +2,7 @@
 title: Get Secret Resources 
 date: 2025-01-08
 description: Workloads that request resources from Trustee 
+weight: 20
 categories:
 - feature 
 tags:

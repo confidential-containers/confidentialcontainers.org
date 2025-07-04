@@ -2,6 +2,7 @@
 title: Authenticated Registries 
 date: 2024-12-06
 description: Use private OCI registries
+weight: 23
 categories:
 - feature 
 tags:

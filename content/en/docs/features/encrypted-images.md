@@ -2,6 +2,7 @@
 title: Encrypted Images
 date: 2023-01-24
 description: Procedures to encrypt and consume OCI images in a TEE
+weight: 22
 categories:
 - feature 
 tags:
