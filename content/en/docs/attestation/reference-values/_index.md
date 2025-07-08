@@ -18,11 +18,44 @@ More specifically the attestation policy specifies how reference values are comp
 
 There are multiple ways to provision reference values.
 
+### KBS Client
+
+The KBS Client can be used to set reference values.
+When using the KBS Client to set reference values,
+the sample reference value extractor is used.
+This must be enabled in the RVPS (it is by default).
+When using the KBS Client for reference values
+the requests are proxied through the trusted admin interface.
+
+To set a reference value, use a command like this.
+```bash
+./kbs-client config --auth-private-key <admin-private-key> set-sample-reference-value <rv-name> <rv-value>
+```
+
+By default, the reference value will be added as a list containing one string value.
+If you would like to add the reference value as a single value without a list,
+you can use the `--as-single-value` flag.
+To add numeric reference values, you can use the `--as-integer` flag.
+To add boolean reference values, use the `--as-bool` flag.
+These flags can be combined with `--as-single-value`.
+
+To register more complex reference values (any JSON types are supported by the RVPS),
+use the RVPS Tool described below.
+
+To view reference values, you can use the following command.
+```bash
+./kbs-client config --auth-private-key <admin-private-key> get-reference-values
+```
+
+
 ### RVPS Tool
 
-The RVPS provides a client tool for providing reference values.
-This is separate form the KBS Client because the reference value provider
-might be a different party than the administrator of Trustee.
+The RVPS tool supports more complex reference value operations
+and is not coupled to the KBS admin credentials/persona.
+The RVPS tool can be used to ingest reference values using any
+extractor (not just the sample extractor).
+The RVPS tool connects to the RVPS directly, which must be
+accessible from wherever the tool is being run.
 
 You can build the RVPS Tool alongside the RVPS.
 ```bash
