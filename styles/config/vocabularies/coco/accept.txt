@@ -130,3 +130,5 @@ Src
 prefetched
 [kK]ubernetes
 chroot'ed
+proxied
+boolean
