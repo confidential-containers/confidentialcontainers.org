@@ -83,7 +83,7 @@ import rego.v1
 default allow = false
 
 allow if {
-    input["submods"]["cpu"]["ear.status"] == "affirming"
+    input["submods"]["cpu0"]["ear.status"] == "affirming"
 }
 ```
 
@@ -100,8 +100,8 @@ import rego.v1
 default allow = false
 
 allow if {
-    input["submods"]["cpu"]["ear.status"] == "affirming"
-    input["submods"]["cpu"]["ear.veraison.annotated-evidence"]["snp"]
+    input["submods"]["cpu0"]["ear.status"] == "affirming"
+    input["submods"]["cpu0"]["ear.veraison.annotated-evidence"]["snp"]
 }
 ```
 
@@ -127,9 +127,9 @@ import rego.v1
 default allow = false
 
 allow if {
-    input["submods"]["cpu"]["ear.status"] == "affirming"
-    input["submods"]["cpu"]["ear.veraison.annotated-evidence"]["snp"]
-    input["submods"]["cpu"]["ear.status.executables"] == 2
+    input["submods"]["cpu0"]["ear.status"] == "affirming"
+    input["submods"]["cpu0"]["ear.veraison.annotated-evidence"]["snp"]
+    input["submods"]["cpu0"]["ear.status.executables"] == 2
 }
 ```
 
@@ -169,14 +169,14 @@ path := split(data["resource-path"], "/")
 
 allowed if {
     path[0] == "red"
-    input["submods"]["cpu"]["ear.status"] == "affirming"
-    input["submods"]["cpu"]["ear.veraison.annotated-evidence"]["snp"]
+    input["submods"]["cpu0"]["ear.status"] == "affirming"
+    input["submods"]["cpu0"]["ear.veraison.annotated-evidence"]["snp"]
 }
 
 allowed if {
     path[0] == "blue"
-    input["submods"]["cpu"]["ear.status"] == "affirming"
-    input["submods"]["cpu"]["ear.veraison.annotated-evidence"]["tdx"]
+    input["submods"]["cpu0"]["ear.status"] == "affirming"
+    input["submods"]["cpu0"]["ear.veraison.annotated-evidence"]["tdx"]
 }
 ```
 
