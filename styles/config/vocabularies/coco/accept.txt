@@ -1,5 +1,6 @@
 # Refer to vale vocabularies page: https://vale.sh/docs/topics/vocab/
 #
+ACK
 APIs
 [bB]lockchain
 [bB]usybox
@@ -47,6 +48,7 @@ vcpus
 VM
 VMs
 VNet
+vSwitch
 wget
 Whitepaper
 XGBoost
