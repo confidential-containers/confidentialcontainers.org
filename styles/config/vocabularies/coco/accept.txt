@@ -4,12 +4,14 @@ ACK
 APIs
 [bB]lockchain
 [bB]usybox
+Calo
 ccruntime
 Cgroups
 CPU[s]
 CRD
 DaemonSet
 [Dd]evnet
+Emanuele
 Entra
 Hygon
 Istio
@@ -20,6 +22,7 @@ KBSes
 [kK]eyprovider
 KServe
 Kubecon
+Lele
 LLM[s]
 [Mm]ainnet
 [Nn]amespace
@@ -29,7 +32,7 @@ OCI
 oras
 PCR
 Peerpod
-Peerpods
+Peer[pP]ods
 PodVM
 (?i)qemu
 [rR]ego
@@ -66,6 +69,7 @@ kbs-client
 kubeconfig
 kubectl
 middleware
+misconfigurations
 ramdisk
 replayable
 reputational

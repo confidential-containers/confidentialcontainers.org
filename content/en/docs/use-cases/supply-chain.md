@@ -1,6 +1,6 @@
 ---
 title: Secure Supply Chain
-description: Securing build piplines with Confidential Containers 
+description: Securing build pipelines with Confidential Containers 
 categories:
 - use cases
 tags:
