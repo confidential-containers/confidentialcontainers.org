@@ -26,7 +26,6 @@ On bare metal Confidential Containers supports the following platforms:
 | Intel TDX | Yes | Yes |
 | Intel SGX | Yes | No |
 | AMD SEV-SNP | Yes | Yes |
-| AMD SEV(-ES) | No | Yes |
 | IBM Secure Execution | Yes | Yes |
 
 Confidential Containers can also be deployed in a cloud environment using the
