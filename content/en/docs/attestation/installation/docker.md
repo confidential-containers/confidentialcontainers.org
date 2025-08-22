@@ -38,6 +38,20 @@ openssl genpkey -algorithm ed25519 > kbs/config/private.key
 openssl pkey -in kbs/config/private.key -pubout -out kbs/config/public.pub
 ```
 
+#### Debug Mode (Optional)
+
+To enable additional debug information, you can set the `RUST_LOG` environment variable.
+
+First, create a file called `debug.env`.
+```bash
+RUST_LOG=debug
+```
+
+Then, you can run Trustee with an additional argument.
+```bash
+docker-compose --env-file debug.env up
+```
+
 ### Uninstall
 
 Stop Trustee.
