@@ -207,6 +207,6 @@ If you are using Trustee to boot different types of guests, you might want to ad
 to capture your TCB.
 
 Either way, you'll need to provide the reference values that the policy expects.
-Take a look at the [default policy](https://github.com/confidential-containers/trustee/blob/b3b88206866517f65ddf3c1a166e58c268d0f49d/attestation-service/src/token/ear_default_policy_cpu.rego)
+Take a look at the [default policy](https://github.com/confidential-containers/trustee/blob/main/attestation-service/src/token/ear_default_policy_cpu.rego)
 to see which values are expected.
 You only need to provision the reference values for the platform that you are using.
