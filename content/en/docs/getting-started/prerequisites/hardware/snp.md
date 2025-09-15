@@ -21,5 +21,3 @@ To build just the upstream compatible host kernel, use the Confidential Containe
 ```
 ./build.sh kernel host --install
 ```
-
-Additionally, [sev-utils](https://github.com/amd/sev-utils/blob/coco-202501150000/docs/snp.md) can be used to install the required host kernel, but it will unnecessarily build AMD compatible guest kernel, OVMF, and QEMU components as these packages are already packaged with Kata. The additional components can be used with the script utility to test launch and attest a base QEMU SNP guest.
