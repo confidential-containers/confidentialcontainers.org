@@ -12,7 +12,7 @@ tags:
 
 The host BIOS and kernel must be capable of supporting AMD SEV-SNP and the host must be configured accordingly.
 
-The latest SEV Firmware version is available on AMD's [SEV Developer Webpage](https://www.amd.com/en/developer/sev.html). It can also be updated via a platform OEM BIOS update.
+The SEV Firmware version must be at least version 1.55 in order to have at least version 3 of the Attestation Report. The latest SEV Firmware version is available on AMD's [SEV Developer Webpage](https://www.amd.com/en/developer/sev.html). It can also be updated via a platform OEM BIOS update.
 
 The host kernel must be equal to or later than upstream version [6.16.1](https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git).
 
