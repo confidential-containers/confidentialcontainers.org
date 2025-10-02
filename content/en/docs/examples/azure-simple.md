@@ -114,7 +114,7 @@ az aks create \
   --node-count 1 \
   --node-vm-size Standard_F4s_v2 \
   --nodepool-labels node.kubernetes.io/worker= \
-  --ssh-key-value "${SSH_KEY}" \
+  --ssh-access-disabled \
   --admin-username "${AKS_WORKER_USER_NAME}" \
   --os-sku Ubuntu
 ```
@@ -228,7 +228,7 @@ az identity federated-credential create \
 {{% tab header="Last Release" %}}
 
 ```bash
-export CAA_VERSION="0.15.0"
+export CAA_VERSION="0.16.0"
 curl -LO "https://github.com/confidential-containers/cloud-api-adaptor/archive/refs/tags/v${CAA_VERSION}.tar.gz"
 tar -xvzf "v${CAA_VERSION}.tar.gz"
 cd "cloud-api-adaptor-${CAA_VERSION}/src/cloud-api-adaptor"
@@ -379,7 +379,7 @@ Find more AMD SEV-SNP machine types on [this](https://learn.microsoft.com/en-us/
 {{% tab header="Intel TDX" %}}
 
 ```bash
-export AZURE_INSTANCE_SIZE="Standard_DC2es_v5"
+export AZURE_INSTANCE_SIZE="Standard_DC2es_v6"
 export DISABLECVM="false"
 ```
 
@@ -461,15 +461,14 @@ kubectl apply -k "install/overlays/azure"
 
 Generic CAA deployment instructions are also described [here](https://github.com/confidential-containers/cloud-api-adaptor/blob/main/install/README.md).
 
-## Deploy the Peerpod controller for garbage collecting pod VMs
-
-Change the working directory from `cloud-api-adaptor-${CAA_VERSION}/src/cloud-api-adaptor`
-to `cloud-api-adaptor-${CAA_VERSION}/src/peerpod-ctrl`
+### Deploy a controller for garbage collecting PodVMs
 
 Run the following command to deploy the Peerpod CRD
 
 ```bash
-kubectl apply -k "config/default"
+pushd ../peerpod-ctrl
+kubectl apply -k config/default
+popd
 ```
 
 ## Run sample application
