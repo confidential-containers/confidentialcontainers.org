@@ -289,7 +289,7 @@ $ export KBS_HOST=$(kubectl get nodes -o jsonpath='{.items[0].status.addresses[?
 $ export KBS_PORT=$(kubectl get svc "kbs" -n "coco-tenant" -o jsonpath='{.spec.ports[0].nodePort}')
 ```
 
-At this point KBS is up and running but lacks policies and resources. To facilitate its configuration we will be using the [kbs-client](https://github.com/confidential-containers/trustee/tree/v0.10.1/tools/kbs-client) tool.  Use the [oras tool](https://oras.land) to download a build of kbs-client:
+At this point KBS is up and running but lacks policies and resources. To facilitate its configuration we will be using the [kbs-client](https://github.com/confidential-containers/trustee/tree/v0.10.1/tools/kbs-client) tool.  Use the [ORAS tool](https://oras.land) to download a build of kbs-client:
 
 ```shell
 $ curl -LOs "https://github.com/oras-project/oras/releases/download/v1.2.0/oras_1.2.0_linux_amd64.tar.gz"

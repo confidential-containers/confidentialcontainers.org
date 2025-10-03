@@ -15,7 +15,7 @@ This blog is adopted from the [overview slides](https://docs.google.com/presenta
 
 **[Confidential Containers](https://github.com/confidential-containers) (CoCo)** is an innovative sandbox project under the [Cloud Native Computing Foundation](https://www.cncf.io/) (CNCF), revolutionizing cloud-native [confidential computing](https://confidentialcomputing.io/faq/) by leveraging diverse hardware platforms and cutting-edge technologies.
 
-The CoCo project builds on existing and emerging hardware security technologies such as [Intel SGX](https://en.wikipedia.org/wiki/Software_Guard_Extensions), [Intel TDX](https://en.wikipedia.org/wiki/Trust_Domain_Extensions), [AMD SEV-SNP](https://www.amd.com/en/processors/amd-secure-encrypted-virtualization) and [IBM Z Secure Execution](https://en.wikipedia.org/wiki/IBM_Secure_Service_Container), in combination with new software frameworks to protect **data in use**. The project brings together software and hardware companies including Alibaba-cloud, AMD, ARM, Edgeless Systems, IBM, Intel, Microsoft, Nvidia, Red Hat, Rivos, etc.
+The CoCo project builds on existing and emerging hardware security technologies such as [Intel SGX](https://en.wikipedia.org/wiki/Software_Guard_Extensions), [Intel TDX](https://en.wikipedia.org/wiki/Trust_Domain_Extensions), [AMD SEV-SNP](https://www.amd.com/en/processors/amd-secure-encrypted-virtualization) and [IBM Z Secure Execution](https://en.wikipedia.org/wiki/IBM_Secure_Service_Container), in combination with new software frameworks to protect **data in use**. The project brings together software and hardware companies including Alibaba-cloud, AMD, ARM, Edgeless Systems, IBM, Intel, Microsoft, NVIDIA, Red Hat, Rivos, etc.
 
 ## Motivation
 
@@ -35,7 +35,7 @@ CoCo helps in deploying your workload that extends beyond the confines of your o
 
 This capability hinges on a fundamental approach: encrypting your workload's memory and fortifying other essential low-level resources at the hardware level. This memory protection ensures that, regardless of the hosting environment, your data remains shielded, and unauthorized access is thwarted.
 
-A key aspect of CoCo's mechanics lies in the use of cryptography-based proofs which involve employing cryptographic techniques to create verifiable evidence, such as signatures or hashes, ensuring the integrity of your software. These serve a dual purpose: validating that your software runs untampered and, conversely, preventing the execution of your workload if any unauthorized alterations are detected.
+A key aspect of CoCo's mechanics lies in the use of cryptography-based proofs which involve employing cryptographic techniques to create verifiable evidence, such as signatures or hashes, ensuring the integrity of your software. These serve a dual purpose: validating that your software runs un-tampered and, conversely, preventing the execution of your workload if any unauthorized alterations are detected.
 
 In essence, CoCo employs cryptographic mechanisms to provide assurance, creating a secure foundation that allows your software to operate with integrity across varied and potentially untrusted hosting environments.
 
