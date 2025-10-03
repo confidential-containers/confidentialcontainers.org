@@ -212,7 +212,7 @@ kubectl create deployment \
 	nginx-cc \
 	--dry-run=client \
 	-o json \
-	jq '.spec.template.spec.runtimeClassName = "kata-cc"' \
+	| jq '.spec.template.spec.runtimeClassName = "kata-cc"' \
 	> nginx-cc.json
 ```
 
@@ -224,7 +224,7 @@ INIT_DATA_B64="$(cat "init-data.toml" | gzip | base64 -w0)"
 cat nginx-cc.yaml | jq \
 	--arg initdata "$INIT_DATA_B64" \
 	'.spec.template.metadata.annotations = { "io.katacontainers.config.hypervisor.cc_init_data": $initdata }' \
-	| kubecl apply -f -
+	| kubectl apply -f -
 ```
 
 ### Testing the Policy
