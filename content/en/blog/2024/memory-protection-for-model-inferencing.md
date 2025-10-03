@@ -3,7 +3,7 @@ date: 2024-04-15
 title: Memory Protection for AI ML Model Inferencing
 linkTitle: Memory Protection for AI ML Model Inferencing
 description: >
-  How Confidential Containers (CoCo) can provide additional security to the model inferencing platform on Kuberentes.
+  How Confidential Containers (CoCo) can provide additional security to the model inferencing platform on Kubernetes.
 author: "[Suraj Deshmukh](https://linktr.ee/surajssd) & [Pradipta Banerjee](https://www.linkedin.com/in/bpradipt/)"
 tags:
 - AI
