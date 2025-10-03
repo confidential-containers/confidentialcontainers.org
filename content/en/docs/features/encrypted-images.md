@@ -220,7 +220,7 @@ kubectl apply -f nginx-encrypted.yaml
          labels:
            app: nginx
          annotations:
-           io.katacontainers.config.runtime.cc_init_data: "${INIT_DATA_B64}"
+           io.katacontainers.config.hypervisor.cc_init_data: "${INIT_DATA_B64}"
            io.containerd.cri.runtime-handler: ${CC_RUNTIMECLASS}
        spec:
          runtimeClassName: ${CC_RUNTIMECLASS}

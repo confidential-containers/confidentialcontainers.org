@@ -412,7 +412,7 @@ pod and retrieve a secret securely within a confidential computing environment.
 
 Peerpods now supports init data, you can pass the required configuration files
 (`aa.toml`, `cdh.toml`, and `policy.rego`) via the
-`io.katacontainers.config.runtime.cc_init_data` annotation. Below is an example
+`io.katacontainers.config.hypervisor.cc_init_data` annotation. Below is an example
 of the configuration and usage.
 
 ```bash
@@ -547,7 +547,7 @@ kind: Pod
 metadata:
   name: example-pod
   annotations:
-    io.katacontainers.config.runtime.cc_init_data: "$INITDATA"
+    io.katacontainers.config.hypervisor.cc_init_data: "$INITDATA"
 spec:
   runtimeClassName: kata-remote
   containers:
