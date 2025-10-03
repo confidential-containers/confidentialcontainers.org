@@ -223,7 +223,7 @@ vim init-data.toml
 INIT_DATA_B64="$(cat "init-data.toml" | gzip | base64 -w0)"
 cat nginx-cc.yaml | jq \
 	--arg initdata "$INIT_DATA_B64" \
-	'.spec.template.metadata.annotations = { "io.katacontainers.config.runtime.cc_init_data": $initdata }' \
+	'.spec.template.metadata.annotations = { "io.katacontainers.config.hypervisor.cc_init_data": $initdata }' \
 	| kubecl apply -f -
 ```
 

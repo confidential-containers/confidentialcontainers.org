@@ -141,7 +141,7 @@ metadata:
   annotations:
     io.containerd.cri.runtime-handler: kata-qemu-tdx
     io.katacontainers.config.hypervisor.kernel_params: ' agent.guest_components_procs=confidential-data-hub'
-    io.katacontainers.config.runtime.cc_init_data: ${initdata}
+    io.katacontainers.config.hypervisor.cc_init_data: ${initdata}
 spec:
   runtimeClassName: kata-qemu-tdx
   containers:
