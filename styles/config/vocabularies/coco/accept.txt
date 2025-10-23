@@ -7,16 +7,18 @@ APIs
 Calo
 ccruntime
 Cgroups
-CPU[s]
+[v]CPU[s]
 CRD
 DaemonSet
 [Dd]evnet
 Emanuele
 Entra
+GPU[s]
 Hygon
 Istio
 Initdata
 JSON
+JWT[s]
 KBS
 KBSes
 simple-kbs
@@ -50,6 +52,7 @@ SKLearn
 URI
 URIs
 vcpus
+vGPU[s]
 VM
 VMs
 VNet
