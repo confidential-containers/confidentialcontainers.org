@@ -119,7 +119,7 @@ aws ec2 authorize-security-group-ingress --group-id "$EKS_CLUSTER_SG" --protocol
 {{% tab header="Last Release" %}}
 
 ```bash
-export CAA_VERSION="0.14.0"
+export CAA_VERSION="0.16.0"
 curl -LO "https://github.com/confidential-containers/cloud-api-adaptor/archive/refs/tags/v${CAA_VERSION}.tar.gz"
 tar -xvzf "v${CAA_VERSION}.tar.gz"
 cd "cloud-api-adaptor-${CAA_VERSION}/src/cloud-api-adaptor"
@@ -156,9 +156,8 @@ by running the following CLI:
 
 ```bash
 export PODVM_AMI_ID=$(aws ec2 describe-images \
-    --filters "Name=tag:Name,Values=fedora-mkosi-debug-tee-amd" "Name=tag:Version,Values=${CAA_VERSION}" \
-    --query 'Images[*].[ImageId]' \
-    --output text)
+    --filters Name=name,Values="podvm-fedora-amd64-${CAA_VERSION//./-}" \
+    --query 'Images[*].[ImageId]' --output text)
 
 echo $PODVM_AMI_ID
 ```
@@ -167,13 +166,22 @@ echo $PODVM_AMI_ID
 
 {{% tab header="Latest Build" %}}
 
-There are no pre-built pod VM AMI for latest builds. You'll need to follow [these instructions](https://github.com/confidential-containers/cloud-api-adaptor/tree/main/src/cloud-api-adaptor/aws#create-pod-vm-ami) to build the pod VM AMI. Once image build is finished then export image id to the environment variable `PODVM_AMI_ID`.
+There are no pre-built pod VM AMI for latest builds. You'll need to build your own pod VM image and then create the AMI by following
+the instructions [here](https://github.com/confidential-containers/cloud-api-adaptor/tree/main/src/cloud-api-adaptor/podvm-mkosi).
+
+Remember to set `TEE_PLATFORM=amd` before building the pod VM image for AWS.
+
+Once image build is finished, export image id to the environment variable `PODVM_AMI_ID`.
 
 {{% /tab %}}
 
 {{% tab header="DIY" %}}
 
-If you have made changes to the CAA code that affects the pod VM image and you want to deploy those changes then follow [these instructions](https://github.com/confidential-containers/cloud-api-adaptor/tree/main/src/cloud-api-adaptor/aws#create-pod-vm-ami) to build the pod VM AMI. Once image build is finished then export image id to the environment variable `PODVM_AMI_ID`.
+You can build your custom pod VM image by following the instructions [here](https://github.com/confidential-containers/cloud-api-adaptor/tree/main/src/cloud-api-adaptor/podvm-mkosi).
+
+Remember to set `TEE_PLATFORM=amd` before building the pod VM image for AWS.
+
+Once image build is finished, export image id to the environment variable `PODVM_AMI_ID`.
 
 {{% /tab %}}
 
