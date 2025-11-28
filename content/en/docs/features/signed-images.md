@@ -28,7 +28,6 @@ approach. In any case, the general approach is to
 3. Update the [KBS](/docs/attestation/key-broker-service) with the public
    signature key and a security policy.
 
-
 ## Creating an Image
 
 ### Creating Keys
@@ -106,8 +105,27 @@ docker build \
   -f <your_dockerfile> \
   .
 docker push ghcr.io/$(COCO_PKG):cosign-sig
+```
+
+If using `cosign` version `v3.0.x`, use the following command to sign the image:
+
+```shell
+cosign sign --new-bundle-format=false \
+  --use-signing-config=false \
+  --key ./cosign.key \
+  ghcr.io/${COCO_PKG}:cosign-sig
+```
+
+If using `cosign` version `>= v2.0` and `< v3.0`, use the following command to sign the image:
+
+```shell
 cosign sign --key ./cosign.key ghcr.io/${COCO_PKG}:cosign-sig
 ```
+
+{{% alert title="Note" color="primary" %}}
+cosign versions `v2.0.x` and `v2.1.x` have a different private key format from `>= v2.2.0`.
+{{% /alert %}}
+
 {{% /tab %}}
 
 {{% tab header="Simple Signing - skopeo" %}}
