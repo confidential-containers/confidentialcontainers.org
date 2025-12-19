@@ -20,10 +20,11 @@ is inherently sensitive.
 
 There are several ways to configure and deploy Trustee.
 
-## Architecture
+## Overview 
 
 Trustee is a composition of a few different services, which can be deployed in several different configurations.
 This figure shows one common way to deploy these components in conjunction with certain guest components.
+For more information see the [architecture page](./architecture).
 
 ```mermaid
 flowchart LR
