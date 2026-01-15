@@ -9,8 +9,6 @@ tags:
 - images
 ---
 
-
-
 ## Overview
 [Encrypted images](/docs/features/encrypted-images/) provide confidentiality,
 but they do not provide _authenticity_ or _integrity_. Image signatures provide
@@ -39,24 +37,23 @@ Create a keypair using one of two approaches, cosign or Simple Signing - gpg.
 
 To generate a public-private keypair with cosign, provide your
 `COSIGN_PASSWORD` and use the `generate-key-pair` action:
-```shell
-$ COSIGN_PASSWORD=just1testing2password3 cosign generate-key-pair
+```bash
+COSIGN_PASSWORD=just1testing2password3 cosign generate-key-pair
 ```
 This will create the private and public keys: cosign.key and cosign.pub.
 
 {{% /tab %}}
 
-
 {{% tab header="Simple Signing - gpg" %}}
 
 skopeo depends on gpg for a keypair.
 To generate a keypair with gpg using default options, use `--full-generate-key`:
-```shell
-$ gpg --full-generate-key
+```bash
+gpg --full-generate-key
 ```
 
 There are several prompts. A user for test purposes could be:
-```
+```text
 Github Runner
 git@runner.com
 just1testing2password3
@@ -64,28 +61,25 @@ just1testing2password3
 
 Then export it. The `--export-secret-key` option is sufficient for exporting
 both the secret and public key. Example command:
-```shell
-$ gpg --export-secret-key F63DB2A1AB7C7F195F698C9ED9582CADF7FBCC5D > github-runner.keys
+```bash
+gpg --export-secret-key F63DB2A1AB7C7F195F698C9ED9582CADF7FBCC5D > github-runner.keys
 ```
 
 The keys can later be imported by gpg in a CI system using `--batch` to avoid
 typing the password:
-```shell
-$ gpg --batch --import ./github-runner.keys
+```bash
+gpg --batch --import ./github-runner.keys
 ```
 
 When automating CI or test workflows, you can place the password for the key in
 a plaintext file (when it is safe to do so):
-```shell
+```bash
 echo just1testing2password3 > git-runner-password.txt
 ```
 
 {{% /tab %}}
 
 {{< /tabpane >}}
-
-
-
 
 ### Signing the Image
 Sign the image using one of two approaches, cosign or Simple Signing - skopeo.
@@ -98,7 +92,7 @@ Use the private key to sign an image.
 In this example, we assume that there is a Dockerfile (`your_dockerfile` below)
 for creating an image that you want signed. The workflow is to build the image,
 push it to ghcr (which requires `docker login`), and sign it.
-```shell
+```bash
 COCO_PKG=confidential-containers/test-container
 docker build \
   -t ghcr.io/$(COCO_PKG):cosign-sig \
@@ -109,7 +103,7 @@ docker push ghcr.io/$(COCO_PKG):cosign-sig
 
 If using `cosign` version `v3.0.x`, use the following command to sign the image:
 
-```shell
+```bash
 cosign sign --new-bundle-format=false \
   --use-signing-config=false \
   --key ./cosign.key \
@@ -118,7 +112,7 @@ cosign sign --new-bundle-format=false \
 
 If using `cosign` version `>= v2.0` and `< v3.0`, use the following command to sign the image:
 
-```shell
+```bash
 cosign sign --key ./cosign.key ghcr.io/${COCO_PKG}:cosign-sig
 ```
 
@@ -139,7 +133,7 @@ the `unsigned` tag, and in the process of signing it, creates a new
 `simple-signed` tag.
 In this example, the resulting image is pushed to ghcr, which requires `docker
 login`:
-```shell
+```bash
 COCO_PKG=confidential-containers/test-container
 skopeo \
   copy \
@@ -155,11 +149,6 @@ skopeo \
 
 {{< /tabpane >}}
 
-
-
-
-
-
 ## Running an Image
 Running a workload with a signed image is very similar to running workloads
 with unsigned images. The main difference is that for a signed image, you must
@@ -172,7 +161,7 @@ apply`).
 
 ### Setting the Security Policy for Signed Images
 Register the public key to KBS storage. For example:
-```shell
+```bash
 mkdir -p ${KBS_DIR_PATH}/data/kbs-storage/default/cosign-key \
   && cp cosign.pub ${KBS_DIR_PATH}/data/kbs-storage/default/cosign-key/1
 ```
@@ -198,13 +187,10 @@ Be sure to replace `[REGISTRY_URL]` with the desired registry URL of the
 encrypted image.
 
 Lastly, register the image pulling validation policy file with KBS storage:
-```shell
+```bash
 mkdir -p ${KBS_DIR_PATH}/data/kbs-storage/default/security-policy
 cp security-policy.json ${KBS_DIR_PATH}/data/kbs-storage/default/security-policy/test
 ```
-
-
-
 
 ## See Also
 ### Cosign-GitHub Integration
@@ -213,8 +199,8 @@ A good tutorial for cosign and github integration is
 The approach is automated and targets real-world usage.
 For example, this key-generation step automatically
 uploads the public key, private key, and key secret to the github repo:
-```
-$ GITHUB_TOKEN=ghp_... \
+```bash
+GITHUB_TOKEN=ghp_... \
 COSIGN_PASSWORD=just1testing2password3 \
 cosign generate-key-pair github://<github_username>/<github_repo>
 ```
