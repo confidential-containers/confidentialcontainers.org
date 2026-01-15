@@ -17,5 +17,6 @@ Many different clusters can be used but they should meet the following requireme
 - SELinux is not enabled.
 - Helm 3.8+ is installed.
 
-If you use Minikube or Kind to setup your cluster, you will only be able to use
-runtime classes based on Cloud Hypervisor due to an issue with QEMU.
+{{% alert title="Note" color="warning" %}}
+Kind and Minikube are not tested anywhere in the project, and those are not encouraged to be used as QEMU is known to **not** work with them.
+{{% /alert %}}
