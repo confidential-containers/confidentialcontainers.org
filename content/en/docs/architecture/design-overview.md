@@ -173,7 +173,7 @@ Confidential Containers integrates many components. Here is a brief overview of 
 
 | Component | Repository | Purpose |
 | --------- | ---------- | ------- |
-| Operator  | operator | Installs Confidential Containers |
+| Helm Charts | charts | Installs Confidential Containers |
 | Kata Shim | kata-containers/kata-containers | Starts PodVM and proxies requests to Kata Agent |
 | Kata Agent | kata-containers/kata-containers | Sets up and runs the workload inside of a VM |
 | image-rs | guest-components | Downloads and unpacks container images |
@@ -192,7 +192,7 @@ Confidential Containers integrates many components. Here is a brief overview of 
 
 Many of the above components depend on each other either directly in the source,
 during packaging, or at runtime.
-The basic premise is that the operator deploys a special configuration of Kata containers
+The basic premise is that the Helm charts deploy a special configuration of Kata containers
 that uses a rootfs (built by the Kata CI) that includes the guest components.
 This diagram shows these relationships in more detail.
 The diagram does not capture runtime interactions.
@@ -201,10 +201,8 @@ The diagram does not capture runtime interactions.
 flowchart LR
     Trustee --> Versions.yaml
     Guest-Components --> Versions.yaml
-    Kata --> kustomization.yaml
+    Kata --> Chart.yaml
     Guest-Components .-> Client-tool
-    Guest-Components --> enclave-agent
-    enclave-cc --> kustomization.yaml
     Guest-Components --> versions.yaml
     Trustee --> versions.yaml
     Kata --> versions.yaml
@@ -217,12 +215,9 @@ flowchart LR
     subgraph Trustee
         Client-tool
     end
-    subgraph enclave-cc
-        enclave-agent
-    end
-    subgraph Operator
-        kustomization.yaml
-        reqs-deploy
+    subgraph Charts
+        Chart.yaml
+        values.yaml
     end
     subgraph cloud-api-adaptor
         versions.yaml
