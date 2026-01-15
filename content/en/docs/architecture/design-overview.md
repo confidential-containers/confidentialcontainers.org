@@ -158,15 +158,6 @@ This also allows confidential containers to integrate with cloud confidential VM
 
 Peer Pods deployments share most of the same properties that are described in this guide.
 
-### Process-based Isolation
-
-Confidential Containers also supports SGX with enclave-cc.
-Because the Kata guest cannot be run as a single process, the design of enclave-cc
-is significantly different.
-In fact, enclave-cc doesn't use Kata at all, but it does still represent a pod-centric approach
-with some sharing between containers even as they run in separate enclaves.
-enclave-cc does use some of the guest components as crates.
-
 ### Components
 
 Confidential Containers integrates many components. Here is a brief overview of most the components related to the project.
