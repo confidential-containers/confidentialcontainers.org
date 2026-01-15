@@ -13,8 +13,8 @@ with a cloud integration, continue to the cloud section.
 You can also run Confidential Containers without hardware support
 for testing or development.
 
-The Confidential Containers operator, which is described in the following section,
-does not setup the host kernel, firmware, or system configuration. 
+The Confidential Containers Helm charts, which are described in the following section,
+do not setup the host kernel, firmware, or system configuration. 
 Before installing Confidential Containers on a bare metal system, 
 make sure that your node can start confidential VMs.
 
