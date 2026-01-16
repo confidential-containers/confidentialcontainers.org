@@ -114,7 +114,7 @@ az aks create \
   --node-count 1 \
   --node-vm-size Standard_F4s_v2 \
   --nodepool-labels node.kubernetes.io/worker= \
-  --ssh-access-disabled \
+  --ssh-access disabled \
   --admin-username "${AKS_WORKER_USER_NAME}" \
   --os-sku Ubuntu
 ```
