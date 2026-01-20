@@ -170,3 +170,4 @@ SBOM[s]
 TDX
 SNP
 Tekton
+snapshotter[s]
