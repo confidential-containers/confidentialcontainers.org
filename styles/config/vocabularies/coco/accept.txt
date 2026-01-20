@@ -164,3 +164,4 @@ RTMR[s]
 vTPM[s]
 SBOM[s]
 Tekton
+snapshotter[s]
