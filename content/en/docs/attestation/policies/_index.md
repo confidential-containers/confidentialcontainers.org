@@ -11,9 +11,35 @@ tags:
 - resources
 ---
 
-Trustee allows users to create policies that govern when secrets are released.
-Trustee has two different policies, the resource policies, and the attestation policy,
-which serve distinct purposes.
+## Policy Overview
+
+Confidential Containers uses three types of policies to secure workloads at different layers:
+
+| Policy | Where Enforced | Purpose | Where it is set |
+|--------|----------------|---------|------------|
+| **Agent Policy** | Inside the TEE by Kata Agent | Controls what operations the agent can perform | [Init-Data](../../features/initdata/)) |
+| **Resource Policy** | By Trustee KBS | Controls which secrets are released to which workloads | KBS (via KBS Client or config file) |
+| **Attestation Policy** | By Trustee AS | Defines how hardware evidence is evaluated | AS (via KBS Client or config file) |
+
+This page focuses on the **two policies managed by Trustee**: resource policies and attestation policies. 
+For information about agent policies, which control the Kata agent's behavior inside the TEE, 
+see the [Init-Data feature documentation](../../features/initdata/#agent-policy-overview).
+
+### How Policies Work Together
+
+While agent policies are not managed by Trustee, they are cryptographically linked to the attestation process:
+
+1. **Agent policies** are delivered via Init-Data, which is hashed and measured into the TEE's hardware evidence
+2. **Attestation policies** evaluate this hardware evidence to generate an attestation token
+3. **Resource policies** can check the Init-Data hash (containing the agent policy) in the attestation token before releasing secrets
+In fact, resource policies can even check individual fields of the Init-Data claims
+see [Trustee docs](https://github.com/confidential-containers/trustee/blob/main/attestation-service/docs/attestation_token.md)
+
+This ensures that even though Trustee doesn't manage agent policies directly, it can verify that the correct agent policy was applied to a workload before granting access to secrets.
+
+## Trustee Policies
+
+Trustee manages two different policies that govern when secrets are released: resource policies and attestation policies. These serve distinct purposes.
 
 Resource policies control which secrets are released and are generally scoped to the workload.
 Attestation policies define how TCB claims are compared to reference values to determine
