@@ -19,7 +19,7 @@ Entra
 GPU[s]
 Hygon
 Istio
-Initdata
+(?i)initdata
 JSON
 JWT[s]
 KBS
@@ -134,7 +134,7 @@ SLSA
 auditable
 Makefile
 [Mm]aximalist
-Src
+(?i)src
 prefetched
 [kK]ubernetes
 chroot'ed
@@ -167,4 +167,6 @@ Occlum
 RTMR[s]
 vTPM[s]
 SBOM[s]
+TDX
+SNP
 Tekton
