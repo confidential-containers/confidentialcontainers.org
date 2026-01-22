@@ -1,12 +1,15 @@
 # Refer to vale vocabularies page: https://vale.sh/docs/topics/vocab/
 #
 ACK
+(?i)allowlist
+(?i)allowlists
 APIs
 [bB]lockchain
 [bB]usybox
 Calo
 ccruntime
 Cgroups
+CPU[s]
 [v]CPU[s]
 CRD
 DaemonSet
@@ -68,7 +71,7 @@ XGBoost
 [Ss]ystemd
 cmdline
 deprivilege
-genpolicy
+(?i)genpolicy
 initrd
 kbs-client
 [kK]ubeadm
@@ -104,7 +107,7 @@ passthrough
 [sS]napshotter
 [nN]ydus
 runtimes
-runtimeclass
+(?i)runtimeclass
 runtimeclasses
 (?i)kms
 KMSes
@@ -158,6 +161,7 @@ umoci
 [Nn]amespace[s]
 [bB]aremetal
 libvirt
+LibVirt
 rollingUpdate
 Occlum
 RTMR[s]
