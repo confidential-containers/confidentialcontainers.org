@@ -148,10 +148,10 @@ import rego.v1
 
 default allowed = false
 
-path := split(data["resource-path"], "/")
-
 allowed if {
-    path[0] == "red"
+    data.plugin == "resource"
+    count(data["resource-path"]) == 3
+    data["resource-path"][1] == "red"
 }
 ```
 
@@ -165,16 +165,18 @@ import rego.v1
 
 default allowed = false
 
-path := split(data["resource-path"], "/")
-
 allowed if {
-    path[0] == "red"
+    data.plugin == "resource"
+    count(data["resource-path"]) == 3
+    data["resource-path"][1] == "red"
     input["submods"]["cpu0"]["ear.status"] == "affirming"
     input["submods"]["cpu0"]["ear.veraison.annotated-evidence"]["snp"]
 }
 
 allowed if {
-    path[0] == "blue"
+    data.plugin == "resource"
+    count(data["resource-path"]) == 3
+    data["resource-path"][1] == "blue"
     input["submods"]["cpu0"]["ear.status"] == "affirming"
     input["submods"]["cpu0"]["ear.veraison.annotated-evidence"]["tdx"]
 }
