@@ -1,9 +1,10 @@
 ---
 title: GCP
-description: Cloud API Adaptor (CAA) on GCP
+description: Peer Pods Helm Chart using Cloud API Adaptor (CAA) on GCP
 categories:
   - examples
 tags:
+  - helm
   - caa
   - gcp
   - gke
@@ -18,12 +19,16 @@ Google Kubernetes Engine (GKE). It explains how to deploy:
 
 ## Pre-requisites
 
-1. **Install Required Tools**:
-    - [Google Cloud CLI (`gcloud`)](https://cloud.google.com/sdk/docs/install)
-    - [kubectl](https://kubernetes.io/docs/tasks/tools/)
-2. **Google Cloud Project**:
-    - Ensure you have a Google Cloud project created.
-    - Note the Project ID (export it as `GCP_PROJECT_ID`).
+Install Required Tools:
+
+- Install [kubectl](https://kubernetes.io/docs/tasks/tools/),
+- Install [Helm](https://helm.sh/docs/intro/install),
+- Install `gcloud` CLI [tool](https://cloud.google.com/sdk/docs/install).
+
+Google Cloud Project:
+
+- Ensure you have a Google Cloud project created,
+- Note the Project ID (export it as `GCP_PROJECT_ID`).
 
 ## GCP Preparation
 
@@ -162,28 +167,15 @@ specific IP address or CIDR block:
 
 ```bash
 gcloud compute firewall-rules create allow-port-15150-restricted \
-   --project=${PROJECT_ID} \
+   --project=${GCP_PROJECT_ID} \
    --network=default \
    --allow=tcp:15150 \
    --source-ranges=[YOUR_EXTERNAL_IP]
 ```
 
-## Deploy the CoCo Operator with Peerpods Runtime
+## Deploy the CAA Helm chart
 
-Deploy the CoCo operator. Usually it’s the same version as CAA, but it can be
-adjusted.
-
-```bash
-export CAA_VERSION="0.14.0"
-export COCO_OPERATOR_VERSION="${CAA_VERSION}"
-
-kubectl apply -k "github.com/confidential-containers/operator/config/release?ref=v${COCO_OPERATOR_VERSION}"
-kubectl apply -k "github.com/confidential-containers/operator/config/samples/ccruntime/peer-pods?ref=v${COCO_OPERATOR_VERSION}"
-```
-
-## Deploy the Cloud API Adaptor (CAA)
-
-### Download the CAA Deployment Artifacts
+### Download the CAA Helm deployment artifacts
 
 {{< tabpane text=true right=true persist=header >}}
 {{% tab header="**Versions**:" disabled=true /%}}
@@ -191,10 +183,10 @@ kubectl apply -k "github.com/confidential-containers/operator/config/samples/ccr
 {{% tab header="Last Release" %}}
 
 ```bash
-export CAA_VERSION="0.14.0"
+export CAA_VERSION="0.17.0"
 curl -LO "https://github.com/confidential-containers/cloud-api-adaptor/archive/refs/tags/v${CAA_VERSION}.tar.gz"
 tar -xvzf "v${CAA_VERSION}.tar.gz"
-cd "cloud-api-adaptor-${CAA_VERSION}/src/cloud-api-adaptor"
+cd "cloud-api-adaptor-${CAA_VERSION}/src/cloud-api-adaptor/install/charts/peerpods"
 ```
 
 {{% /tab %}}
@@ -205,19 +197,24 @@ cd "cloud-api-adaptor-${CAA_VERSION}/src/cloud-api-adaptor"
 export CAA_BRANCH="main"
 curl -LO "https://github.com/confidential-containers/cloud-api-adaptor/archive/refs/heads/${CAA_BRANCH}.tar.gz"
 tar -xvzf "${CAA_BRANCH}.tar.gz"
-cd "cloud-api-adaptor-${CAA_BRANCH}/src/cloud-api-adaptor"
+cd "cloud-api-adaptor-${CAA_BRANCH}/src/cloud-api-adaptor/install/charts/peerpods"
 ```
 
 {{% /tab %}}
 
 {{% tab header="DIY" %}}
-This assumes that you already have the code ready to use. On your terminal change directory to the Cloud API Adaptor's
-code base.
+This assumes that you already have the code ready to use. 
+On your terminal change directory to the Cloud API Adaptor's code base.
 {{% /tab %}}
 
 {{< /tabpane >}}
 
-### Configure the CAA PodVM image
+### Export PodVM image version
+
+Exports the PodVM image ID used by peer pods. This variable tells the deployment tooling which PodVM image version
+to use when creating peer pod virtual machines in Google Cloud.
+
+The image is pulled from the Coco community gallery (or manually built) and must match the current CAA release version.
 
 {{< tabpane text=true right=true persist=header >}}
 {{% tab header="**Versions**:" disabled=true /%}}
@@ -254,7 +251,11 @@ the environment variable `PODVM_IMAGE_ID`.
 
 {{< /tabpane >}}
 
-#### Configure the CAA container image
+#### Export CAA container image path
+
+Define the Cloud API Adaptor (CAA) container image to deploy.
+These variables tell the deployment tooling which CAA image and architecture-specific tag to pull and run.
+The tag is derived from the CAA release version to ensure compatibility with the selected PodVM image and configuration.
 
 {{< tabpane text=true right=true persist=header >}}
 {{% tab header="**Versions**:" disabled=true /%}}
@@ -304,80 +305,88 @@ variables `CAA_IMAGE` and `CAA_TAG`.
 
 {{< /tabpane >}}
 
-### Create the GCP credentials file
+### Populate the `providers/gcp.yaml` file
 
-Copy the Application Credentials to the GCP overlay folder:
+List of all available configuration options can be found in two places:
+- [Main charts values](https://github.com/confidential-containers/cloud-api-adaptor/blob/main/src/cloud-api-adaptor/install/charts/peerpods/values.yaml)
+- [GCP specific values](https://github.com/confidential-containers/cloud-api-adaptor/blob/main/src/cloud-api-adaptor/install/charts/peerpods/providers/gcp.yaml)
 
-```bash
-cp $GOOGLE_APPLICATION_CREDENTIALS install/overlays/gcp/GCP_CREDENTIALS
-```
-
-### Populate the `kustomization.yaml` file
-
-Run the following command to update the
-[`kustomization.yaml`](https://github.com/confidential-containers/cloud-api-adaptor/blob/main/src/cloud-api-adaptor/install/overlays/gcp/kustomization.yaml)
-file:
+Run the following command to update the [`providers/gcp.yaml`](https://github.com/confidential-containers/cloud-api-adaptor/blob/main/src/cloud-api-adaptor/install/charts/peerpods/providers/gcp.yaml) file:
 
 ```bash
-cat <<EOF > install/overlays/gcp/kustomization.yaml
-apiVersion: kustomize.config.k8s.io/v1beta1
-kind: Kustomization
-
-resources:
-- ../../yamls
-
-images:
-- name: cloud-api-adaptor
-  newName: "${CAA_IMAGE}"
-  newTag: "${CAA_TAG}"
-
-generatorOptions:
-  disableNameSuffixHash: true
-
-configMapGenerator:
-- name: peer-pods-cm
-  namespace: confidential-containers-system
-  literals:
-  - CLOUD_PROVIDER="gcp"
-  - PODVM_IMAGE_NAME="${PODVM_IMAGE_ID}"
-  - GCP_PROJECT_ID="${GCP_PROJECT_ID}"
-  - GCP_ZONE="${GCP_REGION}-a"
-  - GCP_MACHINE_TYPE="${PODVM_INSTANCE_TYPE}"
-  - DISABLECVM="${DISABLECVM}"
-  - GCP_NETWORK="global/networks/default"
-  - GCP_CONFIDENTIAL_TYPE="${GCP_CONFIDENTIAL_TYPE}"
-  - GCP_DISK_TYPE="${GCP_DISK_TYPE}"
-secretGenerator:
-- name: peer-pods-secret
-  namespace: confidential-containers-system
-  files:
-  - GCP_CREDENTIALS
+cat <<EOF > providers/gcp.yaml
+provider: gcp
+image:
+  name: "${CAA_IMAGE}"
+  tag: "${CAA_TAG}"
+providerConfigs:
+  gcp:
+    GCP_NETWORK: "global/networks/default"
+    GCP_PROJECT_ID: "${GCP_PROJECT_ID}"
+    GCP_ZONE: "${GCP_REGION}-a"
+    GCP_MACHINE_TYPE: "${PODVM_INSTANCE_TYPE}"
+    GCP_DISK_TYPE: "${GCP_DISK_TYPE}"
+    PODVM_IMAGE_NAME: "${PODVM_IMAGE_ID}"
+    GCP_CONFIDENTIAL_TYPE: "${GCP_CONFIDENTIAL_TYPE}"
+    DISABLECVM: ${DISABLECVM}
 EOF
 ```
 
-### Deploy CAA on the Kubernetes cluster
+### Deploy helm chart on the Kubernetes cluster
 
-Run the following command to deploy CAA:
+1. Create namespace managed by Helm:
+    ```bash
+   kubectl apply -f - << EOF
+   apiVersion: v1
+   kind: Namespace
+   metadata:
+     name: confidential-containers-system
+     labels:
+       app.kubernetes.io/managed-by: Helm
+     annotations:
+       meta.helm.sh/release-name: peerpods
+       meta.helm.sh/release-namespace: confidential-containers-system
+   EOF
+    ```
 
-```bash
-kubectl apply -k "install/overlays/gcp"
-```
+2. Create the secret using `kubectl`:
 
-Verify the deployment:
+   See [providers/gcp-secrets.yaml.template](https://github.com/confidential-containers/cloud-api-adaptor/blob/main/src/cloud-api-adaptor/install/charts/peerpods/providers/gcp-secrets.yaml.template) for required keys.
 
-```bash
-kubectl get pods -n confidential-containers-system
-```
+    ```bash
+    kubectl create secret generic my-provider-creds \
+     -n confidential-containers-system \
+     --from-file=GCP_CREDENTIALS="${GOOGLE_APPLICATION_CREDENTIALS}"
+    ```
 
-Verify that the `runtimeclass` is created after deploying CAA:
+3. Install helm chart:
+
+   Below command uses customization options `-f` and `--set` which are described [here](../../getting-started/installation/advanced_configuration).
+
+    ```bash
+    helm install peerpods . \
+      -f providers/gcp.yaml \
+      --set secrets.mode=reference \
+      --set secrets.existingSecretName=my-provider-creds \
+      --dependency-update \
+      -n confidential-containers-system
+    ```
+
+Generic Peer pods Helm charts deployment instructions are also described 
+[here](https://github.com/confidential-containers/cloud-api-adaptor/tree/main/src/cloud-api-adaptor/install/charts/peerpods/README.md).
+
+## Run a sample application
+
+### Ensure runtimeclass is present
+
+Verify that the `runtimeclass` is created after deploying Peer Pods Helm Charts:
 
 ```bash
 kubectl get runtimeclass
 ```
 
-Once you can find a `runtimeclass` named `kata-remote` then you can be sure
-that the deployment was successful. A successful deployment will look like
-this:
+Once you can find a `runtimeclass` named `kata-remote` then you can be sure that the deployment was successful.
+A successful deployment will look like this:
 
 ```console
 $ kubectl get runtimeclass
@@ -385,21 +394,7 @@ NAME          HANDLER       AGE
 kata-remote   kata-remote   7m18s
 ```
 
-Generic CAA deployment instructions are also described
-[here](https://github.com/confidential-containers/cloud-api-adaptor/tree/main/src/cloud-api-adaptor/install).
-
-## Deploy the Peerpod controller for garbage collecting pod VMs
-
-Change the working directory from `cloud-api-adaptor-${CAA_VERSION}/src/cloud-api-adaptor`
-to `cloud-api-adaptor-${CAA_VERSION}/src/peerpod-ctrl`
-
-Run the following command to deploy the Peerpod CRD
-
-```bash
-kubectl apply -k "config/default"
-```
-
-## Run a sample application
+### Deploy workload
 
 {{< tabpane text=true right=true persist=header >}}
 
@@ -529,8 +524,7 @@ default WriteStreamRequest := false
 '''
 ```
 
-Make sure you have the right policy and KBC URL is pointing to your Key Broker
-Service.
+Make sure you have the right policy and KBC URL is pointing to your Key Broker Service.
 
 Now, encode the `initdata.toml` and store it in a variable
 
@@ -565,19 +559,17 @@ EOF
 
 ### Fetching Secrets from Trustee
 
-Once the pod is successfully deployed with the `initdata`, you can retrieve
-secrets from the Trustee service running inside the pod. Use the following
-command to fetch a specific secret:
+Once the pod is successfully deployed with the `initdata`, you can retrieve secrets from the Trustee service running 
+inside the pod. Use the following command to fetch a specific secret:
 
 ```bash
 kubectl exec -it example-pod -- curl http://127.0.0.1:8006/cdh/resource/default/kbsres1/key1
 {{% /tab %}}
 
-{{% tab header="Basic nginx"  %}}
+{{% tab header="Basic nginx" %}}
 
-This example demonstrates how to verify if CAA is successfully starting the
-PodVM within the cloud provider. It is the simplest example available for
-deployment.
+This example demonstrates how to verify if Helm chart is successfully starting the PodVM within the cloud provider. 
+It is the simplest example available for deployment.
 
 Create an `nginx` deployment:
 
@@ -627,9 +619,6 @@ gcloud compute instances list
 
 Here you should see the VM associated with the pod used by the example above.
 
-> **Note**: If you run into problems then check the troubleshooting guide
-> [here](../troubleshooting/).
-
 ## Cleanup
 
 Delete all running pods using the runtimeclass `kata-remote`. You can use the
@@ -655,6 +644,8 @@ gcloud container clusters delete my-cluster --zone ${GCP_REGION}-a
 ```
 
 ## Troubleshooting
+
+> **Note**: If your case is not covered in section below check the troubleshooting guide [here](../troubleshooting/).
 
 ### VM Doesn't Start
 

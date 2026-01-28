@@ -23,7 +23,9 @@ This documentation will walk you through setting up CAA (a.k.a. Peer Pods) on Al
 
 ## Prerequisites
 
-- Install `aliyun` CLI [tool](https://www.alibabacloud.com/help/en/cli/installation-guide/?spm=a2c63.p38356.help-menu-29991.d_2.28f346a6IMqkop) and [configure credentials](https://www.alibabacloud.com/help/en/cli/configure-credentials)
+Install Required Tools:
+
+- Install `aliyun` CLI [tool](https://www.alibabacloud.com/help/en/cli/installation-guide/?spm=a2c63.p38356.help-menu-29991.d_2.28f346a6IMqkop) and [configure credentials](https://www.alibabacloud.com/help/en/cli/configure-credentials),
 - Have an `aliyun` OSS storage with a bucket.
 
 ## Create pod VM Image
