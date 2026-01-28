@@ -1,9 +1,10 @@
 ---
 title: AWS
-description: Cloud API Adaptor (CAA) on AWS
+description: Peer Pods Helm Chart using Cloud API Adaptor (CAA) on AWS
 categories:
 - examples
 tags:
+- helm
 - caa
 - aws
 - eks
@@ -17,9 +18,12 @@ This documentation will walk you through setting up CAA (a.k.a. Peer Pods) on AW
 
 ## Pre-requisites
 
-- Install `aws` CLI [tool](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html)
-- Install `eksctl` CLI [tool](https://eksctl.io/installation/)
-- Install kubectl by following the instructions [here](https://kubernetes.io/docs/tasks/tools/#kubectl).
+Install Required Tools:
+
+- Install [kubectl](https://kubernetes.io/docs/tasks/tools/#kubectl),
+- Install [Helm](https://helm.sh/docs/intro/install),
+- Install `aws` CLI [tool](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html),
+- Install `eksctl` CLI [tool](https://eksctl.io/installation/),
 - Ensure that the tools `curl`, `git` and `jq` are installed.
 
 ## AWS Preparation
@@ -77,6 +81,14 @@ eksctl create cluster --name "$CLUSTER_NAME" \
 
 Wait for the cluster to be created.
 
+Label the cluster nodes with `node.kubernetes.io/worker=`
+
+```bash
+for NODE_NAME in $(kubectl get nodes -o jsonpath='{.items[*].metadata.name}'); do
+  kubectl label node $NODE_NAME node.kubernetes.io/worker=
+done
+```
+
 ### Allow required network ports
 
 ```bash
@@ -109,9 +121,9 @@ aws ec2 authorize-security-group-ingress --group-id "$EKS_CLUSTER_SG" --protocol
 > - Port `9000` is the VXLAN port used by CAA. Ensure it doesn't conflict with the VXLAN port
 > used by the Kubernetes CNI.
 
-## Deploy CAA
+## Deploy the CAA Helm chart
 
-### Download the CAA deployment artifacts
+### Download the CAA Helm deployment artifacts
 
 {{< tabpane text=true right=true persist=header >}}
 {{% tab header="**Versions**:" disabled=true /%}}
@@ -119,10 +131,10 @@ aws ec2 authorize-security-group-ingress --group-id "$EKS_CLUSTER_SG" --protocol
 {{% tab header="Last Release" %}}
 
 ```bash
-export CAA_VERSION="0.16.0"
+export CAA_VERSION="0.17.0"
 curl -LO "https://github.com/confidential-containers/cloud-api-adaptor/archive/refs/tags/v${CAA_VERSION}.tar.gz"
 tar -xvzf "v${CAA_VERSION}.tar.gz"
-cd "cloud-api-adaptor-${CAA_VERSION}/src/cloud-api-adaptor"
+cd "cloud-api-adaptor-${CAA_VERSION}/src/cloud-api-adaptor/install/charts/peerpods"
 ```
 
 {{% /tab %}}
@@ -133,18 +145,24 @@ cd "cloud-api-adaptor-${CAA_VERSION}/src/cloud-api-adaptor"
 export CAA_BRANCH="main"
 curl -LO "https://github.com/confidential-containers/cloud-api-adaptor/archive/refs/heads/${CAA_BRANCH}.tar.gz"
 tar -xvzf "${CAA_BRANCH}.tar.gz"
-cd "cloud-api-adaptor-${CAA_BRANCH}/src/cloud-api-adaptor"
+cd "cloud-api-adaptor-${CAA_BRANCH}/src/cloud-api-adaptor/install/charts/peerpods"
 ```
 
 {{% /tab %}}
 
 {{% tab header="DIY" %}}
-This assumes that you already have the code ready to use. On your terminal change directory to the Cloud API Adaptor's code base.
+This assumes that you already have the code ready to use. 
+On your terminal change directory to the Cloud API Adaptor's code base.
 {{% /tab %}}
 
 {{< /tabpane >}}
 
-### CAA pod VM image
+### Export PodVM image version
+
+Exports the PodVM image ID used by peer pods. This variable tells the deployment tooling which PodVM image version
+to use when creating peer pod virtual machines in AWS.
+
+The image is pulled from the Coco community gallery (or manually built) and must match the current CAA release version.
 
 {{< tabpane text=true right=true persist=header >}}
 {{% tab header="**Versions**:" disabled=true /%}}
@@ -187,7 +205,11 @@ Once image build is finished, export image id to the environment variable `PODVM
 
 {{< /tabpane >}}
 
-### CAA container image
+### Export CAA container image path
+
+Define the Cloud API Adaptor (CAA) container image to deploy.
+These variables tell the deployment tooling which CAA image and architecture-specific tag to pull and run.
+The tag is derived from the CAA release version to ensure compatibility with the selected PodVM image and configuration.
 
 {{< tabpane text=true right=true persist=header >}}
 {{% tab header="**Versions**:" disabled=true /%}}
@@ -229,17 +251,6 @@ If you have made changes to the CAA code and you want to deploy those changes th
 
 {{< /tabpane >}}
 
-### Create the AWS credentials file
-
-```bash
-cat <<EOF > install/overlays/aws/aws-cred.env
-AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
-AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
-EOF
-```
-
-> **Note**: The values should be without quotes
-
 ### Select peer-pods machine type
 
 {{< tabpane text=true right=true persist=header >}}
@@ -264,75 +275,76 @@ export DISABLECVM="true"
 {{% /tab %}}
 {{< /tabpane >}}
 
-### Populate the `kustomization.yaml` file
+### Populate the `providers/aws.yaml` file
 
-Run the following command to update the [`kustomization.yaml`](https://github.com/confidential-containers/cloud-api-adaptor/blob/main/install/overlays/aws/kustomization.yaml) file:
+List of all available configuration options can be found in two places:
+- [Main charts values](https://github.com/confidential-containers/cloud-api-adaptor/blob/main/src/cloud-api-adaptor/install/charts/peerpods/values.yaml)
+- [AWS specific values](https://github.com/confidential-containers/cloud-api-adaptor/blob/main/src/cloud-api-adaptor/install/charts/peerpods/providers/aws.yaml)
 
-```yaml
-cat <<EOF > install/overlays/aws/kustomization.yaml
-apiVersion: kustomize.config.k8s.io/v1beta1
-kind: Kustomization
-resources:
-- ../../yamls
-images:
-- name: cloud-api-adaptor
-  newName: "${CAA_IMAGE}"
-  newTag: "${CAA_TAG}"
-generatorOptions:
-  disableNameSuffixHash: true
-configMapGenerator:
-- name: peer-pods-cm
-  namespace: confidential-containers-system
-  literals:
-  - CLOUD_PROVIDER="aws"
-  - DISABLECVM="${DISABLECVM}"
-  - VXLAN_PORT="9000"
-  - PODVM_AMI_ID="${PODVM_AMI_ID}"
-  - PODVM_INSTANCE_TYPE="${PODVM_INSTANCE_TYPE}"  
-secretGenerator:
-- name: peer-pods-secret
-  namespace: confidential-containers-system  
-  envs:
-    - aws-cred.env
+Run the following command to update the [`providers/aws.yaml`](https://github.com/confidential-containers/cloud-api-adaptor/blob/main/src/cloud-api-adaptor/install/charts/peerpods/providers/aws.yaml) file:
+
+```bash
+cat <<EOF > providers/aws.yaml
+provider: aws
+image:
+  name: "${CAA_IMAGE}"
+  tag: "${CAA_TAG}"
+providerConfigs:
+   aws:
+      DISABLECVM: ${DISABLECVM}
+      PODVM_AMI_ID: "${PODVM_AMI_ID}"
+      PODVM_INSTANCE_TYPE: "${PODVM_INSTANCE_TYPE}"
+      VXLAN_PORT: 9000
 EOF
 ```
 
-### Deploy CAA on the Kubernetes cluster
+### Deploy helm chart on the Kubernetes cluster
 
-Label the cluster nodes with `node.kubernetes.io/worker=`
+1. Create namespace managed by Helm:
+    ```bash
+   kubectl apply -f - << EOF
+   apiVersion: v1
+   kind: Namespace
+   metadata:
+     name: confidential-containers-system
+     labels:
+       app.kubernetes.io/managed-by: Helm
+     annotations:
+       meta.helm.sh/release-name: peerpods
+       meta.helm.sh/release-namespace: confidential-containers-system
+   EOF
+    ```
 
-```bash
-for NODE_NAME in $(kubectl get nodes -o jsonpath='{.items[*].metadata.name}'); do
-  kubectl label node $NODE_NAME node.kubernetes.io/worker=
-done
-```
+2. Create the secret using `kubectl`:
 
-Deploy the coco operator. Usually it's the same version as CAA, but it can be adjusted.
+   See [providers/aws-secrets.yaml.template](https://github.com/confidential-containers/cloud-api-adaptor/blob/main/src/cloud-api-adaptor/install/charts/peerpods/providers/aws-secrets.yaml.template) for required keys.
 
-```bash
-export COCO_OPERATOR_VERSION="${CAA_VERSION}"
-kubectl apply -k "github.com/confidential-containers/operator/config/release?ref=v${COCO_OPERATOR_VERSION}"
-kubectl apply -k "github.com/confidential-containers/operator/config/samples/ccruntime/peer-pods?ref=v${COCO_OPERATOR_VERSION}"
-```
+    ```bash
+    kubectl create secret generic my-provider-creds \
+    -n confidential-containers-system \
+    --from-literal=AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID} \
+    --from-literal=AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY} \
+    --from-file=id_rsa.pub=${SSH_KEY}
+    ```
 
-Run the following command to deploy CAA:
+   > **Note**: `--from-file=id_rsa.pub=${SSH_KEY}` is optional. It allows user to SSH into the pod VMs for troubleshooting purposes.
+   > This option works only for custom debug enabled pod VM images. The prebuilt pod VM images do not have SSH connection enabled.
 
-```bash
-kubectl apply -k "install/overlays/aws"
-```
+3. Install helm chart:
 
-Generic CAA deployment instructions are also described [here](https://github.com/confidential-containers/cloud-api-adaptor/blob/main/install/README.md).
+   Below command uses customization options `-f` and `--set` which are described [here](../../getting-started/installation/advanced_configuration).
 
-## Deploy the Peerpod controller for garbage collecting pod VMs
+    ```bash
+    helm install peerpods . \
+      -f providers/aws.yaml \
+      --set secrets.mode=reference \
+      --set secrets.existingSecretName=my-provider-creds \
+      --dependency-update \
+      -n confidential-containers-system
+    ```
 
-Change the working directory from `cloud-api-adaptor-${CAA_VERSION}/src/cloud-api-adaptor`
-to `cloud-api-adaptor-${CAA_VERSION}/src/peerpod-ctrl`
-
-Run the following command to deploy the Peerpod CRD
-
-```bash
-kubectl apply -k "config/default"
-```
+Generic Peer pods Helm charts deployment instructions are also described
+[here](https://github.com/confidential-containers/cloud-api-adaptor/tree/main/src/cloud-api-adaptor/install/charts/peerpods/README.md).
 
 ## Run sample application
 

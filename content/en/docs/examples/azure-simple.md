@@ -1,9 +1,10 @@
 ---
 title: Azure
-description: Cloud API Adaptor (CAA) on Azure
+description: Peer Pods Helm Chart using Cloud API Adaptor (CAA) on Azure
 categories:
 - examples
 tags:
+- helm
 - caa
 - azure
 ---
@@ -19,8 +20,11 @@ Confidential Containers also supports using Azure Key Vault as a resource backen
 
 ## Pre-requisites
 
-- Install Azure CLI by following instructions [here](https://learn.microsoft.com/en-us/cli/azure/install-azure-cli).
-- Install kubectl by following the instructions [here](https://kubernetes.io/docs/tasks/tools/#kubectl).
+Install Required Tools:
+
+- Install [kubectl](https://kubernetes.io/docs/tasks/tools/),
+- Install [Helm](https://helm.sh/docs/intro/install),
+- Install `az` CLI [tool](https://learn.microsoft.com/en-us/cli/azure/install-azure-cli),
 - Ensure that the tools `curl`, `git`, `jq` and `sipcalc` are installed.
 
 ## Azure Preparation
@@ -136,7 +140,7 @@ CAA needs privileges to talk to Azure API. This privilege is granted to CAA by a
 Start by creating an identity for CAA:
 
 ```bash
-export AZURE_WORKLOAD_IDENTITY_NAME="caa-${CLUSTER_NAME}"
+export AZURE_WORKLOAD_IDENTITY_NAME="${CLUSTER_NAME}-identity"
 
 az identity create \
   --name "${AZURE_WORKLOAD_IDENTITY_NAME}" \
@@ -208,7 +212,7 @@ export AKS_OIDC_ISSUER="$(az aks show \
 
 ```bash
 az identity federated-credential create \
-  --name "caa-${CLUSTER_NAME}" \
+  --name "${CLUSTER_NAME}-federated" \
   --identity-name "${AZURE_WORKLOAD_IDENTITY_NAME}" \
   --resource-group "${AZURE_RESOURCE_GROUP}" \
   --issuer "${AKS_OIDC_ISSUER}" \
@@ -216,11 +220,11 @@ az identity federated-credential create \
   --audience api://AzureADTokenExchange
 ```
 
-## Deploy CAA
+## Deploy the CAA Helm chart
 
 > **Note**: If you are using Calico Container Network Interface (CNI) on the Kubernetes cluster, then, [configure](https://projectcalico.docs.tigera.io/networking/vxlan-ipip#configure-vxlan-encapsulation-for-all-inter-workload-traffic) Virtual Extensible LAN (VXLAN) encapsulation for all inter workload traffic.
 
-### Download the CAA deployment artifacts
+### Download the CAA Helm deployment artifacts
 
 {{< tabpane text=true right=true persist=header >}}
 {{% tab header="**Versions**:" disabled=true /%}}
@@ -231,7 +235,7 @@ az identity federated-credential create \
 export CAA_VERSION="0.17.0"
 curl -LO "https://github.com/confidential-containers/cloud-api-adaptor/archive/refs/tags/v${CAA_VERSION}.tar.gz"
 tar -xvzf "v${CAA_VERSION}.tar.gz"
-cd "cloud-api-adaptor-${CAA_VERSION}/src/cloud-api-adaptor"
+cd "cloud-api-adaptor-${CAA_VERSION}/src/cloud-api-adaptor/install/charts/peerpods"
 ```
 
 {{% /tab %}}
@@ -242,18 +246,24 @@ cd "cloud-api-adaptor-${CAA_VERSION}/src/cloud-api-adaptor"
 export CAA_BRANCH="main"
 curl -LO "https://github.com/confidential-containers/cloud-api-adaptor/archive/refs/heads/${CAA_BRANCH}.tar.gz"
 tar -xvzf "${CAA_BRANCH}.tar.gz"
-cd "cloud-api-adaptor-${CAA_BRANCH}/src/cloud-api-adaptor"
+cd "cloud-api-adaptor-${CAA_BRANCH}/src/cloud-api-adaptor/install/charts/peerpods"
 ```
 
 {{% /tab %}}
 
 {{% tab header="DIY" %}}
-This assumes that you already have the code ready to use. On your terminal change directory to the Cloud API Adaptor's code base.
+This assumes that you already have the code ready to use. 
+On your terminal change directory to the Cloud API Adaptor's code base.
 {{% /tab %}}
 
 {{< /tabpane >}}
 
-### CAA pod VM image
+### Export PodVM image version
+
+Exports the PodVM image ID used by peer pods. This variable tells the deployment tooling which PodVM image version
+to use when creating peer pod virtual machines in Azure.
+
+The image is pulled from the Coco community gallery (or manually built) and must match the current CAA release version.
 
 {{< tabpane text=true right=true persist=header >}}
 {{% tab header="**Versions**:" disabled=true /%}}
@@ -287,13 +297,18 @@ Above image version is in the format `YYYY.MM.DD`, so to use the latest image sh
 
 {{% tab header="DIY" %}}
 
-If you have made changes to the CAA code that affects the pod VM image and you want to deploy those changes then follow [these instructions](https://github.com/confidential-containers/cloud-api-adaptor/blob/main/src/cloud-api-adaptor/azure/build-image.md) to build the pod VM image. Once image build is finished then export image id to the environment variable `AZURE_IMAGE_ID`.
+If you have made changes to the CAA code that affects the pod VM image, and you want to deploy those changes then follow [these instructions](https://github.com/confidential-containers/cloud-api-adaptor/blob/main/src/cloud-api-adaptor/azure/build-image.md) to build the pod VM image. 
+Once image build is finished then export image id to the environment variable `AZURE_IMAGE_ID`.
 
 {{% /tab %}}
 
 {{< /tabpane >}}
 
-### CAA container image
+### Export CAA container image path
+
+Define the Cloud API Adaptor (CAA) container image to deploy.
+These variables tell the deployment tooling which CAA image and architecture-specific tag to pull and run.
+The tag is derived from the CAA release version to ensure compatibility with the selected PodVM image and configuration.
 
 {{< tabpane text=true right=true persist=header >}}
 {{% tab header="**Versions**:" disabled=true /%}}
@@ -335,33 +350,6 @@ If you have made changes to the CAA code and you want to deploy those changes th
 
 {{< /tabpane >}}
 
-### Annotate Service Account
-
-Annotate the CAA Service Account with the workload identity's `CLIENT_ID` and make the CAA DaemonSet use workload identity for authentication:
-
-```yaml
-cat <<EOF > install/overlays/azure/workload-identity.yaml
-apiVersion: apps/v1
-kind: DaemonSet
-metadata:
-  name: cloud-api-adaptor-daemonset
-  namespace: confidential-containers-system
-spec:
-  template:
-    metadata:
-      labels:
-        azure.workload.identity/use: "true"
----
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: cloud-api-adaptor
-  namespace: confidential-containers-system
-  annotations:
-    azure.workload.identity/client-id: "$USER_ASSIGNED_CLIENT_ID"
-EOF
-```
-
 ### Select peer-pods machine type
 
 {{< tabpane text=true right=true persist=header >}}
@@ -397,91 +385,98 @@ export DISABLECVM="true"
 {{% /tab %}}
 {{< /tabpane >}}
 
-### Populate the `kustomization.yaml` file
+### Populate the `providers/azure.yaml` file
 
-Run the following command to update the [`kustomization.yaml`](https://github.com/confidential-containers/cloud-api-adaptor/blob/main/install/overlays/azure/kustomization.yaml) file:
+List of all available configuration options can be found in two places:
+- [Main charts values](https://github.com/confidential-containers/cloud-api-adaptor/blob/main/src/cloud-api-adaptor/install/charts/peerpods/values.yaml)
+- [Azure specific values](https://github.com/confidential-containers/cloud-api-adaptor/blob/main/src/cloud-api-adaptor/install/charts/peerpods/providers/azure.yaml)
 
-```yaml
-cat <<EOF > install/overlays/azure/kustomization.yaml
-apiVersion: kustomize.config.k8s.io/v1beta1
-kind: Kustomization
-bases:
-- ../../yamls
-images:
-- name: cloud-api-adaptor
-  newName: "${CAA_IMAGE}"
-  newTag: "${CAA_TAG}"
-generatorOptions:
-  disableNameSuffixHash: true
-configMapGenerator:
-- name: peer-pods-cm
-  namespace: confidential-containers-system
-  literals:
-  - CLOUD_PROVIDER="azure"
-  - AZURE_SUBSCRIPTION_ID="${AZURE_SUBSCRIPTION_ID}"
-  - AZURE_REGION="${AZURE_REGION}"
-  - AZURE_INSTANCE_SIZE="${AZURE_INSTANCE_SIZE}"
-  - AZURE_RESOURCE_GROUP="${AZURE_RESOURCE_GROUP}"
-  - AZURE_SUBNET_ID="${AZURE_SUBNET_ID}"
-  - AZURE_IMAGE_ID="${AZURE_IMAGE_ID}"
-  - DISABLECVM="${DISABLECVM}"
-secretGenerator:
-- name: peer-pods-secret
-  namespace: confidential-containers-system
-- name: ssh-key-secret
-  namespace: confidential-containers-system
-  files:
-  - id_rsa.pub
-patchesStrategicMerge:
-- workload-identity.yaml
+Run the following command to update the [`providers/azure.yaml`](https://github.com/confidential-containers/cloud-api-adaptor/blob/main/src/cloud-api-adaptor/install/charts/peerpods/providers/azure.yaml) file:
+
+```bash
+cat <<EOF > providers/azure.yaml
+provider: azure
+image:
+  name: "${CAA_IMAGE}"
+  tag: "${CAA_TAG}"
+providerConfigs:
+   azure:
+      AZURE_IMAGE_ID: "${AZURE_IMAGE_ID}"
+      AZURE_REGION: "${AZURE_REGION}"
+      AZURE_RESOURCE_GROUP: "${AZURE_RESOURCE_GROUP}"
+      AZURE_SUBNET_ID: "${AZURE_SUBNET_ID}"
+      AZURE_SUBSCRIPTION_ID: "${AZURE_SUBSCRIPTION_ID}"
+      AZURE_INSTANCE_SIZE: "${AZURE_INSTANCE_SIZE}"
+      DISABLECVM: ${DISABLECVM}
 EOF
 ```
 
-The SSH public key should be accessible to the `kustomization.yaml` file:
+### Deploy helm chart on the Kubernetes cluster
 
-```bash
-cp $SSH_KEY install/overlays/azure/id_rsa.pub
-```
+1. Create namespace managed by Helm:
+    ```bash
+   kubectl apply -f - << EOF
+   apiVersion: v1
+   kind: Namespace
+   metadata:
+     name: confidential-containers-system
+     labels:
+       app.kubernetes.io/managed-by: Helm
+     annotations:
+       meta.helm.sh/release-name: peerpods
+       meta.helm.sh/release-namespace: confidential-containers-system
+   EOF
+    ```
 
-### Deploy CAA on the Kubernetes cluster
+2. Create the secret using `kubectl`:
 
-Deploy coco operator. Usually it's the same version as CAA, but it can be adjusted.
+    See [providers/azure-secrets.yaml.template](https://github.com/confidential-containers/cloud-api-adaptor/blob/main/src/cloud-api-adaptor/install/charts/peerpods/providers/azure-secrets.yaml.template) for required keys.
 
-```bash
-export COCO_OPERATOR_VERSION="${CAA_VERSION}"
-kubectl apply -k "github.com/confidential-containers/operator/config/release?ref=v${COCO_OPERATOR_VERSION}"
-kubectl apply -k "github.com/confidential-containers/operator/config/samples/ccruntime/peer-pods?ref=v${COCO_OPERATOR_VERSION}"
-```
+    > **Note**: Below example assumes that you are using workload identity for authentication hence
+    > `AZURE_CLIENT_SECRET` and `AZURE_TENANT_ID` are not provided.
 
-Run the following command to deploy CAA:
+    ```bash
+    kubectl create secret generic my-provider-creds \
+    -n confidential-containers-system \
+    --from-literal=AZURE_CLIENT_ID="${USER_ASSIGNED_CLIENT_ID}" \
+    --from-file=id_rsa.pub=${SSH_KEY}
+    ```
+    
+    > **Note**: `--from-file=id_rsa.pub=${SSH_KEY}` is optional. It allows user to SSH into the pod VMs for troubleshooting purposes.
+    > This option works only for custom debug enabled pod VM images. The prebuilt pod VM images do not have SSH connection enabled.
+   
+3. Install helm chart:
 
-```bash
-kubectl apply -k "install/overlays/azure"
-```
+   Below command uses customization options `-f` and `--set` which are described [here](../../getting-started/installation/advanced_configuration).
 
-Generic CAA deployment instructions are also described [here](https://github.com/confidential-containers/cloud-api-adaptor/blob/main/install/README.md).
+    ```bash
+    helm install peerpods . \
+      -f providers/azure.yaml \
+      --set secrets.mode=reference \
+      --set secrets.existingSecretName=my-provider-creds \
+      --set-json daemonset.podLabels='{"azure.workload.identity/use":"true"}' \
+      --dependency-update \
+      -n confidential-containers-system
+    ```
 
-### Deploy a controller for garbage collecting PodVMs
-
-Run the following command to deploy the Peerpod CRD
-
-```bash
-pushd ../peerpod-ctrl
-kubectl apply -k config/default
-popd
-```
+    > **Note**: Above example assumes that you are using workload identity for authentication. <br>
+    > This line: `--set-json daemonset.podLabels='{"azure.workload.identity/use":"true"}'` is required **only** when using workload identity.
+   
+Generic Peer pods Helm charts deployment instructions are also described 
+[here](https://github.com/confidential-containers/cloud-api-adaptor/tree/main/src/cloud-api-adaptor/install/charts/peerpods/README.md).
 
 ## Run sample application
 
 ### Ensure runtimeclass is present
 
-Verify that the `runtimeclass` is created after deploying CAA:
+Verify that the `runtimeclass` is created after deploying Peer Pods Helm Charts:
 
 ```bash
 kubectl get runtimeclass
 ```
 
-Once you can find a `runtimeclass` named `kata-remote` then you can be sure that the deployment was successful. A successful deployment will look like this:
+Once you can find a `runtimeclass` named `kata-remote` then you can be sure that the deployment was successful. 
+A successful deployment will look like this:
 
 ```console
 $ kubectl get runtimeclass
