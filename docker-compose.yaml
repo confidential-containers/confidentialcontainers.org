@@ -1,13 +1,17 @@
-version: "3.3"
-
 services:
-
   site:
-    image: docsy/docsy-example
+    image: ghcr.io/gohugoio/hugo:v0.155.0
     build:
       context: .
-    command: server
+    command: server --bind=0.0.0.0
+    environment:
+      HTTP_PROXY: "${HTTP_PROXY}"
+      HTTPS_PROXY: "${HTTPS_PROXY}"
+      NO_PROXY: "${NO_PROXY}"
+    user: "${UID}:${GID}"
     ports:
       - "1313:1313"
     volumes:
       - .:/src
+      - ${HOME}/.cache/hugo_cache:/cache
+    working_dir: /src

@@ -35,6 +35,12 @@ module:
   - path: github.com/google/docsy
   - path: github.com/google/docsy/dependencies
 
+mediaTypes:
+  font/woff:
+    suffixes: [woff]
+  font/woff2:
+    suffixes: [woff2]
+
 services:
   googleAnalytics:
     # Comment out the next line to disable GA tracking. Also disables the feature described in params.ui.feedback
