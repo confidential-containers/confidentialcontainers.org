@@ -4,7 +4,7 @@ This repository follows the usual Github workflow of pull request to make change
 
 ## Local Development
 
-### Using Hugo
+### Prerequisites
 
 - Make sure You have installed:
   - GO [here](https://go.dev/doc/install) and include it in PATH
@@ -12,22 +12,59 @@ This repository follows the usual Github workflow of pull request to make change
   - PostCSS plugin [here](https://gohugo.io/functions/css/postcss/#setup)
 - Install Hugo by following the instructions [here](https://gohugo.io/installation/).
 
-- Start a local server from the root of this repository:
-  ```bash
-  hugo server
-  ```
+> [!NOTE]
+> Currently recommended versions are:
+> - hugo: **0.155.0+** 
+> - docsy: **0.13.0+**
+
+### Using Hugo
+
+Start a local server from the root of this repository:
+
+```bash
+hugo server
+```
+
+### Using Docker
+
+1. Create a cache directory for Hugo:
+    ```bash
+    mkdir -p $HOME/.cache/hugo_cache
+    ```
+
+2. Start a local server from the root of this repository:
+    ```bash
+    docker run --rm -v .:/site -v $HOME/.cache/hugo_cache:/cache -u $(id -u):$(id -g) -w /site -p 1313:1313 ghcr.io/gohugoio/hugo:latest server --bind="0.0.0.0"
+    ```
 
 ### Using Docker Compose
 
-- Install docker-compose by following the instructions [here](https://docs.docker.com/compose/install/).
+1. Install docker-compose by following the instructions [here](https://docs.docker.com/compose/install/).
 
-- Start a local server from the root of this repository:
+2. Export variables for user and group id:
 
-```bash
-docker-compose up -d
-```
+    ```bash
+    export UID=$(id -u)
+    export GID=$(id -g)
+    ```
 
-Now go to [http://localhost:1313](http://localhost:1313) on your browser. Once you make any changes to the code the changes are compiled in real-time and you can see those in the browser.
+3. Create a cache directory for Hugo:
+
+   To prevent ownership and permission problems, create the Hugo cache directory and ignore the error if the directory
+   already exists:
+
+    ```bash
+    mkdir -p $HOME/.cache/hugo_cache
+    ```
+
+4. Start a local server from the root of this repository:
+
+    ```bash
+    docker-compose up -d
+    ```
+
+Now go to [http://localhost:1313](http://localhost:1313) on your browser. Once you make any changes to the code the
+changes are compiled in real-time and you can see those in the browser.
 
 ## Writing a blog
 
