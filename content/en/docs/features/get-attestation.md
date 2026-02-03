@@ -25,7 +25,7 @@ agent.guest_components_rest_api=all
 ```
 
 As usual, command line configurations can be added with annotations.
-```
+```yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:

@@ -28,7 +28,7 @@ Sometimes this will give you a useful message pointing to a failed attestation
 or some sort of missing environment setup. Most of the time you will see a
 generic message such as the following:
 
-```
+```bash
 Failed to create pod sandbox: rpc error: code = Unknown desc = failed to create containerd task: failed to create shim: Failed to Check if grpc server is working: rpc error: code = DeadlineExceeded desc = timed out connecting to vsock 637456061:1024: unknown
 ```
 
@@ -111,7 +111,7 @@ or hope that Kubernetes restarts your existing pod. Note that enabling debug opt
 config file can change the attestation evidence of a confidential guest.
 
 Now you should be able to view logs from containerd with the following:
-```
+```bash
 sudo journalctl -xeu containerd
 ```
 
@@ -179,7 +179,7 @@ you want to access. Do this via `ps -ef | grep qemu` or equivalent.
 The id is the long id that shows up in many different arguments.
 It should look like `1a9ab65be63b8b03dfd0c75036d27f0ed09eab38abb45337fea83acd3cd7bacd`.
 Once you have the id, you can use it to access the debug console.
-```
+```bash
 sudo /opt/confidential-containers/bin/kata-runtime exec <id>
 ```
 You might need to symlink the appropriate Kata configuration file for your runtime
@@ -238,7 +238,7 @@ If your CoCo Pod gets an error like the one shown below, then it is likely the i
 
 Therefore, you must ensure that the image pull policy is set to **Always** for any CoCo pod. This way the images are always handled entirely by the agent inside the VM. It is worth mentioning we recognize that this behavior is sub-optimal, so the community provides solutions to avoid constant image downloads for each workload.
 
-```
+```bash
 Events:
   Type     Reason     Age               From               Message
   ----     ------     ----              ----               -------
