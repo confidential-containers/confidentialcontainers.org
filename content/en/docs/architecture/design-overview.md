@@ -14,7 +14,7 @@ For Confidential Containers, the enclave contains the workload pod and helper pr
 that facilitate the workload pod.
 Everything else, including the hypervisor, other pods, and the control plane, is outside
 of the enclave and untrusted.
-This division is carefully considered to balance TCB size and sharing.
+This division is carefully considered to balance Trusted Computing Base ([TCB](https://csrc.nist.gov/glossary/term/trusted_computing_base)) size and sharing.
 
 {{< figure src="/img/coco-design-diagram-1.png" alt="A diagram showing container-centeric, pod-centric, and node-centric approaches" >}}
 
