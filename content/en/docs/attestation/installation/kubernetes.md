@@ -18,7 +18,7 @@ When running Trustee in Kubernetes with the operator, the cluster must be Truste
 
 The operator (release v0.17.0 at the time of writing) is available in the [Operator Hub](https://operatorhub.io/operator/trustee-operator).
 
-Please follow the installation steps detailed [here](https://confidentialcontainers.org/blog/2025/02/19/deploy-trustee-in-kubernetes/#kubernetes-deployment).
+Please follow the installation steps detailed [here](https://confidentialcontainers.org/blog/2026/02/11/deploy-trustee-in-kubernetes/#kubernetes-deployment).
 
 Verify that the controller is running.
 ```bash
@@ -49,7 +49,7 @@ kubectl patch csv -n operators trustee-operator.v0.17.0 --type='json' -p="[{'op'
 
 ### Deploy Trustee
 
-An example on how to configure Trustee is provided in this [blog](https://confidentialcontainers.org/blog/2025/02/19/deploy-trustee-in-kubernetes/#configuration).
+An example on how to configure Trustee is provided in this [blog](https://confidentialcontainers.org/blog/2026/02/11/deploy-trustee-in-kubernetes/#configuration).
 
 After the last configuration step, check that the Trustee deployment is running.
 ```bash

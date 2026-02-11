@@ -1,5 +1,5 @@
 ---
-date: 2025-02-19
+date: 2026-02-11
 title: Deploy Trustee in Kubernetes
 linkTitle: Deploy Trustee in Kubernetes
 description: >
