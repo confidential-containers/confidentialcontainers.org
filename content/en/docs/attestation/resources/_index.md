@@ -72,4 +72,4 @@ kubectl create secret generic kbsres1 --from-literal key1=res1val1 --from-litera
 ## Advanced configurations
 
 There are additional plugins and additional backends for the resource plugin.
-For example, Trustee can integrate with Azure Key Vault or PKCS11 HSMs.
+For example, Trustee can integrate with [Azure Key Vault](kbs-backed-by-akv), [HashiCorp Vault KV](kbs-backed-by-vault-kv), or PKCS11 HSMs.
