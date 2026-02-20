@@ -68,10 +68,10 @@ The Pkcs11 backend is configured with the following values.
 	       No `slot_index` is set, the first slot will be used.
 * `pin` The user password for authenticating a session with the above slot.
 
-### HashiCorp Vault KV
+### HashiCorp Vault / OpenBao KV
 
-The KBS can use [HashiCorp Vault](https://developer.hashicorp.com/vault) KV v1 as a resource backend,
-storing and retrieving secrets from a central Vault instance.
+The KBS can use [HashiCorp Vault](https://developer.hashicorp.com/vault) or [OpenBao](https://www.openbao.org/)
+KV v1 as a resource backend, storing and retrieving secrets from a Vault or OpenBao instance.
 Build the KBS with the `vault` feature (e.g. `cargo build --features vault`).
 In the KBS config, add a resource plugin of type `Vault` with `vault_url`, `token`, and optionally
 `mount_path`, `verify_ssl`, and `ca_certs`.
