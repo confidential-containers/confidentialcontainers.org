@@ -114,8 +114,8 @@ What distinguish the pod specification for authenticated registry from a regular
 
 Check the pod gets *Running*:
 
-```bash
-kubectl get -f pod-image-auth.yaml
+```console
+$ kubectl get -f pod-image-auth.yaml
 NAME              READY   STATUS    RESTARTS   AGE
 image-auth-feat   1/1     Running   0          2m52s
 ```

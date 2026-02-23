@@ -40,7 +40,7 @@ Create the workload:
 kubectl apply -f nginx.yaml
 ```
 Output:
-```bash
+```text
 pod/nginx created
 ```
 
@@ -49,7 +49,7 @@ Ensure the pod was created successfully (in running state):
 kubectl get pods
 ```
 Output:
-```
+```text
 NAME    READY   STATUS    RESTARTS   AGE
 nginx   1/1     Running   0          3m50s
 ```

@@ -100,7 +100,7 @@ spec:
 ```
 
 You can also expose your secret as a volume.
-```yaml 
+```yaml
 apiVersion: v1
 kind: Pod
 metadata:

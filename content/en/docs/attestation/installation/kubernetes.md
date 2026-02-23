@@ -26,7 +26,7 @@ kubectl get pods -n operators --watch
 ```
 
 The operator controller should be running.
-```bash
+```text
 NAME                                                   READY   STATUS    RESTARTS   AGE
 trustee-operator-controller-manager-77cb448dc-7vxck    1/1     Running   0          11m
 ```
@@ -57,7 +57,7 @@ kubectl get pods -n operators --selector=app=kbs
 ```
 
 The Trustee deployment should be running.
-```bash
+```text
 NAME                                  READY   STATUS    RESTARTS   AGE
 trustee-deployment-f97fb74d6-w5qsm    1/1     Running   0          25m
 ```

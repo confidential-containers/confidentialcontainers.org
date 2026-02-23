@@ -238,8 +238,8 @@ kubectl apply -f nginx-encrypted.yaml
 
 We can confirm that the image key has been retrieved from KBS.
 
-```bash
-kubectl logs -f deploy/kbs | grep "$KEY_PATH"
+```console
+$ kubectl logs -f deploy/kbs | grep "$KEY_PATH"
 [2024-01-23T10:24:52Z INFO  actix_web::middleware::logger] 10.244.0.1 "GET /kbs/v0/resource/default/image_key/nginx HTTP/1.1" 200 530 "-" "attestation-agent-kbs-client/0.1.0" 0.000670
 ```
 
@@ -281,10 +281,10 @@ If you have successfully retrieved a token attempt to fetch the symmetric key fo
 
 You can find out the kid for a given encrypted image in the a query like this:
 
-```bash
+```console
 $ ANNOTATION="org.opencontainers.image.enc.keys.provider.attestation-agent"
 $ skopeo inspect docker://ghcr.io/mkulke/nginx-encrypted@sha256:5a81641ff9363a63c3f0a1417d29b527ff6e155206a720239360cc6c0722696e \
-    | jq --arg ann "$ANNOTATION" -r '.LayersData[0].Annotations[$ann] | @base64d | fromjson | .kid' 
+    | jq --arg ann "$ANNOTATION" -r '.LayersData[0].Annotations[$ann] | @base64d | fromjson | .kid'
 kbs:///default/image_key/nginx
 ```
 

@@ -100,7 +100,7 @@ Every PR in every subproject is required to include a DCO.
 This is strictly enforced by the CI.
 Fortunately, it's easy to comply with this requirement.
 At the end of the commit message for each of your commits add something like
-```bash
+```text
 Signed-off-by: Alex Ample <al@example.com>
 ```
 You can add additional tags to credit other developers who worked on a commit
@@ -127,8 +127,8 @@ Projects might have additional conventions that are not captured by these tools.
 
 You can install the above tools as follows.
 
-```sh
-$ rustup component add rustfmt clippy
+```bash
+rustup component add rustfmt clippy
 ```
 
 
@@ -143,7 +143,7 @@ what it does.
 This helps reviewers and future developers.
 
 The title of the commit should start with a subsystem. For example,
-```bash
+```text
 docs: update contributor guide
 ```
 The "subsystem" describes the area of the code that the change applies to.

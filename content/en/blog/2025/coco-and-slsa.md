@@ -90,7 +90,7 @@ Following is the current state of provenance generation of the CoCo projects:
 
 Formerly exclusively a place to host layers for container images, OCI registries today can serve a multitude of use cases, such as Helm Charts or Attestation data. A registry is a content-addressable store, which means that it is named after a digest of its content.
 
-```sh
+```console
 $ DIGEST="84ec2a70279219a45d327ec1f2f112d019bc9dcdd0e19f1ba7689b646c2de0c2"
 $ oras manifest fetch "quay.io/curl/curl@sha256:${DIGEST}" | sha256sum
 84ec2a70279219a45d327ec1f2f112d019bc9dcdd0e19f1ba7689b646c2de0c2  -
@@ -99,15 +99,15 @@ $ oras manifest fetch "quay.io/curl/curl@sha256:${DIGEST}" | sha256sum
 We also use OCI registries to distribute and cache artifacts in the CoCo project.
 There is a convention of specifying upstream dependencies in a `versions.yaml` file this:
 
-```sh
+```yaml
 oci:
-  ...
+  # ...
   kata-containers:
-	registry: ghcr.io/kata-containers/cached-artefacts
-	reference: 3.13.0
+    registry: ghcr.io/kata-containers/cached-artefacts
+    reference: 3.13.0
   guest-components:
-	registry: ghcr.io/confidential-containers/guest-components
-	reference: 3df6c412059f29127715c3fdbac9fa41f56cfce4
+    registry: ghcr.io/confidential-containers/guest-components
+    reference: 3df6c412059f29127715c3fdbac9fa41f56cfce4
 ```
 
 Note that the `reference` in this case is a tag, sometimes a version, and sometimes a reference to the digest of a given git commit, not the digest of the OCI artefact. What do we express from this specification, and what do we want to verify?
@@ -115,7 +115,7 @@ We might want to resolve a tag to a git digest first, so tag 3.13.0 resolves to 
 This is what the SLSA attestation that we created during the artefact's build can substantiate.
 It wouldn't make sense to attest against an artifact using an OCI tag alias (those are not immutable, and one can move it to point to something else); the attestations are tied to an OCI artifact referenced by its digest and conveniently stored alongside this in the same repo. We can find it manually if we search for referrers of our OCI artifact.
 
-```sh
+```console
 $ GIT_DGST="2777b13db748f9ba785c7d2be4fcb6ac9c9af265"
 $ oras resolve "ghcr.io/kata-containers/cached-artefacts/agent:${GIT_DGST}-x86_64"
 sha256:c127db93af2fcefddebbe98013e359a7c30b9130317a96aab50093af0dbe8464
@@ -132,7 +132,7 @@ As mentioned previously, Github provides a command line option to verify the [pr
 
 The following snippet from the cloud-api-adaptor project's [Makefile](https://github.com/confidential-containers/cloud-api-adaptor/blob/main/src/cloud-api-adaptor/podvm/Makefile.inc) shows an example usage:
 
-```sh
+```bash
 define pull_agent_artifact
 	$(eval $(call generate_tag,tag,$(KATA_REF),$(ARCH)))
 	$(eval OCI_IMAGE := $(KATA_REGISTRY)/agent)

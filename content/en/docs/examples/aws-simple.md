@@ -368,7 +368,7 @@ kata-remote   kata-remote   7m18s
 
 Create an `nginx` deployment:
 
-```yaml
+```bash
 cat <<EOF | kubectl apply -f -
 apiVersion: apps/v1
 kind: Deployment

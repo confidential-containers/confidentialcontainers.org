@@ -54,7 +54,7 @@ In this section you will learn how to get the [CoCo operator](https://github.com
 
 First, you should have the `node.kubernetes.io/worker=` label on all the cluster nodes that you want the runtime installed on. This is how the cluster admin instructs the operator controller about what nodes, in a multi-node cluster, need the runtime. Use the command `kubectl label node NODE_NAME "node.kubernetes.io/worker="` as on the listing below to add the label:
 
-```shell
+```console
 $ kubectl get nodes
 NAME    	STATUS   ROLES       	AGE   VERSION
 coco-demo   Ready	control-plane   87s   v1.30.1
@@ -64,7 +64,7 @@ node/coco-demo labeled
 
 Once the target worker nodes are properly labeled, the next step is to install the operator controller. You should first ensure that SELinux is disabled or in permissive mode, however, because the operator controller will attempt to restart services in your system and SELinux may deny that. Using the following sequence of commands we set SELinux to permissive and install the operator controller:
 
-```shell
+```console
 $ sudo setenforce 0
 $ kubectl apply -k github.com/confidential-containers/operator/config/release?ref=v0.10.0
 ```
@@ -72,7 +72,7 @@ $ kubectl apply -k github.com/confidential-containers/operator/config/release?re
 This will create a series of resources in the `confidential-containers-system`
 namespace. In particular, it creates a deployment with pods that all need to be running before you continue the installation, as shown below:
 
-```shell
+```console
 $ kubectl get pods -n confidential-containers-system
 NAME                                          	READY   STATUS	RESTARTS   AGE
 cc-operator-controller-manager-557b5cbdc5-q7wk7   2/2 	Running   0      	2m42s
@@ -85,7 +85,7 @@ The operator controller is capable of managing the installation of different [Co
 
 Now it is time to install the ccruntime runtime. You should run the following commands and wait a few minutes while it downloads and installs Kata Containers and configures your node for CoCo:
 
-```shell
+```console
 $ kubectl apply -k github.com/confidential-containers/operator/config/samples/ccruntime/default?ref=v0.10.0
 ccruntime.confidentialcontainers.org/ccruntime-sample created
 $ kubectl get pods -n confidential-containers-system --watch
@@ -97,7 +97,7 @@ cc-operator-pre-install-daemon-d55v2          	1/1 	Running   0      	8m35s
 
 You can notice that it will get installed a couple of [Kubernetes runtimeclasses](https://kubernetes.io/docs/concepts/containers/runtime-class/) as shown on the listing below. Each class defines a container runtime configuration as, for example, **kata-qemu-tdx** should be used to launch QEMU/KVM for Intel TDX hardware (similarly **kata-qemu-snp** for AMD SEV-SNP). For the purpose of creating a confidential pod in a non-TEE environment we will be using the **kata-qemu-coco-dev** runtime class.
 
-```shell
+```console
 $ kubectl get runtimeclasses
 NAME             	HANDLER          	AGE
 kata             	kata-qemu        	26m
@@ -137,7 +137,7 @@ spec:
 
 Then you should apply that manifest and wait for the pod to be `RUNNING` as shown below:
 
-```shell
+```console
 $ kubectl apply -f coco-demo-01.yaml
 pod/coco-demo-01 created
 $ kubectl get pods
@@ -157,7 +157,7 @@ Our confidential containers implementation is built on [Kata Containers](https:/
 
 Currently CoCo supports launching pods with [QEMU](https://www.qemu.org/) only, despite Kata Containers supporting other hypervisors. An instance of QEMU was launched to run the coco-demo-01, as you can see below:
 
-```shell
+```console
 $ ps aux | grep /opt/kata/bin/qemu-system-x86_64
 root   	15892  0.8  3.6 2648004 295424 ?  	Sl   20:36   0:04 /opt/kata/bin/qemu-system-x86_64 -name sandbox-baabb31ff0c798a31bca7373f2abdbf2936375a5729a3599799c0a225f3b9612 -uuid e8a3fb26-eafa-4d6b-b74e-93d0314b6e35 -machine q35,accel=kvm,nvdimm=on -cpu host,pmu=off -qmp unix:fd=3,server=on,wait=off -m 2048M,slots=10,maxmem=8961M -device pci-bridge,bus=pcie.0,id=pci-bridge-0,chassis_nr=1,shpc=off,addr=2,io-reserve=4k,mem-reserve=1m,pref64-reserve=1m -device virtio-serial-pci,disable-modern=true,id=serial0 -device virtconsole,chardev=charconsole0,id=console0 -chardev socket,id=charconsole0,path=/run/vc/vm/baabb31ff0c798a31bca7373f2abdbf2936375a5729a3599799c0a225f3b9612/console.sock,server=on,wait=off -device nvdimm,id=nv0,memdev=mem0,unarmed=on -object memory-backend-file,id=mem0,mem-path=/opt/kata/share/kata-containers/kata-ubuntu-latest-confidential.image,size=268435456,readonly=on -device virtio-scsi-pci,id=scsi0,disable-modern=true -object rng-random,id=rng0,filename=/dev/urandom -device virtio-rng-pci,rng=rng0 -device vhost-vsock-pci,disable-modern=true,vhostfd=4,id=vsock-1515224306,guest-cid=1515224306 -netdev tap,id=network-0,vhost=on,vhostfds=5,fds=6 -device driver=virtio-net-pci,netdev=network-0,mac=6a:e6:eb:34:52:32,disable-modern=true,mq=on,vectors=4 -rtc base=utc,driftfix=slew,clock=host -global kvm-pit.lost_tick_policy=discard -vga none -no-user-config -nodefaults -nographic --no-reboot -object memory-backend-ram,id=dimm1,size=2048M -numa node,memdev=dimm1 -kernel /opt/kata/share/kata-containers/vmlinuz-6.7-136-confidential -append tsc=reliable no_timer_check rcupdate.rcu_expedited=1 i8042.direct=1 i8042.dumbkbd=1 i8042.nopnp=1 i8042.noaux=1 noreplace-smp reboot=k cryptomgr.notests net.ifnames=0 pci=lastbus=0 root=/dev/pmem0p1 rootflags=dax,data=ordered,errors=remount-ro ro rootfstype=ext4 console=hvc0 console=hvc1 quiet systemd.show_status=false panic=1 nr_cpus=4 selinux=0 systemd.unit=kata-containers.target systemd.mask=systemd-networkd.service systemd.mask=systemd-networkd.socket scsi_mod.scan=none -pidfile /run/vc/vm/baabb31ff0c798a31bca7373f2abdbf2936375a5729a3599799c0a225f3b9612/pid -smp 1,cores=1,threads=1,sockets=4,maxcpus=4
 ```
@@ -166,7 +166,7 @@ The launched kernel (`/opt/kata/share/kata-containers/vmlinuz-6.7-136-confidenti
 
 If you run `uname -a` inside the coco-demo-01 and compare with the value obtained from the host then you will notice the container is isolated by a different kernel, as shown below:
 
-```shell
+```console
 $ kubectl exec coco-demo-01 -- uname -a
 Linux 6.7.0 #1 SMP Mon Sep  9 09:48:13 UTC 2024 x86_64 GNU/Linux
 $ uname -a
@@ -183,7 +183,7 @@ Oversimplifying, in a normal Kata Containers pod the container image is pulled b
 
 If you have the `ctr` command in your environment then you can check that only the **quay.io/prometheus/busybox**'s manifest was cached in containerd's storage as well as no rootfs directory exists in `/run/kata-containers/shared/sandboxes/<pod id>` as shown below:
 
-```shell
+```console
 $ sudo ctr -n "k8s.io" image check name==quay.io/prometheus/busybox:latest
 REF                           	TYPE                                                  	DIGEST                                                              	STATUS       	SIZE        	UNPACKED
 quay.io/prometheus/busybox:latest application/vnd.docker.distribution.manifest.list.v2+json sha256:dfa54ef35e438b9e71ac5549159074576b6382f95ce1a434088e05fd6b730bc4 incomplete (1/3) 1.0 KiB/1.2 MiB false
@@ -205,7 +205,7 @@ Points if you noticed on the *coco-demo-01* pod example that the host owner can 
 
 As an example, let’s show how to block the ExecProcessRequest endpoint of the kata-agent to deny the execution of commands in the container. First you need to encode in base64 a [Rego policy file](https://www.openpolicyagent.org/docs/latest/policy-language/) as shown below:
 
-```shell
+```console
 $ curl -s https://raw.githubusercontent.com/kata-containers/kata-containers/refs/heads/main/src/kata-opa/allow-all-except-exec-process.rego | base64 -w 0
 IyBDb3B5cmlnaHQgKGMpIDIwMjMgTWljcm9zb2Z0IENvcnBvcmF0aW9uCiMKIyBTUERYLUxpY2Vuc2UtSWRlbnRpZmllcjogQXBhY2hlLTIuMAojCgpwYWNrYWdlIGFnZW50X3BvbGljeQoKZGVmYXVsdCBBZGRBUlBOZWlnaGJvcnNSZXF1ZXN0IDo9IHRydWUKZGVmYXVsdCBBZGRTd2FwUmVxdWVzdCA6PSB0cnVlCmRlZmF1bHQgQ2xvc2VTdGRpblJlcXVlc3QgOj0gdHJ1ZQpkZWZhdWx0IENvcHlGaWxlUmVxdWVzdCA6PSB0cnVlCmRlZmF1bHQgQ3JlYXRlQ29udGFpbmVyUmVxdWVzdCA6PSB0cnVlCmRlZmF1bHQgQ3JlYXRlU2FuZGJveFJlcXVlc3QgOj0gdHJ1ZQpkZWZhdWx0IERlc3Ryb3lTYW5kYm94UmVxdWVzdCA6PSB0cnVlCmRlZmF1bHQgR2V0TWV0cmljc1JlcXVlc3QgOj0gdHJ1ZQpkZWZhdWx0IEdldE9PTUV2ZW50UmVxdWVzdCA6PSB0cnVlCmRlZmF1bHQgR3Vlc3REZXRhaWxzUmVxdWVzdCA6PSB0cnVlCmRlZmF1bHQgTGlzdEludGVyZmFjZXNSZXF1ZXN0IDo9IHRydWUKZGVmYXVsdCBMaXN0Um91dGVzUmVxdWVzdCA6PSB0cnVlCmRlZmF1bHQgTWVtSG90cGx1Z0J5UHJvYmVSZXF1ZXN0IDo9IHRydWUKZGVmYXVsdCBPbmxpbmVDUFVNZW1SZXF1ZXN0IDo9IHRydWUKZGVmYXVsdCBQYXVzZUNvbnRhaW5lclJlcXVlc3QgOj0gdHJ1ZQpkZWZhdWx0IFB1bGxJbWFnZVJlcXVlc3QgOj0gdHJ1ZQpkZWZhdWx0IFJlYWRTdHJlYW1SZXF1ZXN0IDo9IHRydWUKZGVmYXVsdCBSZW1vdmVDb250YWluZXJSZXF1ZXN0IDo9IHRydWUKZGVmYXVsdCBSZW1vdmVTdGFsZVZpcnRpb2ZzU2hhcmVNb3VudHNSZXF1ZXN0IDo9IHRydWUKZGVmYXVsdCBSZXNlZWRSYW5kb21EZXZSZXF1ZXN0IDo9IHRydWUKZGVmYXVsdCBSZXN1bWVDb250YWluZXJSZXF1ZXN0IDo9IHRydWUKZGVmYXVsdCBTZXRHdWVzdERhdGVUaW1lUmVxdWVzdCA6PSB0cnVlCmRlZmF1bHQgU2V0UG9saWN5UmVxdWVzdCA6PSB0cnVlCmRlZmF1bHQgU2lnbmFsUHJvY2Vzc1JlcXVlc3QgOj0gdHJ1ZQpkZWZhdWx0IFN0YXJ0Q29udGFpbmVyUmVxdWVzdCA6PSB0cnVlCmRlZmF1bHQgU3RhcnRUcmFjaW5nUmVxdWVzdCA6PSB0cnVlCmRlZmF1bHQgU3RhdHNDb250YWluZXJSZXF1ZXN0IDo9IHRydWUKZGVmYXVsdCBTdG9wVHJhY2luZ1JlcXVlc3QgOj0gdHJ1ZQpkZWZhdWx0IFR0eVdpblJlc2l6ZVJlcXVlc3QgOj0gdHJ1ZQpkZWZhdWx0IFVwZGF0ZUNvbnRhaW5lclJlcXVlc3QgOj0gdHJ1ZQpkZWZhdWx0IFVwZGF0ZUVwaGVtZXJhbE1vdW50c1JlcXVlc3QgOj0gdHJ1ZQpkZWZhdWx0IFVwZGF0ZUludGVyZmFjZVJlcXVlc3QgOj0gdHJ1ZQpkZWZhdWx0IFVwZGF0ZVJvdXRlc1JlcXVlc3QgOj0gdHJ1ZQpkZWZhdWx0IFdhaXRQcm9jZXNzUmVxdWVzdCA6PSB0cnVlCmRlZmF1bHQgV3JpdGVTdHJlYW1SZXF1ZXN0IDo9IHRydWUKCmRlZmF1bHQgRXhlY1Byb2Nlc3NSZXF1ZXN0IDo9IGZhbHNlCg==
 ```
@@ -219,23 +219,23 @@ kind: Pod
 metadata:
   name: coco-demo-02
   annotations:
-	"io.containerd.cri.runtime-handler": "kata-qemu-coco-dev"
-	io.katacontainers.config.agent.policy: IyBDb3B5cmlnaHQgKGMpIDIwMjMgTWljcm9zb2Z0IENvcnBvcmF0aW9uCiMKIyBTUERYLUxpY2Vuc2UtSWRlbnRpZmllcjogQXBhY2hlLTIuMAojCgpwYWNrYWdlIGFnZW50X3BvbGljeQoKZGVmYXVsdCBBZGRBUlBOZWlnaGJvcnNSZXF1ZXN0IDo9IHRydWUKZGVmYXVsdCBBZGRTd2FwUmVxdWVzdCA6PSB0cnVlCmRlZmF1bHQgQ2xvc2VTdGRpblJlcXVlc3QgOj0gdHJ1ZQpkZWZhdWx0IENvcHlGaWxlUmVxdWVzdCA6PSB0cnVlCmRlZmF1bHQgQ3JlYXRlQ29udGFpbmVyUmVxdWVzdCA6PSB0cnVlCmRlZmF1bHQgQ3JlYXRlU2FuZGJveFJlcXVlc3QgOj0gdHJ1ZQpkZWZhdWx0IERlc3Ryb3lTYW5kYm94UmVxdWVzdCA6PSB0cnVlCmRlZmF1bHQgR2V0TWV0cmljc1JlcXVlc3QgOj0gdHJ1ZQpkZWZhdWx0IEdldE9PTUV2ZW50UmVxdWVzdCA6PSB0cnVlCmRlZmF1bHQgR3Vlc3REZXRhaWxzUmVxdWVzdCA6PSB0cnVlCmRlZmF1bHQgTGlzdEludGVyZmFjZXNSZXF1ZXN0IDo9IHRydWUKZGVmYXVsdCBMaXN0Um91dGVzUmVxdWVzdCA6PSB0cnVlCmRlZmF1bHQgTWVtSG90cGx1Z0J5UHJvYmVSZXF1ZXN0IDo9IHRydWUKZGVmYXVsdCBPbmxpbmVDUFVNZW1SZXF1ZXN0IDo9IHRydWUKZGVmYXVsdCBQYXVzZUNvbnRhaW5lclJlcXVlc3QgOj0gdHJ1ZQpkZWZhdWx0IFB1bGxJbWFnZVJlcXVlc3QgOj0gdHJ1ZQpkZWZhdWx0IFJlYWRTdHJlYW1SZXF1ZXN0IDo9IHRydWUKZGVmYXVsdCBSZW1vdmVDb250YWluZXJSZXF1ZXN0IDo9IHRydWUKZGVmYXVsdCBSZW1vdmVTdGFsZVZpcnRpb2ZzU2hhcmVNb3VudHNSZXF1ZXN0IDo9IHRydWUKZGVmYXVsdCBSZXNlZWRSYW5kb21EZXZSZXF1ZXN0IDo9IHRydWUKZGVmYXVsdCBSZXN1bWVDb250YWluZXJSZXF1ZXN0IDo9IHRydWUKZGVmYXVsdCBTZXRHdWVzdERhdGVUaW1lUmVxdWVzdCA6PSB0cnVlCmRlZmF1bHQgU2V0UG9saWN5UmVxdWVzdCA6PSB0cnVlCmRlZmF1bHQgU2lnbmFsUHJvY2Vzc1JlcXVlc3QgOj0gdHJ1ZQpkZWZhdWx0IFN0YXJ0Q29udGFpbmVyUmVxdWVzdCA6PSB0cnVlCmRlZmF1bHQgU3RhcnRUcmFjaW5nUmVxdWVzdCA6PSB0cnVlCmRlZmF1bHQgU3RhdHNDb250YWluZXJSZXF1ZXN0IDo9IHRydWUKZGVmYXVsdCBTdG9wVHJhY2luZ1JlcXVlc3QgOj0gdHJ1ZQpkZWZhdWx0IFR0eVdpblJlc2l6ZVJlcXVlc3QgOj0gdHJ1ZQpkZWZhdWx0IFVwZGF0ZUNvbnRhaW5lclJlcXVlc3QgOj0gdHJ1ZQpkZWZhdWx0IFVwZGF0ZUVwaGVtZXJhbE1vdW50c1JlcXVlc3QgOj0gdHJ1ZQpkZWZhdWx0IFVwZGF0ZUludGVyZmFjZVJlcXVlc3QgOj0gdHJ1ZQpkZWZhdWx0IFVwZGF0ZVJvdXRlc1JlcXVlc3QgOj0gdHJ1ZQpkZWZhdWx0IFdhaXRQcm9jZXNzUmVxdWVzdCA6PSB0cnVlCmRlZmF1bHQgV3JpdGVTdHJlYW1SZXF1ZXN0IDo9IHRydWUKCmRlZmF1bHQgRXhlY1Byb2Nlc3NSZXF1ZXN0IDo9IGZhbHNlCg==
+    io.containerd.cri.runtime-handler: "kata-qemu-coco-dev"
+    io.katacontainers.config.agent.policy: IyBDb3B5cmlnaHQgKGMpIDIwMjMgTWljcm9zb2Z0IENvcnBvcmF0aW9uCiMKIyBTUERYLUxpY2Vuc2UtSWRlbnRpZmllcjogQXBhY2hlLTIuMAojCgpwYWNrYWdlIGFnZW50X3BvbGljeQoKZGVmYXVsdCBBZGRBUlBOZWlnaGJvcnNSZXF1ZXN0IDo9IHRydWUKZGVmYXVsdCBBZGRTd2FwUmVxdWVzdCA6PSB0cnVlCmRlZmF1bHQgQ2xvc2VTdGRpblJlcXVlc3QgOj0gdHJ1ZQpkZWZhdWx0IENvcHlGaWxlUmVxdWVzdCA6PSB0cnVlCmRlZmF1bHQgQ3JlYXRlQ29udGFpbmVyUmVxdWVzdCA6PSB0cnVlCmRlZmF1bHQgQ3JlYXRlU2FuZGJveFJlcXVlc3QgOj0gdHJ1ZQpkZWZhdWx0IERlc3Ryb3lTYW5kYm94UmVxdWVzdCA6PSB0cnVlCmRlZmF1bHQgR2V0TWV0cmljc1JlcXVlc3QgOj0gdHJ1ZQpkZWZhdWx0IEdldE9PTUV2ZW50UmVxdWVzdCA6PSB0cnVlCmRlZmF1bHQgR3Vlc3REZXRhaWxzUmVxdWVzdCA6PSB0cnVlCmRlZmF1bHQgTGlzdEludGVyZmFjZXNSZXF1ZXN0IDo9IHRydWUKZGVmYXVsdCBMaXN0Um91dGVzUmVxdWVzdCA6PSB0cnVlCmRlZmF1bHQgTWVtSG90cGx1Z0J5UHJvYmVSZXF1ZXN0IDo9IHRydWUKZGVmYXVsdCBPbmxpbmVDUFVNZW1SZXF1ZXN0IDo9IHRydWUKZGVmYXVsdCBQYXVzZUNvbnRhaW5lclJlcXVlc3QgOj0gdHJ1ZQpkZWZhdWx0IFB1bGxJbWFnZVJlcXVlc3QgOj0gdHJ1ZQpkZWZhdWx0IFJlYWRTdHJlYW1SZXF1ZXN0IDo9IHRydWUKZGVmYXVsdCBSZW1vdmVDb250YWluZXJSZXF1ZXN0IDo9IHRydWUKZGVmYXVsdCBSZW1vdmVTdGFsZVZpcnRpb2ZzU2hhcmVNb3VudHNSZXF1ZXN0IDo9IHRydWUKZGVmYXVsdCBSZXNlZWRSYW5kb21EZXZSZXF1ZXN0IDo9IHRydWUKZGVmYXVsdCBSZXN1bWVDb250YWluZXJSZXF1ZXN0IDo9IHRydWUKZGVmYXVsdCBTZXRHdWVzdERhdGVUaW1lUmVxdWVzdCA6PSB0cnVlCmRlZmF1bHQgU2V0UG9saWN5UmVxdWVzdCA6PSB0cnVlCmRlZmF1bHQgU2lnbmFsUHJvY2Vzc1JlcXVlc3QgOj0gdHJ1ZQpkZWZhdWx0IFN0YXJ0Q29udGFpbmVyUmVxdWVzdCA6PSB0cnVlCmRlZmF1bHQgU3RhcnRUcmFjaW5nUmVxdWVzdCA6PSB0cnVlCmRlZmF1bHQgU3RhdHNDb250YWluZXJSZXF1ZXN0IDo9IHRydWUKZGVmYXVsdCBTdG9wVHJhY2luZ1JlcXVlc3QgOj0gdHJ1ZQpkZWZhdWx0IFR0eVdpblJlc2l6ZVJlcXVlc3QgOj0gdHJ1ZQpkZWZhdWx0IFVwZGF0ZUNvbnRhaW5lclJlcXVlc3QgOj0gdHJ1ZQpkZWZhdWx0IFVwZGF0ZUVwaGVtZXJhbE1vdW50c1JlcXVlc3QgOj0gdHJ1ZQpkZWZhdWx0IFVwZGF0ZUludGVyZmFjZVJlcXVlc3QgOj0gdHJ1ZQpkZWZhdWx0IFVwZGF0ZVJvdXRlc1JlcXVlc3QgOj0gdHJ1ZQpkZWZhdWx0IFdhaXRQcm9jZXNzUmVxdWVzdCA6PSB0cnVlCmRlZmF1bHQgV3JpdGVTdHJlYW1SZXF1ZXN0IDo9IHRydWUKCmRlZmF1bHQgRXhlY1Byb2Nlc3NSZXF1ZXN0IDo9IGZhbHNlCg==
 spec:
   runtimeClassName: kata-qemu-coco-dev
   containers:
-	- name: busybox
-    image: quay.io/prometheus/busybox:latest
-    imagePullPolicy: Always
-    command:
-      - sleep
-      - "infinity"
+    - name: busybox
+      image: quay.io/prometheus/busybox:latest
+      imagePullPolicy: Always
+      command:
+        - sleep
+        - "infinity"
   restartPolicy: Never
 ```
 
 Create the pod, wait for it to be RUNNING, then check that kubectl cannot exec in the container. As a matter of comparison, run exec on coco-demo-01 as shown below:
 
-```shell
+```console
 $ kubectl apply -f coco-demo-02.yaml
 pod/coco-demo-02 created
 $ kubectl get pod
@@ -264,7 +264,7 @@ In this blog we will be deploying a development/test version of the Key Broker S
 
 The following instructions will end up with KBS installed on your cluster and having its service exposed via [nodeport](https://kubernetes.io/docs/concepts/services-networking/service/#type-nodeport). For further information about deploying the KBS on Kubernetes, see this [README](https://github.com/confidential-containers/trustee/tree/v0.10.1/kbs/config/kubernetes). So do:
 
-```shell
+```console
 $ git clone https://github.com/confidential-containers/trustee --single-branch -b v0.10.1
 $ cd trustee/kbs/config/kubernetes
 $ echo "somesecret" > overlays/$(uname -m)/key.bin
@@ -276,7 +276,7 @@ $ export KBS_PRIVATE_KEY="${PWD}/base/kbs.key"
 
 Wait the KBS deployment be ready and running just like below:
 
-```shell
+```console
 $ kubectl -n coco-tenant get deployments
 NAME   READY   UP-TO-DATE   AVAILABLE   AGE
 kbs	1/1 	1        	1       	26m
@@ -284,14 +284,14 @@ kbs	1/1 	1        	1       	26m
 
 You will need the KBS host and port to configure the pod. These values can be obtained like in below listing:
 
-```shell
+```console
 $ export KBS_HOST=$(kubectl get nodes -o jsonpath='{.items[0].status.addresses[?(@.type=="InternalIP")].address}' -n coco-tenant)
 $ export KBS_PORT=$(kubectl get svc "kbs" -n "coco-tenant" -o jsonpath='{.spec.ports[0].nodePort}')
 ```
 
 At this point KBS is up and running but lacks policies and resources. To facilitate its configuration we will be using the [kbs-client](https://github.com/confidential-containers/trustee/tree/v0.10.1/tools/kbs-client) tool.  Use the [ORAS tool](https://oras.land) to download a build of kbs-client:
 
-```shell
+```console
 $ curl -LOs "https://github.com/oras-project/oras/releases/download/v1.2.0/oras_1.2.0_linux_amd64.tar.gz"
 $ tar xvzf oras_1.2.0_linux_amd64.tar.gz
 $ ./oras pull ghcr.io/confidential-containers/staged-images/kbs-client:sample_only-x86_64-linux-gnu-68607d4300dda5a8ae948e2562fd06d09cbd7eca
@@ -309,17 +309,17 @@ kind: Pod
 metadata:
   name: coco-demo-03
   annotations:
-	"io.containerd.cri.runtime-handler": "kata-qemu-coco-dev"
-	io.katacontainers.config.hypervisor.kernel_params: " agent.aa_kbc_params=cc_kbc::http://192.168.122.153:31491"
+    io.containerd.cri.runtime-handler: "kata-qemu-coco-dev"
+    io.katacontainers.config.hypervisor.kernel_params: " agent.aa_kbc_params=cc_kbc::http://192.168.122.153:31491"
 spec:
   runtimeClassName: kata-qemu-coco-dev
   containers:
-	- name: busybox
-    image: quay.io/prometheus/busybox:latest
-    imagePullPolicy: Always
-    command:
-      - sleep
-      - "infinity"
+    - name: busybox
+      image: quay.io/prometheus/busybox:latest
+      imagePullPolicy: Always
+      command:
+        - sleep
+        - "infinity"
   restartPolicy: Never
 ```
 
@@ -331,7 +331,7 @@ The [Confidential Data Hub](https://github.com/confidential-containers/guest-com
 
 Let’s add the to-be-fetched resource to the KBS first. Think of that resource as a secret key required to unencrypt an important file for data processing. Using `kbs-client`, do the following (`KBS_HOST`, `KBS_PORT` and `KBS_PRIVATE_KEY` are previously defined variables):
 
-```shell
+```console
 $ echo "MySecretKey" > secret.txt
 $ ./kbs-client --url "http://$KBS_HOST:$KBS_PORT" config --auth-private-key "$KBS_PRIVATE_KEY" set-resource --path default/secret/1 --resource-file secret.txt
 Set resource success
@@ -347,25 +347,25 @@ kind: Pod
 metadata:
   name: coco-demo-04
   annotations:
-	"io.containerd.cri.runtime-handler": "kata-qemu-coco-dev"
-	io.katacontainers.config.hypervisor.kernel_params: " agent.aa_kbc_params=cc_kbc::http://192.168.122.153:31491"
+    io.containerd.cri.runtime-handler: "kata-qemu-coco-dev"
+    io.katacontainers.config.hypervisor.kernel_params: " agent.aa_kbc_params=cc_kbc::http://192.168.122.153:31491"
 spec:
   runtimeClassName: kata-qemu-coco-dev
   containers:
-	- name: busybox
-    image: quay.io/prometheus/busybox:latest
-    imagePullPolicy: Always
-    command:
-      - sh
-      - -c
-      - |
-        wget -O- http://127.0.0.1:8006/cdh/resource/default/secret/1; sleep infinity
+    - name: busybox
+      image: quay.io/prometheus/busybox:latest
+      imagePullPolicy: Always
+      command:
+        - sh
+        - -c
+        - |
+          wget -O- http://127.0.0.1:8006/cdh/resource/default/secret/1; sleep infinity
   restartPolicy: Never
 ```
 
 Apply **coco-demo-04.yaml** and wait for it to get into `RUNNING` state. Checking the pod logs you will notice that wget failed to fetch the secret:
 
-```shell
+```console
 $ kubectl apply -f coco-demo-04.yaml
 pod/coco-demo-04 created
 $ kubectl wait --for=condition=Ready pod/coco-demo-04
@@ -377,7 +377,7 @@ wget: server returned error: HTTP/1.1 500 Internal Server Error
 
 Looking at the KBS logs we can find that the problem was caused by `Resource not permitted` denial:
 
-```shell
+```console
 $ kubectl logs -l app=kbs -n coco-tenant
 Defaulted container "kbs" out of: kbs, copy-config (init)
 [2024-11-07T20:04:32Z INFO  kbs::http::resource] Get resource from kbs:///default/secret/1
@@ -400,7 +400,7 @@ package policy
 default allow = false
 
 allow {
-    input["tee"] == "sample"
+	input["tee"] == "sample"
 }
 ```
 
@@ -408,7 +408,7 @@ The `GetResource` request to CDH is an attested operation. The policy in **resou
 
 Apply the resources_policy.rego policy to the KBS, then respin the coco-demo-04 pod, and you will see `MySecretKey` is now fetched:
 
-```shell
+```console
 $ ./kbs-client --url "http://$KBS_HOST:$KBS_PORT" config --auth-private-key "$KBS_PRIVATE_KEY" set-resource-policy --policy-file resources_policy.rego
 Set resource policy success
  policy: cGFja2FnZSBwb2xpY3kKCmRlZmF1bHQgYWxsb3cgPSBmYWxzZQoKYWxsb3cgewogICAgaW5wdXRbInRlZSJdID09ICJzYW1wbGUiCn0K
@@ -426,7 +426,7 @@ MySecretKey
 
 In the KBS log messages below you can see that the Attestation Service (AS) was involved in the request. A sample verifier was invoked in the place of a real hardware-oriented one for the sake of emulating the verification process. The generated attestation token (see `Attestation Token (Simple) generated` message in the log) is passed all the way back to the CDH on the confidential VM, which then can finally request the resource (the `Get resource from kbs:///default/secret/1` message) from KBS.
 
-```shell
+```console
 $ kubectl logs -l app=kbs -n coco-tenant
 Defaulted container "kbs" out of: kbs, copy-config (init)
 [2024-11-07T22:04:22Z INFO  actix_web::middleware::logger] 10.244.0.1 "POST /kbs/v0/auth HTTP/1.1" 200 74 "-" "attestation-agent-kbs-client/0.1.0" 0.000185
@@ -456,8 +456,8 @@ kind: Pod
 metadata:
   name: coco-demo-05
   annotations:
-	"io.containerd.cri.runtime-handler": "kata-qemu-coco-dev"
-	io.katacontainers.config.hypervisor.kernel_params: " agent.aa_kbc_params=cc_kbc::http://192.168.122.153:31491"
+    io.containerd.cri.runtime-handler: "kata-qemu-coco-dev"
+    io.katacontainers.config.hypervisor.kernel_params: " agent.aa_kbc_params=cc_kbc::http://192.168.122.153:31491"
 spec:
   runtimeClassName: kata-qemu-coco-dev
   containers:
@@ -472,7 +472,7 @@ spec:
 
 Apply the pod, wait a little bit and you will see it failed to start with `StartError` status:
 
-```shell
+```console
 $ kubectl describe pods/coco-demo-05
 Name:            	coco-demo-05
 Namespace:       	default
@@ -597,7 +597,7 @@ Stack backtrace:
 
 The reason why it failed is because the decryption key wasn’t found in the KBS. So let’s insert the key:
 
-```shell
+```console
 $ echo "HUlOu8NWz8si11OZUzUJMnjiq/iZyHBJZMSD3BaqgMc=" | base64 -d > image_key.txt
 $ ./kbs-client --url "http://$KBS_HOST:$KBS_PORT" config --auth-private-key "$KBS_PRIVATE_KEY" set-resource --path default/key/ssh-demo --resource-file image_key.txt
 Set resource success
@@ -608,7 +608,7 @@ Then restart the coco-demo-05 pod and it should get running just fine.
 
 As demonstrated by the listing below, you can inspect the image with skopeo. Note that each of its layers is encrypted (`MIMEType` is `tar+gzip+encrypted`) and annotated with `org.opencontainers.image.enc.*` tags. In particular, the `org.opencontainers.image.enc.keys.provider.attestation-agent` annotation encodes the decryption key path (e.g. `kbs:///default/key/ssh-demo`) in the KBS:
 
-```shell
+```console
 $ skopeo inspect --raw docker://ghcr.io/confidential-containers/test-container:multi-arch-encrypted
 {
    "schemaVersion": 2,

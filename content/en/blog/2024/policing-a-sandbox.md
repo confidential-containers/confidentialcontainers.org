@@ -23,7 +23,7 @@ For the implementers of such a solution, this choice comes with a few challenges
 
 This would be the sequence of RPC calls that are issued to a Kata agent in the Guest VM (for brevity we'll refer to it as _Agent_ in the text below), if we launch a simple Nginx Pod. There are 2 containers being launched, because a Pod includes the implicit `pause` container:
 
-```
+```text
 create_sandbox
 get_guest_details
 copy_file
@@ -62,7 +62,6 @@ In order to preserve the integrity of a Confidential Pod, we need to observe clo
 Kata-Containers currently features an implementation of a policy engine using the popular [Rego](https://www.openpolicyagent.org/docs/latest/policy-language) language. Convenience tooling can assist and automate aspects of authoring a policy for a workload. The following would be an example policy (hand-crafted for brevity, real policy bodies would be larger) in which we allow the launch of specific OCI images, the execution of certain commands, Kata management endpoints, but disallow pretty much everything else during runtime:
 
 ```rego
-"""
 package agent_policy
 
 import future.keywords.in
@@ -85,13 +84,13 @@ default ExecProcessRequest := false
 
 CreateContainerRequest if {
 	every storage in input.storages {
-        some allowed_image in policy_data.allowed_images
-        storage.source == allowed_image
-    }
+		some allowed_image in policy_data.allowed_images
+		storage.source == allowed_image
+	}
 }
 
 ExecProcessRequest if {
-    input_command = concat(" ", input.process.Args)
+	input_command = concat(" ", input.process.Args)
 	some allowed_command in policy_data.allowed_commands
 	input_command == allowed_command
 }
@@ -180,8 +179,8 @@ Host-Data is a field in a TEE’s evidence that is passed into a confidential Gu
 
 Example: Producing a SHA256 digest of the Init-Data file
 
-```bash
-openssl dgst -sha256 --binary init-data.toml | xxd -p -c32
+```console
+$ openssl dgst -sha256 --binary init-data.toml | xxd -p -c32
 bdc9a7390bb371258fb7fb8be5a8de5ced6a07dd077d1ce04ec26e06eaf68f60
 ```
 
@@ -191,10 +190,10 @@ Instead of seeding the Init-Data hash into a Host-Data field at launch, we can a
 
 Example: Extending an empty SHA256 runtime measurement register with the digest of an Init-Data file 
 
-```bash
-dd if=/dev/zero of=zeroes bs=32 count=1
-openssl dgst -sha256 --binary init-data.toml > init-data.digest
-openssl dgst -sha256 --binary <(cat zeroes init-data.digest) | xxd -p -c32
+```console
+$ dd if=/dev/zero of=zeroes bs=32 count=1
+$ openssl dgst -sha256 --binary init-data.toml > init-data.digest
+$ openssl dgst -sha256 --binary <(cat zeroes init-data.digest) | xxd -p -c32
 7aaf19294adabd752bf095e1f076baed85d4b088fa990cb575ad0f3e0569f292
 ```
 
@@ -231,46 +230,46 @@ cat nginx-cc.yaml | jq \
 
 If the Pod came up successfully, it passed the initial policy check for the image already.
 
-```bash
-kubectl get pod
+```console
+$ kubectl get pod
 NAME                         READY   STATUS        RESTARTS   AGE
 nginx-cc-694cc48b65-lklj7    1/1     Running       0          83s
 ```
 
 According to the policy only certain commands are allowed to be executed in the container. Executing `whoami` should be fine, while `ls` should be rejected:
 
-```bash
-kubectl exec -it deploy/nginx-cc -- whoami
+```console
+$ kubectl exec -it deploy/nginx-cc -- whoami
 root
 ```
 
-```bash
-kubectl exec -it deploy/nginx-cc -- ls
+```console
+$ kubectl exec -it deploy/nginx-cc -- ls
 error: Internal error occurred: error executing command in container: failed to
 exec in container: failed to start exec "e2d8bad68b64d6918e6bda08a43f457196b5f30d6616baa94a0be0f443238980": cannot enter container 914c589fe74d1fcac834d0dcfa3b6a45562996661278b4a8de5511366d6a4609, with err rpc error: code = PermissionDenied desc = "ExecProcessRequest is blocked by policy: ": unknown
 ```
 
-In our example we tie the Init-Data measurement to the TEE evidence using a Runtime Measurement into PCR8 of a vTPM. Assuming a 0-initalized SHA256 register, we can calculate the expected value by extend the zeroes with the SHA256 digest of the Init-Data file:
+In our example we tie the Init-Data measurement to the TEE evidence using a Runtime Measurement into PCR8 of a vTPM. Assuming a 0-initialized SHA256 register, we can calculate the expected value by extend the zeroes with the SHA256 digest of the Init-Data file:
 
-```bash
-dd if=/dev/zero of=zeroes bs=32 count=1
-openssl dgst -sha256 --binary init-data.toml > init-data.digest
-openssl dgst -sha256 --binary <(cat zeroes init-data.digest) | xxd -p -c32
+```console
+$ dd if=/dev/zero of=zeroes bs=32 count=1
+$ openssl dgst -sha256 --binary init-data.toml > init-data.digest
+$ openssl dgst -sha256 --binary <(cat zeroes init-data.digest) | xxd -p -c32
 765156eda5fe806552610f2b6e828509a8b898ad014c76ad8600261eb7c5e63f
 ```
 
 As part of the policy we also allow-listed a specific command that can request a KBS token using an endpoint that is exposed to a container by a [specific Guest Component](https://github.com/confidential-containers/guest-components/tree/41ad96d4b2e5e9dc205c6d41f7b550629cea677f/api-server-rest). Note: This is not something a user would want to typically enable, since this token is used to retrieve confidential secrets and we would not want it to leak outside the Guest. We are using it here to illustrate that we _could_ retrieve a secret in the container, since we passed remote attestation including the verification of the Init-Data digest.
 
 
-```bash
-kubectl exec deploy/nginx-cc -- curl -s http://127.0.0.1:8006/aa/token\?token_type=kbs | jq -c 'keys'
+```console
+$ kubectl exec deploy/nginx-cc -- curl -s http://127.0.0.1:8006/aa/token\?token_type=kbs | jq -c 'keys'
 ["tee_keypair","token"]
 ```
 
 Since this has been successful we can inspect the logs of the Attestation Service (bundled into a KBS here) to confirm it has been considered in the appraisal. The first text block shows the claims from the (successfully verified) TEE evidence, the second block is displaying the acceptable reference values for a PCR8 measurement:
 
-```bash
-kubectl logs deploy/kbs -n coco-tenant | grep -C 2 765156eda5fe806552610f2b6e828509a8b898ad014c76ad8600261eb7c5e63f
+```console
+$ kubectl logs deploy/kbs -n coco-tenant | grep -C 2 765156eda5fe806552610f2b6e828509a8b898ad014c76ad8600261eb7c5e63f
 ...
         "aztdxvtpm.tpm.pcr06": String("65f0a56c41416fa82d573df151746dc1d6af7bd8d4a503b2ab07664305d01e59"),
         "aztdxvtpm.tpm.pcr07": String("124daf47b4d67179a77dc3c1bcca198ae1ee1d094a2a879974842e44ab98bb06"),
@@ -282,7 +281,7 @@ kubectl logs deploy/kbs -n coco-tenant | grep -C 2 765156eda5fe806552610f2b6e828
             "7aaf19294adabd752bf095e1f076baed85d4b088fa990cb575ad0f3e0569f292",
             "765156eda5fe806552610f2b6e828509a8b898ad014c76ad8600261eb7c5e63f",
         ],
-		"aztdxvtpm.tpm.pcr10": [],
+        "aztdxvtpm.tpm.pcr10": [],
 ```
 
 ### Size Limitations

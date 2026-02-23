@@ -25,7 +25,7 @@ This option is appealing for certain CoCo deployments. If we have a Trusted Exec
 
 An expected SEV-SNP launch measurement for Linux direct boot with Qemu can be calculated using trusted artifacts (firmware, kernel & initrd) and a few platform parameters. Please note that the respective kernel/fw components and tools are still being actively developed. The [AMDESE/AMDSEV](https://github.com/AMDESE/AMDSEV/tree/snp-latest) repository provides instructions and pointers to a working set of revisions.
 
-```bash
+```console
 $ sev-snp-measure \
 	--mode snp \
 	--vcpus=1 \
@@ -49,7 +49,7 @@ A rootfs can comfortably host the infrastructure components and we can still pac
 
 DM-Verity volumes feature a hash tree and a root hash in addition to the actual data. The hash tree can be stored on disk next to the verity volume or as a local file. We'll store the hash-tree as file for brevity and write a string `CoCo` into a file `/coco` on the formatted volume:
 
-```bash
+```console
 $ dd if=/dev/zero of=rootfs.raw bs=1M count=100
 $ DEVICE="$(sudo losetup --show -f rootfs.raw)"
 $ sudo cfdisk "$DEVICE"
@@ -77,7 +77,7 @@ $ export ROOT_HASH=ad86ff8492be2ee204cb54d70c84412c2dc89cefd34e263184f4e00295a41
 
 Now we toggle a bit on the raw image (`CoCo` => `DoCo` in `/coco`). If the image is attached as a block device via dm-verity, there will be IO errors and respective entries in the kernel log, once we attempt to read the file.
 
-```bash
+```console
 $ hexdump -C rootfs.raw | grep CoCo
 06000000  43 6f 43 6f 0a 00 00 00  00 00 00 00 00 00 00 00  |CoCo............|
 $ printf '\x44' | dd of=rootfs.raw bs=1 seek="$((16#06000000))" count=1 conv=notrunc
@@ -113,7 +113,7 @@ To retrieve the expected measurements, for a dm-verity protected OS image, we ca
 In a TEE the vTPM would have to be isolated from both the Host and the Guest OS. We use `swtpm` to retrieve reference values here. 
 {{% /alert %}}
 
-```bash
+```console
 $ swtpm socket \
 	--tpmstate dir=/tmp/vtpm \
 	--ctrl type=unixio,path=/tmp/vtpm/swtpm.sock \
@@ -123,8 +123,8 @@ $ swtpm socket \
 
 We retrieve VM firmware from debian's repository and attach the vTPM socket as character device:
 
-```bash
-# retrieve vm firmware from debian's repo
+```console
+$ # retrieve vm firmware from debian's repo
 $ wget http://security.debian.org/debian-security/pool/updates/main/e/edk2/ovmf_2022.11-6+deb12u1_all.deb
 $ mkdir fw
 $ dpkg-deb -x ovmf_2022.11-6+deb12u1_all.deb fw/
@@ -146,7 +146,7 @@ $ qemu-system-x86_64 \
 
 Once logged into the VM we can retrieve the relevant measurements in the form of PCRs (the package `tpm2_tools` needs to be available):
 
-```bash
+```console
 $ tpm2_pcrread sha256:0,1,2,3,4,5,6,7,8,9,10,11
   sha256:
 	0 : 0x61E3B90D0862D052BF6C802E0FD2A44A671A37FE2EB67368D89CB56E5D23014E
@@ -165,7 +165,7 @@ $ tpm2_pcrread sha256:0,1,2,3,4,5,6,7,8,9,10,11
 
 If we boot the same image on a Confidential VM in Azure's cloud, we'll see different measurements. This is expected since the early boot stack does not match our reference setup:
 
-```bash
+```console
 $ tpm2_pcrread sha256:0,1,2,3,4,5,6,7,8,9,10,11
   sha256:
 	0 : 0x782B20B10F55CC46E2142CC2145D548698073E5BEB82752C8D7F9279F0D8A273
@@ -184,7 +184,7 @@ $ tpm2_pcrread sha256:0,1,2,3,4,5,6,7,8,9,10,11
 
 We can identify the common PCRs between the measurements in a cloud VM and those that we gathered in our reference setup. Those are good candidates to include them as [reference values](https://confidentialcontainers.org/docs/attestation/reference-values/) in a relying party against which a TEE's evidence can be verified.
 
-```bash
+```console
 $ grep -F -x -f pcr_reference.txt pcr_cloud.txt
 	3 : 0x3D458CFE55CC03EA1F443F1562BEEC8DF51C75E14A9FCF9A7234A13F198E7969
 	8 : 0x0000000000000000000000000000000000000000000000000000000000000000
