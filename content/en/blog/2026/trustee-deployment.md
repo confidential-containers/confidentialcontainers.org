@@ -83,7 +83,7 @@ kubectl get csv -n operators
 
 We should expect something like:
 
-```bash
+```text
 NAME                       DISPLAY            VERSION   REPLACES                  PHASE
 trustee-operator.v0.17.0   Trustee Operator   0.17.0    trustee-operator.v0.5.0   Succeeded
 ```
@@ -178,7 +178,7 @@ EOF
   <summary>Permissive Mode</summary>
 TrusteeConfig CR creation:
 
-```bash
+```yaml
 apiVersion: confidentialcontainers.org/v1alpha1
 kind: TrusteeConfig
 metadata:
@@ -308,8 +308,8 @@ kubectl config set-context --current --namespace=operators
 
 ### Check if the PODs are running
 
-```bash
-kubectl get pods -n operators
+```console
+$ kubectl get pods -n operators
 NAME                                                   READY   STATUS    RESTARTS   AGE
 trustee-deployment-7bdc6858d7-bdncx                    1/1     Running   0          69s
 trustee-operator-controller-manager-6c584fc969-8dz2d   1/1     Running   0          4h7m
@@ -317,9 +317,9 @@ trustee-operator-controller-manager-6c584fc969-8dz2d   1/1     Running   0      
 
 Also, the log should report something like:
 
-```bash
-POD_NAME=$(kubectl get pods -l app=kbs -o jsonpath='{.items[0].metadata.name}' -n operators)
-kubectl logs -n operators $POD_NAME
+```console
+$ export POD_NAME=$(kubectl get pods -l app=kbs -o jsonpath='{.items[0].metadata.name}' -n operators)
+$ kubectl logs -n operators $POD_NAME
 [2026-02-10T15:21:47Z INFO  kbs] Using config file /etc/kbs-config/kbs-config.toml
 [2026-02-10T15:21:47Z INFO  tracing::span] Initialize RVPS;
 [2026-02-10T15:21:47Z INFO  attestation_service::rvps] launch a built-in RVPS.
@@ -362,16 +362,16 @@ Finally we are able to test the entire attestation protocol, when fetching one o
 Note: Make sure the resource-policy is permissive for testing purposes.
 For example:
 
-```
-    package policy
-    default allow = true
+```rego
+package policy
+default allow = true
 ```
 
 
-```bash
-kubectl get secret trustee-tls-cert -n operators -o json | jq -r '.data."tls.crt"' | base64 --decode > https.crt
-kubectl cp -n operators https.crt kbs-client:/
-kubectl exec -it -n operators kbs-client -- kbs-client --cert-file https.crt --url https://kbs-service:8080 get-resource --path default/kbsres1/key1
+```console
+$ kubectl get secret trustee-tls-cert -n operators -o json | jq -r '.data."tls.crt"' | base64 --decode > https.crt
+$ kubectl cp -n operators https.crt kbs-client:/
+$ kubectl exec -it -n operators kbs-client -- kbs-client --cert-file https.crt --url https://kbs-service:8080 get-resource --path default/kbsres1/key1
 cmVzMXZhbDE=
 ```
 

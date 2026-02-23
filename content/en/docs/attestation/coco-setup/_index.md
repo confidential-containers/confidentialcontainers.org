@@ -14,7 +14,7 @@ If you are using Trustee with Confidential Containers, you'll need to point
 your CoCo workload to your Trustee.
 
 In your pod definition, add the following annotation.
-```bash
+```yaml
 io.katacontainers.config.hypervisor.kernel_params: "agent.aa_kbc_params=cc_kbc::http://<kbs-ip>:<kbs-port>"
 ```
 

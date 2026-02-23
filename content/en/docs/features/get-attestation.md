@@ -20,12 +20,13 @@ A workload could use this evidence to carry out its own attestation protocol.
 ### Enabling
 
 To enable this feature, set the following parameter in the guest kernel command line.
-```bash
+```text
 agent.guest_components_rest_api=all
 ```
 
 As usual, command line configurations can be added with annotations.
 ```yaml
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -44,10 +45,10 @@ spec:
       annotations:
         io.katacontainers.config.hypervisor.kernel_params: "agent.guest_components_rest_api=all"
     spec:
-      runtimeClassName: (...)
+      runtimeClassName: # (...)
       containers:
       - name: nginx
-        (...)
+        # (...)
 ```
 ### Attestation
 

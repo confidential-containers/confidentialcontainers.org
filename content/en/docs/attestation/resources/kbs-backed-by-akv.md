@@ -185,7 +185,7 @@ kubectl apply -k akv/
 
 The KBS pod should be running, the pod events should give indication of possible errors. From a confidential pod the AKV secrets should be retrievable via Confidential Data Hub:
 
-```bash
+```console
 $ kubectl exec -it deploy/nginx-coco -- curl http://127.0.0.1:8006/cdh/resource/default/akv/coco_one
 a secret
 ```

@@ -39,7 +39,7 @@ spec:
     metadata:
       labels:
         app: "confidential-unencrypted"
-       annotations:
+      annotations:
         io.containerd.cri.runtime-handler: kata-qemu-snp
     spec:
       runtimeClassName: kata-qemu-snp
@@ -53,13 +53,13 @@ Save the contents of this yaml to a file called `confidential-unencrypted.yaml`.
 
 Start the service:
  
-```shell
+```bash
 kubectl apply -f confidential-unencrypted.yaml
 ```
 
 Check for errors:
 
-```shell
+```bash
 kubectl describe pod confidential-unencrypted
 ```
 
@@ -71,13 +71,13 @@ The container `dmesg` log can be parsed to indicate that SNP memory encryption i
 
 Get the pod IP:
 
-```shell
+```bash
 pod_ip=$(kubectl get pod -o wide | grep confidential-unencrypted | awk '{print $6;}')
 ```
 
 Download and save the SSH private key and set the permissions.
 
-```shell
+```bash
 wget https://github.com/kata-containers/kata-containers/raw/main/tests/integration/kubernetes/runtimeclass_workloads/confidential/unencrypted/ssh/unencrypted -O confidential-image-ssh-key
 
 chmod 600 confidential-image-ssh-key
@@ -85,7 +85,7 @@ chmod 600 confidential-image-ssh-key
 
 The following command will run a remote SSH command on the container to check if SNP memory encryption is active:
 
-```shell
+```bash
 ssh -i confidential-image-ssh-key \
   -o "StrictHostKeyChecking no" \
   -t root@${pod_ip} \
@@ -94,6 +94,6 @@ ssh -i confidential-image-ssh-key \
 
 If SNP is enabled and active, the output should return:
 
-```shell
+```text
 [    0.150045] Memory Encryption Features active: AMD SNP
 ```

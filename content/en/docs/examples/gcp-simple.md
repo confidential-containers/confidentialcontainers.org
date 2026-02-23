@@ -410,7 +410,7 @@ Peerpods now supports init data, you can pass the required configuration files
 `io.katacontainers.config.hypervisor.cc_init_data` annotation. Below is an example
 of the configuration and usage.
 
-```bash
+```toml
 # initdata.toml
 algorithm = "sha384"
 version = "0.1.0"
@@ -573,7 +573,7 @@ It is the simplest example available for deployment.
 
 Create an `nginx` deployment:
 
-```yaml
+```bash
 cat <<EOF | kubectl apply -f -
 apiVersion: apps/v1
 kind: Deployment

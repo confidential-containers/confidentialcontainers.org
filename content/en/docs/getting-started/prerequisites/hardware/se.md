@@ -44,7 +44,7 @@ capability.
     sudo dmesg | grep -i ultravisor
     ```
     Example output:
-    ```
+    ```text
     [    0.063630] prot_virt.f9efb6: Reserving 98MB as ultravisor base storage
     ```
 

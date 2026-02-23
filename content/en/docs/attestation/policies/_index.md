@@ -81,7 +81,7 @@ The built-in policies are `--allow-all`, `--deny-all`, `--default`, `--affirming
 These policies are described in more detail below.
 
 The simplest possible policies either allow or reject all requests.
-```opa
+```rego
 package policy
 
 default allow = true
@@ -102,14 +102,14 @@ There are 4 tiers: Contraindicated, Warning, Affirming,
 and None.
 Ideally secrets should only be released when the token affirms the guest TCB.
 
-```opa
+```rego
 package policy
 import rego.v1
 
 default allow = false
 
 allow if {
-    input["submods"]["cpu0"]["ear.status"] == "affirming"
+	input["submods"]["cpu0"]["ear.status"] == "affirming"
 }
 ```
 
@@ -119,15 +119,15 @@ attestation tokens that are not contraindicated. This is described in upcoming s
 A more advanced policy could check that the token is not contraindicated and that the enclave
 is of a certain type. For example, this policy will only allow requests if the evidence
 is not contraindicated and comes from an SNP guest.
-```opa
+```rego
 package policy
 import rego.v1
 
 default allow = false
 
 allow if {
-    input["submods"]["cpu0"]["ear.status"] == "affirming"
-    input["submods"]["cpu0"]["ear.veraison.annotated-evidence"]["snp"]
+	input["submods"]["cpu0"]["ear.status"] == "affirming"
+	input["submods"]["cpu0"]["ear.veraison.annotated-evidence"]["snp"]
 }
 ```
 
@@ -146,16 +146,16 @@ See the next section for how these vectors are calculated.
 A resource policy can check each of these values.
 For instance this policy builds on the previous one to make sure that in addition
 to not being contraindicated, the executables trust vector has a particular claim.
-```opa
+```rego
 package policy
 import rego.v1
 
 default allow = false
 
 allow if {
-    input["submods"]["cpu0"]["ear.status"] == "affirming"
-    input["submods"]["cpu0"]["ear.veraison.annotated-evidence"]["snp"]
-    input["submods"]["cpu0"]["ear.status.executables"] == 2
+	input["submods"]["cpu0"]["ear.status"] == "affirming"
+	input["submods"]["cpu0"]["ear.veraison.annotated-evidence"]["snp"]
+	input["submods"]["cpu0"]["ear.status.executables"] == 2
 }
 ```
 
@@ -168,16 +168,16 @@ The policy also takes the requested resource URI as input so the policy can have
 on which resource is requested.
 
 Here is a basic policy checking which resource is requested.
-```opa
+```rego
 package policy
 import rego.v1
 
 default allowed = false
 
 allowed if {
-    data.plugin == "resource"
-    count(data["resource-path"]) == 3
-    data["resource-path"][1] == "red"
+	data.plugin == "resource"
+	count(data["resource-path"]) == 3
+	data["resource-path"][1] == "red"
 }
 ```
 
@@ -185,26 +185,26 @@ This policy only allows requests to certain repositories.
 This technique can be combined with those above.
 For instance, you could write a policy that allows different resources on different platforms,
 or requires different trust claims for different secrets.
-```opa 
+```rego
 package policy
 import rego.v1
 
 default allowed = false
 
 allowed if {
-    data.plugin == "resource"
-    count(data["resource-path"]) == 3
-    data["resource-path"][1] == "red"
-    input["submods"]["cpu0"]["ear.status"] == "affirming"
-    input["submods"]["cpu0"]["ear.veraison.annotated-evidence"]["snp"]
+	data.plugin == "resource"
+	count(data["resource-path"]) == 3
+	data["resource-path"][1] == "red"
+	input["submods"]["cpu0"]["ear.status"] == "affirming"
+	input["submods"]["cpu0"]["ear.veraison.annotated-evidence"]["snp"]
 }
 
 allowed if {
-    data.plugin == "resource"
-    count(data["resource-path"]) == 3
-    data["resource-path"][1] == "blue"
-    input["submods"]["cpu0"]["ear.status"] == "affirming"
-    input["submods"]["cpu0"]["ear.veraison.annotated-evidence"]["tdx"]
+	data.plugin == "resource"
+	count(data["resource-path"]) == 3
+	data["resource-path"][1] == "blue"
+	input["submods"]["cpu0"]["ear.status"] == "affirming"
+	input["submods"]["cpu0"]["ear.veraison.annotated-evidence"]["tdx"]
 }
 ```
 

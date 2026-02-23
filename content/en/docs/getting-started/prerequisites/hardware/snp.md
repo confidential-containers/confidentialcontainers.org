@@ -18,6 +18,6 @@ The host kernel must be equal to or later than upstream version [6.16.1](https:/
 
 To build just the upstream compatible host kernel, use the Confidential Containers fork of [AMDESE AMDSEV](https://github.com/confidential-containers/amdese-amdsev/tree/amd-snp-202511200000). Individual components can be built by running the following command:
 
-```
+```bash
 ./build.sh kernel host --install
 ```

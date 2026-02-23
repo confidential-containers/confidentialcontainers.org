@@ -46,7 +46,7 @@ git clone https://github.com/confidential-containers/trustee.git
 ```
 
 Build the client
-```
+```bash
 cd kbs
 make CLI_FEATURES=sample_only cli
 sudo make install-cli

@@ -26,8 +26,8 @@ but in practice the KBS Host and KBS Port are ignored to avoid coupling a resour
 to a particular IP and port.
 
 Instead, resources are typically expressed as
-```
-kbs:///<repository>/<type>/<tag>`
+```text
+kbs:///<repository>/<type>/<tag>
 ```
 
 Often resources are referred to just as `<repository>/<type>/<tag>`.

@@ -18,7 +18,7 @@ via the KBS protocol and compared to the hardware evidence.
 ### Enabling
 
 To enable this feature, set the following parameter in the guest kernel command line.
-```bash
+```text
 agent.guest_components_rest_api=all
 ```
 {{% alert title="Warning" color="primary" %}}
@@ -75,12 +75,12 @@ spec:
         app: nginx
       annotations:
         io.katacontainers.config.hypervisor.kernel_params: "agent.guest_components_rest_api=all"
-	io.katacontainers.config.hypervisor.cc_init_data: "H4sIAAAAAAAAA4WOwQ6DIBBE7/sVhos3xGpSa9IvMYQgUiEiGFz9/kLTHtpLjzO7M29OHXcbfHEvCKM1ZQSkm0O0aNbs7UY2XUtgmCRKDkRKimF1JN3KsoQBw6K9UME/7LzzH02XMXlHdLnJIG59VdWMXtqWMnpr+o51iQeDPrVHF+Z3joP1FsWmYsrVV9Bejk6Lz1cyMR4aMh+Imsz3omVUHLxcdYYqJZImfze8up7xdiRhCwEAAA=="
+        io.katacontainers.config.hypervisor.cc_init_data: "H4sIAAAAAAAAA4WOwQ6DIBBE7/sVhos3xGpSa9IvMYQgUiEiGFz9/kLTHtpLjzO7M29OHXcbfHEvCKM1ZQSkm0O0aNbs7UY2XUtgmCRKDkRKimF1JN3KsoQBw6K9UME/7LzzH02XMXlHdLnJIG59VdWMXtqWMnpr+o51iQeDPrVHF+Z3joP1FsWmYsrVV9Bejk6Lz1cyMR4aMh+Imsz3omVUHLxcdYYqJZImfze8up7xdiRhCwEAAA=="
     spec:
-      runtimeClassName: (...)
+      runtimeClassName: # (...)
       containers:
       - name: nginx
-        (...)
+        # (...)
 ```
 ### Runtime Attestation
 

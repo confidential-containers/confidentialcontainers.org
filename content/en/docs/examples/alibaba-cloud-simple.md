@@ -37,7 +37,7 @@ If you want to build a pod VM image yourself, please follow the steps.
 
 1. Create pod VM image.
 
-    ```sh
+    ```bash
     PODVM_DISTRO=alinux \
     CLOUD_PROVIDER=alibabacloud \
     IMAGE_URL=https://alinux3.oss-cn-hangzhou.aliyuncs.com/aliyun_3_x64_20G_nocloud_alibase_20250117.qcow2 \
@@ -50,7 +50,7 @@ If you want to build a pod VM image yourself, please follow the steps.
 2. Upload to OSS storage and create ECS Image.
 
     You will then need to upload the Pod VM image to OSS (Object Storage Service). 
-    ```sh
+    ```bash
     export REGION_ID=<region-id>
     export IMAGE_FILE=<path-to-qcow2-file>
     export BUCKET=<OSS-bucket-name>
@@ -60,7 +60,7 @@ If you want to build a pod VM image yourself, please follow the steps.
     ```
 
     Then, mark the image file as an ECS Image
-    ```sh
+    ```bash
     export IMAGE_NAME=$(basename ${IMAGE_FILE%.*})
 
     aliyun ecs ImportImage --ImageName ${IMAGE_NAME} \
@@ -77,7 +77,7 @@ If you want to build a pod VM image yourself, please follow the steps.
 
 If you want to build CAA DaemonSet image yourself:
 
-  ```sh
+  ```bash
   export registry=<registry-address>
   export RELEASE_BUILD=true
   export CLOUD_PROVIDER=alibabacloud
@@ -91,7 +91,7 @@ later.
 
 1. Create ACK Managed Cluster.
 
-    ```sh
+    ```bash
     export CONTAINER_CIDR=172.18.0.0/16
     export REGION_ID=cn-beijing
     export ZONES='["cn-beijing-i"]'
@@ -117,12 +117,12 @@ later.
 
     Wait for the cluster to be created. Get the vSwitch id of the cluster.
     
-    ```sh
+    ```bash
     VSWITCH_IDS=$(aliyun cs DescribeClusterDetail --ClusterId ${CLUSTER_ID} | jq -r  ".parameters.WorkerVSwitchIds" | sed 's/^/["/; s/$/"]/; s/,/","/g')
     ```
     Then add one worker node to the cluster.
 
-    ```sh
+    ```bash
     WORKER_NODE_COUNT=1
     WORKER_NODE_TYPE="[\"ecs.g8i.xlarge\",\"ecs.g7.xlarge\"]"
     aliyun cs POST /clusters/${CLUSTER_ID}/nodepools \
@@ -160,7 +160,7 @@ later.
 
 2. Add Internet access for the cluster VPC
 
-    ```sh
+    ```bash
     export VPC_ID=$(aliyun cs DescribeClusterDetail --ClusterId ${CLUSTER_ID} | jq -r ".vpc_id")
     export VSWITCH_ID=$(echo ${VSWITCH_IDS} | sed 's/[][]//g' | sed 's/"//g')
     aliyun vpc CreateNatGateway \
@@ -202,7 +202,7 @@ later.
 3. Grant role permissions
 
     Give role permission to the cluster to allow the worker to create ECS instances.
-    ```sh
+    ```bash
     export ROLE_NAME=caa-alibaba
     export RRSA_ISSUER=$(aliyun cs DescribeClusterDetail --ClusterId ${CLUSTER_ID} | jq -r ".rrsa_config.issuer" | cut -d',' -f1)
     export RRSA_ARN=$(aliyun cs DescribeClusterDetail --ClusterId ${CLUSTER_ID} | jq -r ".rrsa_config.oidc_arn" | cut -d',' -f1)
@@ -293,7 +293,7 @@ later.
 
 ### Create the credentials file
 
-```sh
+```bash
 cat <<EOF > install/overlays/alibabacloud/alibabacloud-cred.env
 # If the WorkerNode is on ACK, we use RRSA to authenticate
 ALIBABA_CLOUD_ROLE_ARN=${ROLE_ARN}
@@ -316,7 +316,7 @@ in [`kustomization.yaml`](../install/overlays/alibabacloud/kustomization.yaml).
 
 Label the cluster nodes with `node.kubernetes.io/worker=`
 
-```sh
+```bash
 for NODE_NAME in $(kubectl get nodes -o jsonpath='{.items[*].metadata.name}'); do
   kubectl label node $NODE_NAME node.kubernetes.io/worker=
 done
@@ -329,7 +329,7 @@ of CoCo Operator for Alibaba Cloud. Specifically,
 we enabled containerd 1.7+ installation and mirrored images from `quay.io` on
 Alibaba Cloud to accelerate.
 
-```sh
+```bash
 export COCO_OPERATOR_REPO="https://github.com/AliyunContainerService/coco-operator"
 export COCO_OPERATOR_REF="main"
 export RESOURCE_CTRL=false
@@ -345,7 +345,7 @@ Generic CAA deployment instructions are also described [here](../install/README.
 
 Verify that the `runtimeclass` is created after deploying CAA:
 
-```sh
+```bash
 kubectl get runtimeclass
 ```
 
@@ -361,7 +361,7 @@ kata-remote   kata-remote   7m18s
 
 Create an `nginx` deployment:
 
-```yaml
+```bash
 echo '
 apiVersion: v1
 kind: Pod
@@ -377,13 +377,13 @@ spec:
 
 Ensure that the pod is up and running:
 
-```sh
+```bash
 kubectl get pods -n default
 ```
 
 You can verify that the peer-pod VM was created by running the following command:
 
-```sh
+```bash
 aliyun ecs DescribeInstances --RegionId ${REGION_ID} --InstanceName 'podvm-*'
 ```
 
@@ -401,12 +401,12 @@ Delete all running pods using the `runtimeClass` `kata-remote`.
 Verify that all peer-pod VMs are deleted. You can use the following command to list all the peer-pod VMs
 (VMs having prefix `podvm`) and status:
 
-```sh
+```bash
 aliyun ecs DescribeInstances --RegionId ${REGION_ID} --InstanceName 'podvm-*'
 ```
 
 Delete the ACK cluster by running the following command:
 
-```sh
+```bash
 aliyun cs DELETE /clusters/${CLUSTER_ID} --region ${REGION_ID} --keep_slb false --retain_all_resources false --header "Content-Type=application/json;" --body "{}"
 ```

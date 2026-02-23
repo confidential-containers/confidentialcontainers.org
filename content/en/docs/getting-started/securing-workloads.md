@@ -113,7 +113,7 @@ default ExecProcessRequest := false
 
 # Only allow specific image digests
 CreateContainerRequest if {
-    input.storages[0].source == "docker.io/library/nginx@sha256:abc123..."
+	input.storages[0].source == "docker.io/library/nginx@sha256:abc123..."
 }
 ```
 
@@ -144,9 +144,9 @@ default allow = false
 
 # Only release secrets to workloads with the expected Init-Data hash
 allow if {
-    input["submods"]["cpu0"]["ear.status"] == "affirming"
-    # Verify the specific Init-Data hash (includes agent policy + config)
-    input["submods"]["cpu0"]["ear.veraison.annotated-evidence"]["init_data"] == "expected-hash-here"
+	input["submods"]["cpu0"]["ear.status"] == "affirming"
+	# Verify the specific Init-Data hash (includes agent policy + config)
+	input["submods"]["cpu0"]["ear.veraison.annotated-evidence"]["init_data"] == "expected-hash-here"
 }
 ```
 
@@ -154,7 +154,9 @@ Use the hash algorithm you specified in the `initdata.toml` file to calculate
 the expected value. For example with TDX you would have specified sha384 and at
 a command line you could run:
 
-`sha384sum initdata.toml`
+```bash
+sha384sum initdata.toml
+```
 
 **Learn more:** [Resource Policies](../../attestation/policies/#resource-policies)
 

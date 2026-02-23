@@ -28,7 +28,7 @@ Sometimes this will give you a useful message pointing to a failed attestation
 or some sort of missing environment setup. Most of the time you will see a
 generic message such as the following:
 
-```bash
+```text
 Failed to create pod sandbox: rpc error: code = Unknown desc = failed to create containerd task: failed to create shim: Failed to Check if grpc server is working: rpc error: code = DeadlineExceeded desc = timed out connecting to vsock 637456061:1024: unknown
 ```
 
@@ -40,32 +40,32 @@ what is going on.
 It can be quite useful to start a debug container, usually kubernetes nodes are stripped / hardened, which means no tools are installed, a debug container can be any image.
 
 `Debug container`
-```sh
+```bash
 kubectl debug node/dev01-worker -it --image=busybox
 ```
 
 When in a debug container host system are mounted under */host*
 
 `Edit containerd config`
-```sh
+```bash
 vi /host/etc/containerd/config.toml
 ```
 {{% alert color="info" %}}
 If chroot'ed, there's no access to debug containers tools etc
 {{% /alert %}}
 `Show containerd log`
-```sh
+```bash
 chroot /host
 journalctl -xeu containerd
 ```
 
 `Edit kata containerd 2.0 config`
-```sh
+```bash
 vi /host/opt/kata/containerd/config.d/kata-deploy.toml
 ```
 
 `Edit qemu-coco-dev config`
-```sh
+```bash
 vi /host/opt/kata/share/defaults/kata-containers/configuration-qemu-coco-dev.toml
 ```
 
@@ -165,7 +165,7 @@ the Kata agent.
 
 One very useful debugging tool is the Kata guest debug console. You can
 enable this by editing the Kata agent configuration file and adding the lines
-``` toml
+```toml
 debug_console = true
 debug_console_vport = 1026
 ```
@@ -203,7 +203,7 @@ redirect script described above.
 
 Sometimes when creating a pod you might encounter the following error:
 
-```sh
+```text
 Warning  Failed     8m51s (x7 over 10m)  kubelet            Error: failed to create containerd container: error unpacking image: failed to extract layer sha256:d51af96cf93e225825efd484ea457f867cb2b967f7415b9a3b7e65a2f803838a: failed to get reader from content store: content digest sha256:ec562eabd705d25bfea8c8d79e4610775e375524af00552fe871d3338261563c: not found
 ```
 
@@ -221,7 +221,7 @@ Confidential container workloads rely on those layers. To disable it, update
 {{% alert color="info" %}}
 Previously failed images needs to be prefetched
 {{% /alert %}}
-```sh
+```bash
 ctr -n k8s.io content fetch <image>
 ```
 Restart containerd after making the change:
@@ -238,7 +238,7 @@ If your CoCo Pod gets an error like the one shown below, then it is likely the i
 
 Therefore, you must ensure that the image pull policy is set to **Always** for any CoCo pod. This way the images are always handled entirely by the agent inside the VM. It is worth mentioning we recognize that this behavior is sub-optimal, so the community provides solutions to avoid constant image downloads for each workload.
 
-```bash
+```text
 Events:
   Type     Reason     Age               From               Message
   ----     ------     ----              ----               -------
