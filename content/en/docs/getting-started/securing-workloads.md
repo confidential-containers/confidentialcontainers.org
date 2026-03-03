@@ -88,22 +88,29 @@ Confidential Containers uses **three types of policies** to protect your workloa
 
 | Policy Type | Where Enforced | What It Controls | Configured Via |
 |------------|----------------|------------------|----------------|
-| **Agent Policy** | Inside the TEE by Kata Agent | Which operations the agent can perform (create containers, exec into pods, etc.) | Pod annotation with init-data |
-| **Resource Policy** | By Trustee KBS | Which secrets are released to which workloads | KBS Client or Trustee Operator |
-| **Attestation Policy** | By Trustee AS | How hardware evidence is evaluated (what TCB is acceptable) | KBS Client or Trustee Operator |
+| **Kata Agent Policy** | Inside the TEE by Kata Agent | Which operations the agent can perform (create containers, exec into pods, etc.) | Pod annotation with init-data |
+| **KBS Resource Policy** | By Trustee KBS | Which secrets are released to which workloads | KBS Client or Trustee Operator |
+| **Attestation Service Policy** | By Trustee AS | How hardware evidence is evaluated (what TCB is acceptable) | KBS Client or Trustee Operator |
 
-{{< figure src="/img/CoCoMeasurementsAndConfig.svg" alt="Diagram showing how agent policy, resource policy, and attestation policy interact in the attestation flow" >}}
+{{< figure src="/img/CoCoMeasurementsAndConfig.svg" alt="Diagram showing how kata agent policy, KBS resource policy, and attestation service policy interact in the attestation flow" >}}
 
-### 1. Agent Policy (Inside the TEE)
+{{% alert title="Note" color="info" %}}
+The diagram shows example Rego file names.
+Those names are arbitrary.
+Policies are always supplied by path via command line (e.g. `kbs-client ... set-resource-policy --policy-file <path>`) or config,
+and the services use the file *content*, not the filename.
+{{% /alert %}}
 
-The agent policy controls what operations the Kata agent can perform inside your TEE. This is your **first line of defense** against malicious or compromised Kubernetes control planes.
+### 1. Kata Agent Policy (Inside the TEE)
+
+The kata agent policy controls what operations the Kata agent can perform inside your TEE. This is your **first line of defense** against malicious or compromised Kubernetes control planes.
 
 **Example use cases:**
 - Prevent `kubectl exec` into production pods
 - Restrict which container images can be launched
 - Control which commands can be executed
 
-**Quick example** of a restrictive agent policy:
+**Quick example** of a restrictive kata agent policy:
 ```rego
 package agent_policy
 import rego.v1
@@ -117,24 +124,24 @@ CreateContainerRequest if {
 }
 ```
 
-Agent policies get embedded in the Init-Data configuration file. That file provides additional configuration like where to look for Trustee.
+Kata agent policies get embedded in the Init-Data configuration file. That file provides additional configuration like where to look for Trustee.
 
 **Learn more:** [Agent Policies and Init-Data](../../features/initdata/)
 
 
-### 2. Resource Policy (At the KBS)
+### 2. KBS Resource Policy (At the KBS)
 
-Resource policies control which secrets are released under what conditions. They inspect the attestation token from your workload to make decisions.
+KBS resource policies control which secrets are released under what conditions. They inspect the attestation token from your workload to make decisions.
 
 **Example use cases:**
-- Verify the workload is using a specific agent policy (via Init-Data hash)
+- Verify the workload is using a specific kata agent policy (via Init-Data hash)
 - Only release database credentials to attesting TDX guests
 - Require specific trust levels (affirming vs contraindicated)
 - Different secrets for different platforms (TDX vs SNP)
 
 **Example: Checking Init-Data hash**
 
-When you provide Init-Data in your pod (with an agent policy), the Attestation Service verifies it and includes the hash in the token. Your resource policy can verify the specific Init-Data hash to ensure the exact agent policy was used:
+When you provide Init-Data in your pod (with a kata agent policy), the Attestation Service verifies it and includes the hash in the token. Your KBS resource policy can verify the specific Init-Data hash to ensure the exact kata agent policy was used:
 
 ```rego
 package policy
@@ -145,7 +152,7 @@ default allow = false
 # Only release secrets to workloads with the expected Init-Data hash
 allow if {
 	input["submods"]["cpu0"]["ear.status"] == "affirming"
-	# Verify the specific Init-Data hash (includes agent policy + config)
+	# Verify the specific Init-Data hash (includes kata agent policy + config)
 	input["submods"]["cpu0"]["ear.veraison.annotated-evidence"]["init_data"] == "expected-hash-here"
 }
 ```
@@ -158,18 +165,18 @@ a command line you could run:
 sha384sum initdata.toml
 ```
 
-**Learn more:** [Resource Policies](../../attestation/policies/#resource-policies)
+**Learn more:** [KBS Resource Policies](../../attestation/policies/#kbs-resource-policies)
 
-### 3. Attestation Policy (At the Attestation Service)
+### 3. Attestation Service Policy (At the Attestation Service)
 
-Attestation policies define **how hardware evidence is evaluated** - what measurements are acceptable, which reference values to compare against, and how to calculate trust vectors.
+Attestation service policies define **how hardware evidence is evaluated** - what measurements are acceptable, which reference values to compare against, and how to calculate trust vectors.
 
 **Example use cases:**
 - Define acceptable firmware versions
 - Specify required security levels for different workloads
 - Map hardware measurements to trust claims
 
-**Learn more:** [Attestation Policies](../../attestation/policies/#attestation-policies)
+**Learn more:** [Attestation Service Policies](../../attestation/policies/#attestation-service-policies)
 
 {{% alert title="Default Policies" color="success" %}}
 CoCo ships with sensible default attestation policies for TDX and SNP. For most users, you only need to provide reference values - the policy is already configured appropriately.
@@ -185,8 +192,8 @@ Once you've configured the basics, explore these features for enhanced security:
 Before deploying to production, ensure you've addressed:
 
 - [ ] Selected the correct runtime class for your hardware
-- [ ] Generated and embedded an agent policy appropriate for your workload
-- [ ] Configured resource policies in your KBS
+- [ ] Generated and embedded a kata agent policy appropriate for your workload
+- [ ] Configured KBS resource policies in your KBS
 - [ ] Provisioned reference values to the attestation service
 
 ## Next Steps
