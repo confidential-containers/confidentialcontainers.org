@@ -49,7 +49,7 @@ RUST_LOG=debug
 
 Then, you can run Trustee with an additional argument.
 ```bash
-docker-compose --env-file debug.env up
+docker compose --env-file debug.env up
 ```
 
 ### Uninstall
