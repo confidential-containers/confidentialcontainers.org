@@ -1,12 +1,15 @@
 ---
+
 title: Alibaba Cloud
 description: Cloud API Adaptor (CAA) on Alibaba Cloud
 categories:
+
 - examples
 tags:
 - caa
 - alibaba cloud
 - ack
+
 ---
 
 This documentation will walk you through setting up CAA (a.k.a. Peer Pods) on Alibaba Cloud Container Service for Kubernetes (ACK) and Alibaba Cloud Elastic Compute Service (ECS). It explains how to deploy:
@@ -17,7 +20,7 @@ This documentation will walk you through setting up CAA (a.k.a. Peer Pods) on Al
 
 > **Note:** Run the following commands from the following directory - `src/cloud-api-adaptor`
 
-> **Note:** Now Confidential Computing instances [are only available](https://www.alibabacloud.com/help/en/ecs/user-guide/build-a-tdx-confidential-computing-environment) in `cn-beijing` region within zone `cn-beijing-i`. 
+> **Note:** Now Confidential Computing instances are available [in some regions](https://www.alibabacloud.com/help/en/ecs/user-guide/build-a-tdx-confidential-computing-environment).
 
 > **Note:** Official document from Alibaba Cloud can be found [here](https://help.aliyun.com/zh/ack/ack-managed-and-ack-dedicated/user-guide/implement-caa-confidential-container-solution-using-confidential-vms).
 
@@ -36,53 +39,51 @@ Install Required Tools:
 If you want to build a pod VM image yourself, please follow the steps.
 
 1. Create pod VM image.
-
-    ```bash
+  ```bash
     PODVM_DISTRO=alinux \
     CLOUD_PROVIDER=alibabacloud \
     IMAGE_URL=https://alinux3.oss-cn-hangzhou.aliyuncs.com/aliyun_3_x64_20G_nocloud_alibase_20250117.qcow2 \
     make podvm-builder podvm-binaries podvm-image
-    ```
+  ```
 
-    The built image will be available in the root path of following newly built docker image: `quay.io/confidential-containers/podvm-alibabacloud-alinux-amd64:<sha256>`
-    with name like `podvm-*.qcow2`. You need to export it from the container image.
+  The built image will be available in the root path of following newly built docker image: `quay.io/confidential-containers/podvm-alibabacloud-alinux-amd64:<sha256>`
+  with name like `podvm-*.qcow2`. You need to export it from the container image.
 
 2. Upload to OSS storage and create ECS Image.
 
-    You will then need to upload the Pod VM image to OSS (Object Storage Service). 
-    ```bash
-    export REGION_ID=<region-id>
-    export IMAGE_FILE=<path-to-qcow2-file>
-    export BUCKET=<OSS-bucket-name>
-    export OBJECT=<object-name>
+  You will then need to upload the Pod VM image to OSS (Object Storage Service). 
+  ```bash
+  export REGION_ID=<region-id>
+  export IMAGE_FILE=<path-to-qcow2-file>
+  export BUCKET=<OSS-bucket-name>
+  export OBJECT=<object-name>
 
-    aliyun oss cp ${IMAGE_FILE} oss://${BUCKET}/${OBJECT}
-    ```
+  aliyun oss cp ${IMAGE_FILE} oss://${BUCKET}/${OBJECT}
+  ```
 
-    Then, mark the image file as an ECS Image
-    ```bash
-    export IMAGE_NAME=$(basename ${IMAGE_FILE%.*})
-
-    aliyun ecs ImportImage --ImageName ${IMAGE_NAME} \
-        --region ${REGION_ID} --RegionId ${REGION_ID}
-        --BootMode UEFI \
-        --DiskDeviceMapping.1.OSSBucket ${BUCKET} --DiskDeviceMapping.1.OSSObject ${OBJECT} \
-        --Features.NvmeSupport supported \
-        --method POST --force
-    
-    export POD_IMAGE_ID=<ImageId>
-    ```
+  Then, mark the image file as an ECS Image
+  ```bash
+  export IMAGE_NAME=$(basename ${IMAGE_FILE%.*})
+  aliyun ecs ImportImage --ImageName ${IMAGE_NAME} \
+      --region ${REGION_ID} --RegionId ${REGION_ID}
+      --BootMode UEFI \
+      --DiskDeviceMapping.1.OSSBucket ${BUCKET} --DiskDeviceMapping.1.OSSObject ${OBJECT} \
+      --Features.NvmeSupport supported \
+      --method POST --force
+  
+  export POD_IMAGE_ID=<ImageId>
+  ```
 
 ## Build CAA development image
 
 If you want to build CAA DaemonSet image yourself:
 
-  ```bash
-  export registry=<registry-address>
-  export RELEASE_BUILD=true
-  export CLOUD_PROVIDER=alibabacloud
-  make image
-  ```
+```bash
+export registry=<registry-address>
+export RELEASE_BUILD=true
+export CLOUD_PROVIDER=alibabacloud
+make image
+```
 
 After that you should take note of the tag used for this image, we will use it
 later.
@@ -90,8 +91,7 @@ later.
 ## Deploy Kubernetes using ACK Managed Cluster
 
 1. Create ACK Managed Cluster.
-
-    ```bash
+  ```bash
     export CONTAINER_CIDR=172.18.0.0/16
     export REGION_ID=cn-beijing
     export ZONES='["cn-beijing-i"]'
@@ -110,57 +110,16 @@ later.
         }
       ]
     }"
-    
+
     export CLUSTER_ID=<cluster-id>
     export SECURITY_GROUP_ID=$(aliyun cs DescribeClusterDetail --ClusterId ${CLUSTER_ID} | jq -r  ".security_group_id")
-    ```
-
-    Wait for the cluster to be created. Get the vSwitch id of the cluster.
-    
-    ```bash
-    VSWITCH_IDS=$(aliyun cs DescribeClusterDetail --ClusterId ${CLUSTER_ID} | jq -r  ".parameters.WorkerVSwitchIds" | sed 's/^/["/; s/$/"]/; s/,/","/g')
-    ```
-    Then add one worker node to the cluster.
-
-    ```bash
-    WORKER_NODE_COUNT=1
-    WORKER_NODE_TYPE="[\"ecs.g8i.xlarge\",\"ecs.g7.xlarge\"]"
-    aliyun cs POST /clusters/${CLUSTER_ID}/nodepools \
-      --region ${REGION_ID} \
-      --header "Content-Type=application/json;" \
-      --body "
-    {
-      \"nodepool_info\": {
-        \"name\":\"worker-node-pool\"
-      },
-      \"management\":{
-        \"enable\":true
-      },
-      \"scaling_group\":{
-        \"desired_size\":${WORKER_NODE_COUNT},
-        \"image_type\":\"Ubuntu\",
-        \"instance_types\":${WORKER_NODE_TYPE},
-        \"system_disk_category\":\"cloud_essd\",
-        \"vswitch_ids\":${VSWITCH_IDS},
-        \"system_disk_size\":40,
-        \"internet_charge_type\":\"PayByTraffic\",
-        \"internet_max_bandwidth_out\":5,
-        \"data_disks\":[
-          {
-            \"size\":120,
-            \"category\":\"cloud_essd\",
-            \"system_disk_bursting_enabled\":false
-          }
-        ]
-      }
-    }"
-    
-    NODE_POOL_ID=<node-pool-id>
-    ```
+  ```
+  
+  Wait for the cluster to be created. Get the vSwitch id of the cluster.
+  Then add one worker node to the cluster.
 
 2. Add Internet access for the cluster VPC
-
-    ```bash
+  ```bash
     export VPC_ID=$(aliyun cs DescribeClusterDetail --ClusterId ${CLUSTER_ID} | jq -r ".vpc_id")
     export VSWITCH_ID=$(echo ${VSWITCH_IDS} | sed 's/[][]//g' | sed 's/"//g')
     aliyun vpc CreateNatGateway \
@@ -170,7 +129,7 @@ later.
       --NatType Enhanced \
       --VSwitchId ${VSWITCH_ID} \
       --NetworkType internet
-    
+
     export GATEWAY_ID="<NatGatewayId>"
     export SNAT_TABLE_ID="<SnatTableId>"
 
@@ -183,161 +142,210 @@ later.
 
     export EIP_ID="<AllocationId>"
     export EIP_ADDRESS="<EipAddress>"
-  
+
     aliyun vpc AssociateEipAddress \
       --region ${REGION_ID} \
       --RegionId ${REGION_ID} \
       --AllocationId ${EIP_ID} \
       --InstanceId ${GATEWAY_ID} \
       --InstanceType Nat
-    
+
     aliyun vpc CreateSnatEntry \
       --region ${REGION_ID} \
       --RegionId ${REGION_ID} \
       --SnatTableId ${SNAT_TABLE_ID} \
       --SourceVSwitchId ${VSWITCH_ID} \
       --SnatIp ${EIP_ADDRESS}
-    ```
-
+  ```
 3. Grant role permissions
+  Give role permission to the cluster to allow the worker to create ECS instances.
 
-    Give role permission to the cluster to allow the worker to create ECS instances.
-    ```bash
-    export ROLE_NAME=caa-alibaba
-    export RRSA_ISSUER=$(aliyun cs DescribeClusterDetail --ClusterId ${CLUSTER_ID} | jq -r ".rrsa_config.issuer" | cut -d',' -f1)
-    export RRSA_ARN=$(aliyun cs DescribeClusterDetail --ClusterId ${CLUSTER_ID} | jq -r ".rrsa_config.oidc_arn" | cut -d',' -f1)
-  
-    aliyun ram CreateRole --region ${REGION_ID} \
-      --RoleName ${ROLE_NAME} \
-      --AssumeRolePolicyDocument "
-    {
-      \"Version\": \"1\",
-      \"Statement\": [
-        {
-          \"Action\": \"sts:AssumeRole\",
-          \"Condition\": {
-            \"StringEquals\": {
-              \"oidc:aud\": [
-                \"sts.aliyuncs.com\"
-              ],
-              \"oidc:iss\": [
-                \"${RRSA_ISSUER}\"
-              ],
-              \"oidc:sub\": [
-                \"system:serviceaccount:confidential-containers-system:cloud-api-adaptor\"
-              ]
-            }
-          },
-          \"Effect\": \"Allow\",
-          \"Principal\": {
-            \"Federated\": [
-              \"${RRSA_ARN}\"
-            ]
-          }
-        }
-      ]
-    }"
+## Deploy the CAA Helm Chart
 
-    export POLICY_NAME=caa-aliyun-policy
-    aliyun ram CreatePolicy --region ${REGION_ID} \
-      --PolicyName ${POLICY_NAME} \
-      --PolicyDocument "
-      {
-        \"Version\": \"1\",
-        \"Statement\": [
-          {
-            \"Effect\": \"Allow\",
-            \"Action\": [
-              \"ecs:RunInstances\",
-              \"ecs:DeleteInstance\",
-              \"ecs:DescribeInstanceAttribute\",
-              \"ecs:CreateNetworkInterface\",
-              \"ecs:DeleteNetworkInterface\",
-              \"ecs:AttachNetworkInterface\",
-              \"ecs:ModifyNetworkInterfaceAttribute\",
-              \"ecs:DescribeNetworkInterfaceAttribute\"
-            ],
-            \"Resource\": \"*\"
-          },
-          {
-            \"Effect\": \"Allow\",
-            \"Action\": \"vpc:DescribeVSwitchAttributes\",
-            \"Resource\": \"*\"
-          },
-          {
-            \"Effect\": \"Allow\",
-            \"Action\": [
-              \"vpc:AllocateEipAddress\",
-              \"vpc:ReleaseEipAddress\",
-              \"vpc:AssociateEipAddress\",
-              \"vpc:UnassociateEipAddress\",
-              \"vpc:DescribeEipAddresses\",
-              \"vpc:DescribeVSwitchAttributes\"
-            ],
-            \"Resource\": \"*\"
-          }
-        ]
-      }
-      "
+### Download the CAA Helm deployment artifacts
 
-    aliyun ram AttachPolicyToRole \
-      --region ${REGION_ID} \
-      --PolicyType Custom \
-      --PolicyName ${POLICY_NAME} \
-      --RoleName ${ROLE_NAME}
+{{< tabpane text=true right=true persist=header >}}
+{{% tab header="**Versions**:" disabled=true /%}}
 
-    ROLE_ARN=$(aliyun ram GetRole --region ${REGION_ID} --RoleName ${ROLE_NAME} | jq -r ".Role.Arn")
-    ```
-
-## Deploy CAA
-
-### Create the credentials file
+{{% tab header="Last Release" %}}
 
 ```bash
-cat <<EOF > install/overlays/alibabacloud/alibabacloud-cred.env
-# If the WorkerNode is on ACK, we use RRSA to authenticate
-ALIBABA_CLOUD_ROLE_ARN=${ROLE_ARN}
-ALIBABA_CLOUD_OIDC_PROVIDER_ARN=${RRSA_ARN}
-ALIBABA_CLOUD_OIDC_TOKEN_FILE=/var/run/secrets/ack.alibabacloud.com/rrsa-tokens/token
+export CAA_VERSION="0.17.0"
+curl -LO "https://github.com/confidential-containers/cloud-api-adaptor/archive/refs/tags/v${CAA_VERSION}.tar.gz"
+tar -xvzf "v${CAA_VERSION}.tar.gz"
+cd "cloud-api-adaptor-${CAA_VERSION}/src/cloud-api-adaptor/install/charts/peerpods"
+```
+
+{{% /tab %}}
+
+{{% tab header="Latest Build" %}}
+
+```bash
+export CAA_BRANCH="main"
+curl -LO "https://github.com/confidential-containers/cloud-api-adaptor/archive/refs/heads/${CAA_BRANCH}.tar.gz"
+tar -xvzf "${CAA_BRANCH}.tar.gz"
+cd "cloud-api-adaptor-${CAA_BRANCH}/src/cloud-api-adaptor/install/charts/peerpods"
+```
+
+{{% /tab %}}
+
+{{% tab header="DIY" %}}
+This assumes that you already have the code ready to use. 
+On your terminal change directory to the Cloud API Adaptor's code base.
+{{% /tab %}}
+
+{{< /tabpane >}}
+
+### Export PodVM image version
+
+Exports the PodVM image ID used by peer pods. This variable tells the deployment tooling which PodVM image version
+to use when creating peer pod virtual machines in Alibaba Cloud.
+
+```bash
+export IMAGEID="m-2zef6zaa0j0qz3sunhjp"
+```
+
+> **Note:** Alibaba Cloud builds the images ahead of time. Different regions has different image id to use.
+>
+> | region | IMAGEID |
+> |---|---|
+> | cn-beijing | m-2zef6zaa0j0qz3sunhjp |
+> | ap-southeast-1 | m-t4n9ocuen5sy6rhbxbk1 |
+
+### Export CAA container image path
+
+Define the Cloud API Adaptor (CAA) container image to deploy.
+These variables tell the deployment tooling which CAA image and architecture-specific tag to pull and run.
+The tag is derived from the CAA release version to ensure compatibility with the selected PodVM image and configuration.
+
+{{< tabpane text=true right=true persist=header >}}
+{{% tab header="**Versions**:" disabled=true /%}}
+
+{{% tab header="Last Release" %}}
+
+Export the following environment variable to use the latest release image of CAA:
+
+```bash
+export CAA_IMAGE="quay.io/confidential-containers/cloud-api-adaptor"
+export CAA_TAG="v${CAA_VERSION}-amd64"
+```
+
+{{% /tab %}}
+
+{{% tab header="Latest Build" %}}
+
+Export the following environment variable to use the image built by the CAA CI on each merge to main:
+
+```bash
+export CAA_IMAGE="quay.io/confidential-containers/cloud-api-adaptor"
+```
+
+Find an appropriate tag of pre-built image suitable to your needs [here](https://quay.io/repository/confidential-containers/cloud-api-adaptor?tab=tags&tag=latest).
+
+```bash
+export CAA_TAG=""
+```
+
+> **Caution**: You can also use the `latest` tag but it is **not** recommended, because of its lack of version control and potential for unpredictable updates, impacting stability and reproducibility in deployments.
+
+{{% /tab %}}
+
+{{% tab header="DIY" %}}
+
+If you have made changes to the CAA code and you want to deploy those changes then follow [these instructions](https://github.com/confidential-containers/cloud-api-adaptor/blob/main/src/cloud-api-adaptor/install/README.md#building-custom-cloud-api-adaptor-image) to build the container image. Once the image is built export the environment variables `CAA_IMAGE` and `CAA_TAG`.
+
+{{% /tab %}}
+
+{{< /tabpane >}}
+
+### Select peer-pods machine type
+
+```bash
+export PODVM_INSTANCE_TYPE="ecs.g8i.xlarge"
+export DISABLECVM="false"
+```
+
+> **Note:** See [the official document](https://help.aliyun.com/en/ecs/user-guide/build-a-tdx-confidential-computing-environment?spm=a2c4g.11186623.0.0.219e6187iTmYIJ#31e97c05ee64f) for more instance types that supports confidential computing.
+
+
+### Populate the `providers/alibabacloud.yaml` file
+
+List of all available configuration options can be found in two places:
+- [Main charts values](https://github.com/confidential-containers/cloud-api-adaptor/blob/main/src/cloud-api-adaptor/install/charts/peerpods/values.yaml)
+- [Alibaba Cloud specific values](https://github.com/confidential-containers/cloud-api-adaptor/blob/main/src/cloud-api-adaptor/install/charts/peerpods/providers/alibabacloud.yaml)
+
+Run the following command to update the [`providers/alibabacloud.yaml`](https://github.com/confidential-containers/cloud-api-adaptor/blob/main/src/cloud-api-adaptor/install/charts/peerpods/providers/alibabacloud.yaml) file:
+
+```bash
+cat <<EOF > providers/alibabacloud.yaml
+provider: alibabacloud
+image:
+  name: "${CAA_IMAGE}"
+  tag: "${CAA_TAG}"
+providerConfigs:
+   alibabacloud:
+      IMAGEID: "${IMAGEID}"
+      REGION: "${REGION_ID}"
+      SECURITY_GROUP_IDS: "${SECURITY_GROUP_ID}"
+      VSWITCH_ID: "${VSWITCH_ID}"
+      DISABLECVM: ${DISABLECVM}
+alibabacloud:
+  rrsa:
+    enable: true
 EOF
 ```
 
-### Update the `kustomization.yaml` file
+> **Note:** If you are not using RRSA for auth, please change the `alibabacloud.rrsa.enable` to `false`
+> in the yaml.
 
-At a minimum you need to update the following values
-in [`kustomization.yaml`](../install/overlays/alibabacloud/kustomization.yaml).
+### Deploy helm chart on the Kubernetes cluster
 
-- `VSWITCH_ID`: Use one of the values of `${VSWITCH_IDS}`
-- `SECURITY_GROUP_IDS`: We can reuse the security group id `${SECURITY_GROUP_ID}` of ACK.
-- `IMAGEID`: The ECS images ID, e.g. `m-2ze1w9aj2aonwckv64cw` in `cn-beijing` region.
-- `REGION`: The region where Peer Pods run, e.g. `cn-beijing`. 
+1. Create namespace managed by Helm:
+    ```bash
+   kubectl apply -f - << EOF
+   apiVersion: v1
+   kind: Namespace
+   metadata:
+     name: confidential-containers-system
+     labels:
+       app.kubernetes.io/managed-by: Helm
+     annotations:
+       meta.helm.sh/release-name: peerpods
+       meta.helm.sh/release-namespace: confidential-containers-system
+   EOF
+    ```
 
-### Deploy CAA on the Kubernetes cluster
+2. Create the secret using `kubectl`:
 
-Label the cluster nodes with `node.kubernetes.io/worker=`
+    See [providers/alibabacloud-secrets.yaml.template](https://github.com/confidential-containers/cloud-api-adaptor/blob/main/src/cloud-api-adaptor/install/charts/peerpods/providers/alibabacloud-secrets.yaml.template) for required keys.
 
-```bash
-for NODE_NAME in $(kubectl get nodes -o jsonpath='{.items[*].metadata.name}'); do
-  kubectl label node $NODE_NAME node.kubernetes.io/worker=
-done
-```
+    > **Note**: Below example assumes that you are using RRSA for auth hence
+    > `ALIBABACLOUD_ACCESS_KEY_ID` and `ALIBABACLOUD_ACCESS_KEY_SECRET` are not provided,
+    > while `ALIBABA_CLOUD_ROLE_ARN` and `ALIBABA_CLOUD_OIDC_PROVIDER_ARN` are provided.
 
-Run the following command to deploy CAA:
+    ```bash
+    kubectl create secret generic my-provider-creds \
+    -n confidential-containers-system \
+    --from-literal=ALIBABA_CLOUD_ROLE_ARN=${ALIBABA_CLOUD_ROLE_ARN} \
+    --from-literal=ALIBABA_CLOUD_OIDC_PROVIDER_ARN=${ALIBABA_CLOUD_OIDC_PROVIDER_ARN} \
+    --from-literal=ALIBABA_CLOUD_OIDC_TOKEN_FILE=/var/run/secrets/ack.alibabacloud.com/rrsa-tokens/token
+    ```
+   
+3. Install helm chart:
 
-> **Note:** We have a [forked version](https://github.com/AliyunContainerService/coco-operator)
-of CoCo Operator for Alibaba Cloud. Specifically,
-we enabled containerd 1.7+ installation and mirrored images from `quay.io` on
-Alibaba Cloud to accelerate.
+   Below command uses customization options `-f` and `--set` which are described [here](../../getting-started/installation/advanced_configuration).
 
-```bash
-export COCO_OPERATOR_REPO="https://github.com/AliyunContainerService/coco-operator"
-export COCO_OPERATOR_REF="main"
-export RESOURCE_CTRL=false
-export CLOUD_PROVIDER=alibabacloud
-make deploy
-```
+    ```bash
+    helm install peerpods . \
+      -f providers/alibabacloud.yaml \
+      --set secrets.mode=reference \
+      --set secrets.existingSecretName=my-provider-creds \
+      --dependency-update \
+      -n confidential-containers-system
+    ```
 
-Generic CAA deployment instructions are also described [here](../install/README.md).
+Generic Peer pods Helm charts deployment instructions are also described 
+[here](https://github.com/confidential-containers/cloud-api-adaptor/tree/main/src/cloud-api-adaptor/install/charts/peerpods/README.md).
 
 ## Run sample application
 
@@ -410,3 +418,4 @@ Delete the ACK cluster by running the following command:
 ```bash
 aliyun cs DELETE /clusters/${CLUSTER_ID} --region ${REGION_ID} --keep_slb false --retain_all_resources false --header "Content-Type=application/json;" --body "{}"
 ```
+
