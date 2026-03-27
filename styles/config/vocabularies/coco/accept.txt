@@ -36,6 +36,7 @@ LLM[s]
 [nN]odeport
 OCI
 ocicrypt
+olm
 oras
 PCR
 Peerpod

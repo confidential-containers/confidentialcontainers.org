@@ -36,7 +36,7 @@ For a high level overview of the CoCo project, please see: [What is the Confiden
 
 As mentioned above, you don’t need TEE-capable hardware for this tutorial. You will only be required to have:
 
-* Ubuntu 22.04 virtual or bare-metal machine with a minimum of 8GB RAM and 4 vcpus
+* Ubuntu 22.04 virtual or bare-metal machine with a minimum of 8GB RAM and 4 (v)CPUs
 * Kubernetes 1.30.1 or above
 
 It is beyond the scope of this blog to tell you how to install Kubernetes, but there are some details that should be taken into consideration:
@@ -95,7 +95,7 @@ cc-operator-daemon-install-q27qz              	1/1 	Running   0      	8m10s
 cc-operator-pre-install-daemon-d55v2          	1/1 	Running   0      	8m35s
 ```
 
-You can notice that it will get installed a couple of [Kubernetes runtimeclasses](https://kubernetes.io/docs/concepts/containers/runtime-class/) as shown on the listing below. Each class defines a container runtime configuration as, for example, **kata-qemu-tdx** should be used to launch QEMU/KVM for Intel TDX hardware (similarly **kata-qemu-snp** for AMD SEV-SNP). For the purpose of creating a confidential pod in a non-TEE environment we will be using the **kata-qemu-coco-dev** runtime class.
+You can notice that it will get installed a couple of [Kubernetes runtimeclasses](https://kubernetes.io/docs/concepts/containers/runtime-class/) as shown on the listing below. Each class defines a container runtime configuration as, for example, `kata-qemu-tdx` should be used to launch QEMU/KVM for Intel TDX hardware (similarly `kata-qemu-snp` for AMD SEV-SNP). For the purpose of creating a confidential pod in a non-TEE environment we will be using the **kata-qemu-coco-dev** runtime class.
 
 ```console
 $ kubectl get runtimeclasses
