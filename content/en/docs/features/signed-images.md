@@ -33,7 +33,7 @@ In any case, the general approach is to
 
 ### Creating a Key Pair
 
-Create a key pair using one of two approaches: `cosign` or simple signing with GPG.
+Create a key pair using one of two approaches: `cosign` or simple signing with gpg.
 
 {{< tabpane text=true right=true persist=header >}}
 
@@ -50,10 +50,10 @@ This will create the private and public keys: `cosign.key` and `cosign.pub`.
 
 {{% /tab %}}
 
-{{% tab header="Simple Signing - GPG" %}}
+{{% tab header="Simple Signing - gpg" %}}
 
-`skopeo` depends on GPG for key management.
-To generate a key pair with GPG using the default options, run:
+`skopeo` depends on gpg for key management.
+To generate a key pair with gpg using the default options, run:
 
 ```bash
 gpg --full-generate-key
@@ -112,9 +112,9 @@ EXPOSE 80
 EOF
 ```
 
-The workflow is to build the image, push it to GHCR, and then sign it.
+The workflow is to build the image, push it to ghcr, and then sign it.
 
-Make sure you are authenticated to GHCR first, for example with `docker login`.
+Make sure you are authenticated to ghcr first, for example with `docker login`.
 
 Perform the following steps to build, push, and sign the image:
 
@@ -127,8 +127,8 @@ Perform the following steps to build, push, and sign the image:
       -f Dockerfile \
       .
     ```
-
-2. Push the image to GHCR
+   
+2. Push the image to ghcr
 
     ```bash
     docker push ghcr.io/${COCO_PKG}:cosign-sig
@@ -172,13 +172,13 @@ cosign sign --key ./cosign.key ghcr.io/${COCO_PKG}@sha256:<IMAGE_DIGEST>
 
 {{% tab header="Simple Signing - skopeo" %}}
 
-Ensure that you have a GPG key owned by the user signing the image. See the
-previous subsection for instructions on generating and importing GPG keys.
+Ensure that you have a gpg key owned by the user signing the image. See the
+previous subsection for instructions on generating and importing gpg keys.
 
 The following example signs a local image named
 `confidential-containers/test-container`. It uses the `unsigned` tag and, as
 part of the signing flow, creates a new `simple-signed` tag. In this example,
-the resulting image is pushed to GHCR, which requires `docker login` first:
+the resulting image is pushed to ghcr, which requires `docker login` first:
 
 ```bash
 COCO_PKG=confidential-containers/test-container
