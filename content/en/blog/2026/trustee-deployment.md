@@ -36,11 +36,15 @@ The following instructions are assuming a Kubernetes cluster is set up with the 
 
 {{% alert color="info" %}}
 If we don't have a running cluster yet, we can easily bring it up with [kind](https://kind.sigs.k8s.io/docs/user/quick-start#installation). For example:
-{{% /alert %}}
-
 ```bash
 kind create cluster -n trustee
-# install the olm operator
+```
+
+{{% /alert %}}
+
+Install the olm operator responsible for managing the lifecycle of the Trustee operator:
+
+```bash 
 curl -sL https://github.com/operator-framework/operator-lifecycle-manager/releases/download/v0.31.0/install.sh | bash -s v0.31.0
 ```
 
@@ -178,7 +182,8 @@ EOF
   <summary>Permissive Mode</summary>
 TrusteeConfig CR creation:
 
-```yaml
+```bash
+kubectl apply -f - << EOF
 apiVersion: confidentialcontainers.org/v1alpha1
 kind: TrusteeConfig
 metadata:
@@ -286,7 +291,7 @@ KBS_CONFIG=$(kubectl get trusteeconfig trusteeconfig -n operators -o jsonpath='{
 Edit the KbsConfig with the following command should you need to provide some optional configuration:
 
 ```bash
-oc edit KbsConfig -n operators $KBS_CONFIG
+kubectl edit KbsConfig -n operators $KBS_CONFIG
 ```
 
 For example:
