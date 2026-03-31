@@ -4,37 +4,37 @@ title: Confidential Containers
 
 {{< blocks/cover image_anchor="top" height="full" >}}
 <div class="position-relative">
-<div class="d-flex flex-column h-100 position-absolute">
-	<div class="fw-bold fa-2x text-start">
-		Deploy Cloud Native Applications
-		<br>
-		inside Confidential Enclaves
-	</div>
-	<div class="text-start p-4">
-		<a class="btn btn-lg btn-primary me-3 mb-4" href="/docs/getting-started">
-			Get Started<i class="fas fa-arrow-alt-circle-right ms-2"></i>
-		</a>
-		<a class="btn btn-lg btn-secondary me-3 mb-4" href="/docs/architecture">
-			How it works<i class="fas fa-arrow-alt-circle-right ms-2"></i>
-		</a>
-	</div>
-	<div class="bg-primary text-start d-grid gap-3 p-4 fw-bold flex-grow-1 rounded">
-		<div class="bg-secondary p-3 rounded">
-			Run unmodified applications and containers
-		</div>
-		<div class="bg-secondary p-3 rounded">
-			Support multiple confidential hardware platforms and cloud offerings
-		</div>
-		<div class="bg-secondary p-3 rounded">
-			End-to-end attestation flow built-in
-		</div>
+<div class="d-flex flex-column h-100 inter-cover">
+<div class="row justify-content-around">
+<div class="col-12 col-xl-7">
+<div class="mb-4">
+<img style="width:20%" src="confidential-containers-project-logo-square.png" alt="Confidential containers"/> 
+</div>
+<div class="cover-text-big">
+Deploy Cloud Native Applications
+<br>
+inside Confidential Enclaves
+</div>
+<div class="inter-light mt-4">
+Protect containers <strong>while they are running</strong> using confidential computing and hardware-backed isolation.
+</div>
+<div class="p-5">
+<a class="btn btn-lg btn-primary me-3 mb-4" href="/docs/getting-started">
+Get Started<i class="fas fa-arrow-alt-circle-right ms-2"></i>
+</a>
+<a class="btn btn-lg btn-secondary me-3 mb-4" href="/docs/architecture">
+How it works<i class="fas fa-arrow-alt-circle-right ms-2"></i>
+</a>
+</div>
+</div>
+</div>
 <div class="text-center mt-4">
 {{< blocks/link-down color="secondary" >}}
 </div>
 </div>
 </div>
 <div aria-live="polite" aria-atomic="true" class="toast position-fixed p-3 bottom-0 end-0 m-3 p-0 show">
-  <div class="toast-body text-dark text-start fw-bold m-0 p-0">
+  <div class="toast-body text-body text-start fw-bold m-0 p-0">
 	What is Confidential Computing?
     <div class="pt-1 border-top">
       <button type="button" class="btn btn-primary btn-sm" onclick="location.href='https://confidentialcomputing.io/about';">Learn More</button>
