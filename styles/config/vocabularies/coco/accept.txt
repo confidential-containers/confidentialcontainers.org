@@ -171,3 +171,5 @@ TDX
 SNP
 Tekton
 snapshotter[s]
+Balint
+Tobik
