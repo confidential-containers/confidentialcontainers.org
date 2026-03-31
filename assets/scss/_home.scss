@@ -1,0 +1,47 @@
+.inter-cover {
+  font-optical-sizing: auto;
+  font-weight: 500;
+  font-style: normal;
+
+  .cover-text-big {
+    font-size: 1.4em;
+  }
+  @include media-breakpoint-up(sm) {
+    .cover-text-big {
+      font-size: 2em;
+    }
+  }
+
+  .inter-light {
+    font-optical-sizing: auto;
+    font-weight: 300;
+    font-style: normal;
+  }
+}
+
+#td-cover-block-0 {
+  background: #1C1C1C;
+  background: linear-gradient(137deg, rgba(28, 28, 28, 1) 0%, rgba(123, 161, 209, 1) 44%, rgba(104, 134, 173, 1) 72%, rgba(28, 28, 28, 1) 100%);
+}
+
+.td-home {
+  @include media-breakpoint-up(sm) {
+    .td-navbar {
+      background: transparent;
+    }
+  }
+
+  .btn-primary {
+    background: #3a4655;
+    border: 1px solid #252a2f;
+  }
+
+  .btn-secondary {
+    background: #525e71;
+    border: 1px solid #252a2f;
+  }
+
+  .btn.btn-link.text-secondary {
+    color: #ffffff94 !important;
+  }
+}
