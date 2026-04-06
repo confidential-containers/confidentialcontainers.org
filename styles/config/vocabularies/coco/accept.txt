@@ -173,3 +173,4 @@ Tekton
 snapshotter[s]
 Balint
 Tobik
+[Ee]mptyDir
