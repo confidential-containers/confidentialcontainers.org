@@ -28,6 +28,20 @@ On bare metal Confidential Containers supports the following platforms:
 | AMD SEV-SNP | Yes | Yes |
 | IBM Secure Execution | Yes | Yes |
 
+### Accelerators
+
+| Accelerator | Single Device Passthrough | Multi Device Passthrough |
+| --- | --- | --- |
+| Hygon DCU | Yes | No | 
+| NVIDIA Hopper | Yes | Protected PCIe |
+| NVIDIA RTX Pro 6000 BSE | Yes | Yes |
+| NVIDIA Blackwell | Yes | Yes |
+
+NVIDIA Multi-Passthrough requires assigning all GPUs on a host to one pod.
+NVIDIA Protected PCIe additionally requires listing the NVIDIA NVLink switches in the pod.
+
+### Clouds
+
 Confidential Containers can also be deployed in a cloud environment using the
 `cloud-api-adaptor`.
 The following platforms are supported.
@@ -42,6 +56,8 @@ The following platforms are supported.
 | TDX | GCP | Under development |
 | None | LibVirt | For local testing |
 
+### Attestation 
+
 Confidential Containers provides an attestation and key-management engine, called Trustee
 which is able to attest the following platforms:
 
@@ -55,6 +71,7 @@ which is able to attest the following platforms:
 | IBM Secure Execution |
 | ARM CCA | 
 | Hygon CSV |
+| NVIDIA GPU |
 
 Trustee can be used with Confidential Containers or to attest standalone confidential guests.
 See `Attestation` section for more information.
