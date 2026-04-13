@@ -179,7 +179,9 @@ Attestation service policies define **how hardware evidence is evaluated** - wha
 **Learn more:** [Attestation Service Policies](../../attestation/policies/#attestation-service-policies)
 
 {{% alert title="Default Policies" color="success" %}}
-CoCo ships with sensible default attestation policies for TDX and SNP. For most users, you only need to provide reference values - the policy is already configured appropriately.
+CoCo ships with sensible default attestation policies for TDX and SNP CPU guests, as well as for
+NVIDIA Confidential Computing GPUs.
+For most users, you only need to provide reference values - the policy is already configured appropriately.
 {{% /alert %}}
 
 ## Additional Security Features

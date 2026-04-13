@@ -225,16 +225,23 @@ For instance, the init-data could be used to assign each guest a UUID or a workl
 Attestation service policies are what the attestation service uses to calculate EAR trust vectors
 based on the TCB claims extracted from the hardware evidence by the verifiers.
 Essentially the attestation service policy defines which parts of the evidence are important
-and how the evidence should be compared to reference values.
+and how the evidence should be compared to reference values. Trustee supports multiple attestation 
+service policies for different types of devices. When you are using multiple devices in the same pod,
+like a CPU and a GPU, we call that composite evidence.
 
-The default attestation service policy already defines this relationship for TDX and SNP guests
+The default attestation service CPU policy already defines this relationship for TDX and SNP guests
 booted by the Kata shim and running Kata guests.
 If you are using Confidential Containers with these platforms you probably do not need
 to change this policy.
+
+GPU and composite flows use the
+[default GPU policy](https://github.com/confidential-containers/trustee/blob/main/attestation-service/src/ear_token/ear_default_policy_gpu.rego).
+If you are using NVIDIA Confidential Computing GPUs you probably do not need to change this policy.
+
 If you are using Trustee to boot different types of guests, you might want to adjust the attestation service policy
 to capture your TCB.
 
 Either way, you'll need to provide the reference values that the attestation service policy expects.
 Take a look at the [default CPU policy](https://github.com/confidential-containers/trustee/blob/main/attestation-service/src/ear_token/ear_default_policy_cpu.rego)
-to see which values are expected.
+to see which values are expected for CPUs.
 You only need to provision the reference values for the platform that you are using.
