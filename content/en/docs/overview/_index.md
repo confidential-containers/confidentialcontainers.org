@@ -21,12 +21,11 @@ attesting them, and provisioning secrets.
 
 On bare metal Confidential Containers supports the following platforms: 
 
-| Platform | Supports Attestation | Uses Kata |
-| -------- | -------------------- | --------- |
-| Intel TDX | Yes | Yes |
-| Intel SGX | Yes | No |
-| AMD SEV-SNP | Yes | Yes |
-| IBM Secure Execution | Yes | Yes |
+| Platform | Supports Attestation |
+| -------- | -------------------- |
+| Intel TDX | Yes |
+| AMD SEV-SNP | Yes |
+| IBM Secure Execution | Yes |
 
 ### Accelerators
 
