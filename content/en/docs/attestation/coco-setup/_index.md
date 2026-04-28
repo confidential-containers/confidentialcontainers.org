@@ -12,6 +12,9 @@ tags:
 
 If you are using Trustee with Confidential Containers, you'll need to point
 your CoCo workload to your Trustee.
+You can do this with an annotation on your workload, or via init-data.
+
+## Annotation
 
 In your pod definition, add the following annotation.
 ```yaml
@@ -42,4 +45,30 @@ spec:
   runtimeClassName: kata-qemu-coco-dev
 ```
 
-The Trustee address can also be configured via init data.
+## Init-Data
+
+The KBS URI can be set via Init-Data.
+Add the KBS URI to both the Attestation Agent config file (`aa.toml`)
+and to the CDH config file (`cdh.toml`).
+In most cases the CDH and the AA should use the same KBS.
+
+```toml
+version = "0.1.0"
+algorithm = "sha384"
+
+[data]
+
+"aa.toml" = '''
+[token_configs.kbs]
+url = "http://<kbs-ip>:<kbs-port>"
+'''
+
+"cdh.toml" = '''
+[kbc]
+name = "cc_kbc"
+url = "http://<kbs-ip>:<kbs-port>"
+'''
+```
+
+See [Init-Data](../features/initdata) page for instructions on how to attach
+the Init-Data to a workload.
