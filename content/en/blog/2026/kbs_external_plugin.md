@@ -498,7 +498,7 @@ This validates not just functionality, but also the **end-to-end security invari
 ## Final Takeaway
 
 The plugin model provides a flexible framework to extend Trustee.  The external
-plugins provides you the capability to write and maitain your own custom
+plugins provides you the capability to write and maintain your own custom
 plugins in a language of your choice.
 
 The plugin architecture achieves a clean separation of concerns:
