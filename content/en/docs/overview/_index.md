@@ -33,7 +33,7 @@ On bare metal Confidential Containers supports the following platforms:
 | --- | --- | --- |
 | Hygon DCU | Yes | No | 
 | NVIDIA Hopper | Yes | Protected PCIe |
-| NVIDIA RTX Pro 6000 BSE | Yes | Yes |
+| NVIDIA RTX Pro 6000 BSE | Yes | No |
 | NVIDIA Blackwell | Yes | Yes |
 
 NVIDIA Multi-Passthrough requires assigning all GPUs on a host to one pod.

@@ -62,8 +62,6 @@ kind: Pod
 metadata:
   name: cuda-vectoradd-kata
   namespace: default
-  annotations:
-    io.katacontainers.config.hypervisor.kernel_params: "nvrc.smi.srs=1"
 spec:
   runtimeClassName: kata-qemu-nvidia-gpu-tdx
   restartPolicy: Never
@@ -75,6 +73,8 @@ spec:
         nvidia.com/pgpu: "1"
         memory: 16Gi
 ```
+
+For Hopper and Blackwell multi-GPU examples and Hopper PPCIE labeling, see [NVIDIA GPU examples](../../examples/nvidia-gpu-examples/).
 
 {{% alert title="Note" color="info" %}}
 The runtime class you choose must match your hardware capabilities. Using a mismatched runtime class (e.g., `kata-qemu-tdx` on AMD hardware) will cause pod creation to fail.
