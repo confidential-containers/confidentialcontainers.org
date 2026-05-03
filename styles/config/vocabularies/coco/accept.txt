@@ -35,6 +35,7 @@ LLM[s]
 [nN]ginx
 [nN]odeport
 NVLink
+NVSwitch
 OCI
 ocicrypt
 olm
