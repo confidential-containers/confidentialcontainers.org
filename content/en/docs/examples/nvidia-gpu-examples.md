@@ -76,7 +76,7 @@ and NVSwitch devices, and the node must use `ppcie` confidential GPU mode.
 kubectl label node <node-name> nvidia.com/cc.mode=ppcie --overwrite
 ```
 
-Use the same pod as above, but change the resource section:
+Use the same pod as above, but change the resource section to include *all* node GPU resources along with their switch links to the pod:
 
 ```yaml
     resources:
