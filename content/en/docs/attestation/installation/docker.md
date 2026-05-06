@@ -17,7 +17,7 @@ Trustee can be installed using Docker Compose.
 
 Clone the Trustee repo.
 ```bash
-git clone https://github.com/confidential-containers/trustee.git
+git clone https://github.com/confidential-containers/trustee.git && cd trustee
 ```
 
 Run Trustee.
