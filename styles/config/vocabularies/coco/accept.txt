@@ -21,6 +21,8 @@ Hygon
 Istio
 (?i)initdata
 JSON
+JWK
+JWS
 JWT[s]
 KBS
 KBSes
