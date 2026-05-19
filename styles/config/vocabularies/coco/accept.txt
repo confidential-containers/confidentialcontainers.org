@@ -173,6 +173,7 @@ rollingUpdate
 Occlum
 RTMR[s]
 vTPM[s]
+TPM[s]
 SBOM[s]
 TDX
 SNP
