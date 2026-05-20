@@ -16,9 +16,9 @@ When running Trustee in Kubernetes with the operator, the cluster must be Truste
 
 ### Install the operator
 
-The operator (release v0.17.0 at the time of writing) is available in the [Operator Hub](https://operatorhub.io/operator/trustee-operator).
+The operator (release v0.19.0 at the time of writing) is available in the [Operator Hub](https://operatorhub.io/operator/trustee-operator).
 
-Please follow the installation steps detailed [here](https://confidentialcontainers.org/blog/2026/02/11/deploy-trustee-in-kubernetes/#kubernetes-deployment).
+Please follow the installation steps detailed [here](https://confidentialcontainers.org/blog/2026/05/20/deploy-trustee-in-kubernetes/#kubernetes-deployment).
 
 Verify that the controller is running.
 ```bash
@@ -36,15 +36,15 @@ trustee-operator-controller-manager-77cb448dc-7vxck    1/1     Running   0      
 First of all we need to know which Trustee image is running:
 
 ```bash
-kubectl get csv -n operators trustee-operator.v0.17.0 -o json | jq '.spec.install.spec.deployments[0].spec.template.spec.containers[0].env[1].value'
-"ghcr.io/confidential-containers/key-broker-service:built-in-as-v0.16.0"
+kubectl get csv -n operators trustee-operator.v0.19.0 -o json | jq '.spec.install.spec.deployments[0].spec.template.spec.containers[0].env[1].value'
+"ghcr.io/confidential-containers/key-broker-service:built-in-as-v0.19.0"
 ```
 
-The default image can be replaced with an updated version, for example Trustee v0.17.0:
+The default image can be replaced with an updated version, for example Trustee v0.20.0:
 
 ```bash
-NEW_IMAGE=ghcr.io/confidential-containers/key-broker-service:built-in-as-v0.17.0
-kubectl patch csv -n operators trustee-operator.v0.17.0 --type='json' -p="[{'op': 'replace', 'path': '/spec/install/spec/deployments/0/spec/template/spec/containers/0/env/1/value', 'value':$NEW_IMAGE}]"
+NEW_IMAGE=ghcr.io/confidential-containers/key-broker-service:built-in-as-v0.20.0
+kubectl patch csv -n operators trustee-operator.v0.19.0 --type='json' -p="[{'op': 'replace', 'path': '/spec/install/spec/deployments/0/spec/template/spec/containers/0/env/1/value', 'value':$NEW_IMAGE}]"
 ```
 
 ### Deploy Trustee
@@ -64,13 +64,13 @@ trustee-deployment-f97fb74d6-w5qsm    1/1     Running   0          25m
 
 ### Uninstall
 
-Remove the Trustee CRD.
+Remove the TrusteeConfig CRD.
 ```bash
-CR_NAME=$(kubectl get kbsconfig -n operators -o=jsonpath='{.items[0].metadata.name}') && kubectl delete KbsConfig $CR_NAME -n operators
+CR_NAME=$(kubectl get TrusteeConfig -n operators -o=jsonpath='{.items[0].metadata.name}') && kubectl delete TrusteeConfig $CR_NAME -n operators
 ```
 
 Remove the controller.
 ```bash
 kubectl delete Subscription -n operators my-trustee-operator
-kubectl delete csv -n operators trustee-operator.v0.3.0
+kubectl delete csv -n operators trustee-operator.v0.19.0
 ```
