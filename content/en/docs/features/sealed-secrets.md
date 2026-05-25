@@ -275,7 +275,7 @@ Perform below steps to configure the CDH and reference the sealed secret from yo
    agent.aa_kbc_params=cc_kbc::<SCHEME>://<HOST>:<PORT>
    ```
 
-    - `agent.aa_kbc_params` points to the KBS service. Replace `<SCHEME>`, `<HOST>`, and `<PORT>` with the values for
+   - `agent.aa_kbc_params` points to the KBS service. Replace `<SCHEME>`, `<HOST>`, and `<PORT>` with the values for
       your environment.
 
    {{% /tab %}}
@@ -284,13 +284,13 @@ Perform below steps to configure the CDH and reference the sealed secret from yo
 
    Run the following commands to prepare the init data file with the appropriate KBS configuration:
 
-    - Export environment variables:
+   - Export environment variables:
 
       ```bash
       export KBS_ADDRESS=scheme://host:port
       ```
 
-    - Create file `$HOME/initdata.toml`
+   - Create file `$HOME/initdata.toml`
        ```bash
        cat <<EOF> initdata.toml
        algorithm = "sha256"
@@ -317,7 +317,7 @@ Perform below steps to configure the CDH and reference the sealed secret from yo
        EOF
        ```
 
-    - Encode the init data file in base64:
+   - Encode the init data file in base64:
 
       ```bash
       export INIT_DATA=$(cat $HOME/initdata.toml | gzip | base64 -w 0)
