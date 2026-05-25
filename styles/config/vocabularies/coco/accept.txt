@@ -185,3 +185,8 @@ RPCs
 [kK]eycloak
 access_token
 [Ee]mptyDir
+Amulya
+(?i)byom
+chroot
+deallocates
+IP[s]
