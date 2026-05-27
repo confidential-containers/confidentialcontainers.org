@@ -1,7 +1,7 @@
 ---
 title: NVIDIA GPU examples
 description: >-
-  Single GPU example for Hopper, Blackwell, or RTX Pro 6000 BSE 
+  Single GPU example for Hopper, Blackwell, or RTX Pro 6000 BSE
   Multi-gpu snippets for Blackwell and Hopper; Hopper PPCIE node label
 categories:
 - examples
@@ -15,6 +15,9 @@ These examples show how to request NVIDIA passthrough devices in pod specs.
 They require that you have deployed CoCo following the
 [NVIDIA Confidential Containers Reference Architecture](https://docs.nvidia.com/datacenter/cloud-native/confidential-containers/latest/)
 which documents supported component versions and the passthrough modes used below.
+For an end-to-end NIM workload that combines the GPU runtime class with Trustee/KBS,
+sealed secrets, guest pull, and generated agent policy, see
+[NVIDIA NIM deployment scenario with GPU attestation]({{< relref "nvidia-nim-confidential-gpu-attestation.md" >}}).
 
 In brief: NVIDIA Hopper, NVIDIA Blackwell, and NVIDIA RTX Pro 6000 all support Single-GPU passthrough (SPT).
 Hopper and Blackwell additionally support Multi-GPU passthrough (MPT).
