@@ -35,7 +35,7 @@ LLM[s]
 [Mm]ainnet
 [Nn]amespace
 [nN]ginx
-[nN]odeport
+[nN]ode[Pp]ort
 NVLink
 NVSwitch
 OCI
@@ -84,6 +84,8 @@ kbs-plugin-sdk-python
 [kK]ubeadm
 kubeconfig
 kubectl
+[Kk]ustomize
+microservices
 middleware
 misconfigurations
 ramdisk
@@ -134,6 +136,7 @@ plaintext
 Dockerfile
 ghcr
 repo
+tmpfs
 ORAS
 attesters
 HSM[s]
@@ -145,6 +148,7 @@ Makefile
 prefetched
 [kK]ubernetes
 chroot'ed
+toolchain
 proxied
 boolean
 Suraj
@@ -190,3 +194,15 @@ Amulya
 chroot
 deallocates
 IP[s]
+crates.io
+HOST_DATA
+jwcrypto
+NGC
+NIM
+NVCR
+PersistentVolume(Claim)?
+PV[C]?
+snphost
+StorageClass
+vLLM
+zstd
