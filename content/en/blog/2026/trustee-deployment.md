@@ -1,5 +1,5 @@
 ---
-date: 2026-02-11
+date: 2026-05-20
 title: Deploy Trustee in Kubernetes
 linkTitle: Deploy Trustee in Kubernetes
 description: >
@@ -74,7 +74,7 @@ EOF
 
 {{% alert color="info" %}}
 Note that the Trustee operator has been already published in the operator [hub catalog](https://operatorhub.io/).
-Trustee operator v0.17.0 is aligned to CoCo v.0.18.0 release.
+Trustee operator v0.19.0 is aligned to CoCo v.0.20.0 release.
 {{% /alert %}}
 
 ### Check Trustee Operator installation
@@ -89,7 +89,7 @@ We should expect something like:
 
 ```text
 NAME                       DISPLAY            VERSION   REPLACES                  PHASE
-trustee-operator.v0.17.0   Trustee Operator   0.17.0    trustee-operator.v0.5.0   Succeeded
+trustee-operator.v0.19.0   Trustee Operator   0.19.0    trustee-operator.v0.18.0  Succeeded
 ```
 
 ## Configuration
@@ -212,9 +212,13 @@ This ConfigMap mounts the main KBS configuration file onto the trustee container
 
 This ConfigMap mounts the resource-policy onto the trustee container filesystem. It can be permissive or restrictive depending on the TrusteeConfig `profileType`. Typically there is no need to edit the ConfigMap content, unless required for specific use cases.
 
-<u>`trusteeconfig-attestation-policy`</u>
+<u>`trusteeconfig-attestation-policy-cpu`</u>
 
-This ConfigMap mounts the attestation-policy onto the trustee container filesystem. Typically there is no need to edit the ConfigMap content, it works out-of-the-box.
+This ConfigMap mounts the CPU attestation-policy onto the trustee container filesystem. Typically there is no need to edit the ConfigMap content, it works out-of-the-box.
+
+<u>`trusteeconfig-attestation-policy-gpu`</u>
+
+This ConfigMap mounts the GPU attestation-policy onto the trustee container filesystem. Typically there is no need to edit the ConfigMap content, it works out-of-the-box.
 
 <u>`trusteeconfig-rvps-reference-values`</u>
 
@@ -351,7 +355,7 @@ metadata:
 spec:
   containers:
   - name: kbs-client
-    image: quay.io/confidential-containers/kbs-client:v0.17.0
+    image: quay.io/confidential-containers/kbs-client:v0.19.0
     imagePullPolicy: IfNotPresent
     command:
       - sleep
