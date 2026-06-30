@@ -408,9 +408,16 @@ The next step selects the Trustee source tree, the Compose service images, and t
 guest components in your cluster. The NVIDIA supported-platforms documentation is intended to be
 the source that tells you which Trustee version to use for a given platform. See the
 [NVIDIA supported platforms](https://docs.nvidia.com/datacenter/cloud-native/confidential-containers/latest/supported-platforms.html)
-page for that version mapping. For this single-node tutorial, the installed Kata release already
-carries the Trustee source reference in `/opt/kata/versions.yaml`, so the commands below read that
-local file directly.
+page for that version mapping. Kata deployments installed using the `kata-deploy` Helm chart usually
+provide release metadata in `/opt/kata/versions.yaml`. The commands below use the `coco-trustee`
+entry in that file to resolve the matching Trustee source reference automatically. If the file is
+unavailable, inspect the upstream Kata Containers
+[`versions.yaml`](https://github.com/kata-containers/kata-containers/blob/main/versions.yaml) at the
+Kata tag shipped with your CoCo release and read `externals.coco-trustee.version`. Under the current
+release convention, the matching Trustee tag is one minor version behind the CoCo release (for
+example, CoCo `v0.18.0` uses Trustee `v0.17.0`). If the reference still cannot be resolved, look up
+the Trustee reference validated for your platform, set `KBS_TRUSTEE_REF` explicitly, and rerun the
+commands.
 
 This works well for the tutorial because the commands run on the same node where Kata is installed.
 For production, treat release selection as part of your deployment process instead. If you already
@@ -426,6 +433,12 @@ KBS_RVPS_IMAGE_REPO="ghcr.io/confidential-containers/staged-images/rvps"
 KBS_CLIENT_IMAGE_REPO="ghcr.io/confidential-containers/staged-images/kbs-client"
 
 if test -z "${KBS_TRUSTEE_REF}"; then
+  if ! test -r "${KATA_VERSIONS_FILE}"; then
+    echo "ERROR: cannot resolve KBS_TRUSTEE_REF because ${KATA_VERSIONS_FILE} is not readable." >&2
+    echo "Look up the validated Trustee reference for your platform, set KBS_TRUSTEE_REF, and rerun this snippet." >&2
+    exit 1
+  fi
+
   KBS_TRUSTEE_REF="$(
     awk '
       $1 == "coco-trustee:" { in_trustee = 1; next }
@@ -438,7 +451,11 @@ if test -z "${KBS_TRUSTEE_REF}"; then
   )"
 fi
 
-test -n "${KBS_TRUSTEE_REF}"
+if test -z "${KBS_TRUSTEE_REF}"; then
+  echo "ERROR: could not find the coco-trustee version in ${KATA_VERSIONS_FILE}." >&2
+  echo "Look up the validated Trustee reference for your platform, set KBS_TRUSTEE_REF, and rerun this snippet." >&2
+  exit 1
+fi
 
 KBS_COMPOSE_IMAGE_TAG="${KBS_COMPOSE_IMAGE_TAG:-${KBS_TRUSTEE_REF}-${KBS_CLIENT_ARCH}}"
 KBS_CLIENT_ARTIFACT="${KBS_CLIENT_IMAGE_REPO}:sample_only-${KBS_COMPOSE_IMAGE_TAG}"
