@@ -75,8 +75,8 @@ Confidential Containers brings hardware platforms and cloud offerings
 into one framework for secure applications.
 {{% /blocks/feature %}}
 
-{{% blocks/feature icon="fa-building-columns" title="CNCF Sandbox Project" %}}
-Confidential Containers is a CNCF Sandbox Project
+{{% blocks/feature icon="fa-building-columns" title="CNCF Incubating Project" %}}
+Confidential Containers is a [CNCF](https://www.cncf.io/) Incubating Project
 with deep connections to other cloud native projects.
 {{% /blocks/feature %}}
 {{% /blocks/section %}}
