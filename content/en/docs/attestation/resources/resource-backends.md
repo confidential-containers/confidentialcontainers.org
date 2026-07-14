@@ -55,7 +55,7 @@ A resource URI of `kbs:///repo/type/tag` is translated into the Secret Manager v
 and the latest enabled version is served, matching the behavior of the Aliyun KMS backend.
 Credentials are resolved via
 [Application Default Credentials](https://cloud.google.com/docs/authentication/application-default-credentials)
-(ADC): the `GOOGLE_APPLICATION_CREDENTIALS` env var, `gcloud auth application-default login`,
+(ADC): the `GOOGLE_APPLICATION_CREDENTIALS` environment variable, `gcloud auth application-default login`,
 or the GCE/GKE/Cloud Run metadata server (workload identity).
 This backend is read-only; writes and deletes return an error, so provision and rotate
 secrets via GCP APIs.
