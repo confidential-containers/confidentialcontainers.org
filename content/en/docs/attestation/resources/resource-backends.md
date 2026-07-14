@@ -42,6 +42,27 @@ One KBS can be configured with a specified KMS instance in `repository_config` f
 These materials can be found in KMS instance's [AAP](https://www.alibabacloud.com/help/en/kms/user-guide/manage-aaps?spm=a3c0i.23458820.2359477120.1.4fd96e9bmEFST4).
 When being accessed, a resource URI of `kbs:///repo/type/tag` will be translated into the generic secret with name `tag`. Hinting that `repo/type` field will be ignored.
 
+### Google Cloud Secret Manager
+
+[Google Cloud Secret Manager](https://cloud.google.com/secret-manager/docs/overview)
+can also work as the KBS resource storage backend.
+Build the KBS with the `gcp` feature (e.g. `cargo build --features gcp`).
+In the KBS config, add a resource plugin with `storage_backend_type = "gcp"` and the
+`project_id` that owns the secrets.
+Resources are stored as Secret Manager secrets and fetched via `AccessSecretVersion`.
+A resource URI of `kbs:///repo/type/tag` is translated into the Secret Manager version
+`projects/<project_id>/secrets/<tag>/versions/latest`; the `repo/type` portion is ignored
+and the latest enabled version is served, matching the behavior of the Aliyun KMS backend.
+Credentials are resolved via
+[Application Default Credentials](https://cloud.google.com/docs/authentication/application-default-credentials)
+(ADC): the `GOOGLE_APPLICATION_CREDENTIALS` env var, `gcloud auth application-default login`,
+or the GCE/GKE/Cloud Run metadata server (workload identity).
+This backend is read-only; writes and deletes return an error, so provision and rotate
+secrets via GCP APIs.
+For details, see the
+[resource storage backend documentation](https://github.com/confidential-containers/trustee/blob/main/kbs/docs/resource_storage_backend.md)
+in the Trustee repo.
+
 ### Pkcs11
 
 The Pkcs11 backend uses Pkcs11 to store plaintext resources
