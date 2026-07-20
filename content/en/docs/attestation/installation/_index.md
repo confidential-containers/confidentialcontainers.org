@@ -11,7 +11,18 @@ tags:
 ---
 
 Trustee can be deployed in several different configurations.
-Either way, Trustee should be deployed in a trusted environment.
+In every install scenario, Trustee should be deployed in a trusted environment.
 This could be a local server, some trusted third party, or even another enclave.
 Official support for deploying Trustee inside of Confidential Containers
 is being developed.
+
+## Choosing an installation method
+
+| Method | Best for |
+|--------|----------|
+| [Helm](helm/) | Delveopment or production deployments, where you want declarative configuration or advanced options (custom storage, BYOK, IBM SE) |
+| [Kubernetes Operator](kubernetes/) | Kubernetes deployments with operator-managed lifecycle  |
+| [Docker Compose](docker/) | Local evaluation, development, and testing |
+
+
+

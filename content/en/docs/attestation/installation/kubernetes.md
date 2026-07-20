@@ -11,8 +11,12 @@ tags:
 - kubernetes
 ---
 
-Trustee can be installed on Kubernetes using the Trustee operator.
-When running Trustee in Kubernetes with the operator, the cluster must be Trusted.
+Use the Trustee Operator if you are running Kubernetes and want a managed installation
+that follows the Kubernetes operator pattern.
+The operator handles the Trustee lifecycle (install, upgrade, configuration) through a custom resource,
+making it a good fit for teams already using operators in their cluster.
+The entire Kubernetes cluster must be trusted.
+
 
 ### Install the operator
 
