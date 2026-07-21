@@ -14,7 +14,11 @@ tags:
 Use Docker Compose if you want to get Trustee running quickly with minimal prerequisites.
 This is the recommended starting point for developers evaluating Trustee or building a proof of concept.
 It requires only Docker and gives you a working KBS, Attestation Service, and RVPS with two commands.
-It is not recommended for production deployments.
+For production deployments, consider using [Helm](helm.md) or the [Trustee Operator](kubernetes.md) install paths.
+
+{{% alert title="Note" color="info" %}}
+The steps on this page deploy latest Trustee image.
+{{% /alert %}}
 
 
 ### Installation
