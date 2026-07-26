@@ -8,6 +8,7 @@ tags:
 - caa
 - aws
 - eks
+- irsa
 ---
 
 This documentation will walk you through setting up CAA (a.k.a. Peer Pods) on AWS Elastic Kubernetes Service (EKS). It explains how to deploy:
@@ -29,6 +30,10 @@ Install Required Tools:
 ## AWS Preparation
 
 - Set `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` (or `AWS_PROFILE`) and `AWS_REGION` for AWS CLI access
+
+> **Note:** As an alternative to static credentials, you can use [IRSA (IAM Roles for Service Accounts)](#configure-authentication)
+> on EKS. With IRSA, the CAA pods authenticate via OIDC — no static AWS keys are stored in Kubernetes secrets.
+> You still need `AWS_REGION` and temporary credentials for the cluster setup steps below.
 
 - Set the region:
 
@@ -120,6 +125,192 @@ aws ec2 authorize-security-group-ingress --group-id "$EKS_CLUSTER_SG" --protocol
 > running inside the pod VM.
 > - Port `9000` is the VXLAN port used by CAA. Ensure it doesn't conflict with the VXLAN port
 > used by the Kubernetes CNI.
+
+### Configure Authentication
+
+Choose how CAA authenticates with AWS. Static credentials use a Kubernetes secret with access keys.
+[IRSA](https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html) uses
+OIDC federation so the pods assume an IAM role directly — no static keys needed.
+
+{{< tabpane text=true right=true persist=header >}}
+
+{{% tab header="Static Credentials" %}}
+
+Ensure `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` (or `AWS_PROFILE`) are set in your environment.
+These will be stored in a Kubernetes secret and used by the CAA pods.
+
+No additional setup is needed here — the secret is created during the [Helm chart deployment](#deploy-helm-chart-on-the-kubernetes-cluster) step.
+
+{{% /tab %}}
+
+{{% tab header="IRSA (EKS)" %}}
+
+IRSA eliminates the need for long-lived AWS access keys stored in Kubernetes secrets,
+and is the recommended authentication method for EKS.
+
+**Enable OIDC Provider**
+
+Check if the IAM OIDC provider is already registered:
+
+```bash
+OIDC_ID=$(aws eks describe-cluster \
+  --name ${CLUSTER_NAME} \
+  --region ${AWS_REGION} \
+  --query "cluster.identity.oidc.issuer" \
+  --output text | awk -F'/' '{print $NF}')
+
+aws iam list-open-id-connect-providers | grep ${OIDC_ID}
+```
+
+If the command returns empty, create the OIDC provider:
+
+```bash
+eksctl utils associate-iam-oidc-provider \
+  --cluster ${CLUSTER_NAME} \
+  --region ${AWS_REGION} \
+  --approve
+```
+
+Export the account ID and OIDC provider for use in the following steps:
+
+```bash
+export ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+
+export OIDC_PROVIDER=$(aws eks describe-cluster \
+  --name ${CLUSTER_NAME} \
+  --region ${AWS_REGION} \
+  --query "cluster.identity.oidc.issuer" \
+  --output text | sed 's|https://||')
+```
+
+**Create IAM Role for cloud-api-adaptor**
+
+```bash
+export NAMESPACE="confidential-containers-system"
+export CAA_SERVICE_ACCOUNT="cloud-api-adaptor"
+export CAA_ROLE_NAME="CAA-IRSA-Role"
+```
+
+Create the trust policy:
+
+```bash
+cat > /tmp/caa-trust-policy.json <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": {
+        "Federated": "arn:aws:iam::${ACCOUNT_ID}:oidc-provider/${OIDC_PROVIDER}"
+      },
+      "Action": "sts:AssumeRoleWithWebIdentity",
+      "Condition": {
+        "StringEquals": {
+          "${OIDC_PROVIDER}:sub": "system:serviceaccount:${NAMESPACE}:${CAA_SERVICE_ACCOUNT}",
+          "${OIDC_PROVIDER}:aud": "sts.amazonaws.com"
+        }
+      }
+    }
+  ]
+}
+EOF
+```
+
+Create the IAM role and attach the `AmazonEC2FullAccess` managed policy:
+
+```bash
+aws iam create-role \
+  --role-name ${CAA_ROLE_NAME} \
+  --assume-role-policy-document file:///tmp/caa-trust-policy.json \
+  --description "IRSA role for Cloud API Adaptor on EKS"
+
+aws iam attach-role-policy \
+  --role-name ${CAA_ROLE_NAME} \
+  --policy-arn arn:aws:iam::aws:policy/AmazonEC2FullAccess
+```
+
+> **Note:** `AmazonEC2FullAccess` grants broad EC2 permissions. For production workloads, it is strongly
+> recommended to replace it with a custom least-privilege policy scoped to the specific EC2 actions
+> CAA requires.
+> See the [AWS IRSA documentation](https://github.com/confidential-containers/cloud-api-adaptor/blob/main/src/cloud-api-adaptor/docs/aws-irsa.md) for more configuration options.
+
+Export the role ARN for later use:
+
+```bash
+export CAA_ROLE_ARN=$(aws iam get-role \
+  --role-name ${CAA_ROLE_NAME} \
+  --query 'Role.Arn' \
+  --output text)
+
+echo "CAA Role ARN: ${CAA_ROLE_ARN}"
+```
+
+**Create IAM Role for Peerpod-ctrl (optional)**
+
+This step is only required if you are deploying Peerpod-ctrl.
+
+```bash
+export CTRL_SERVICE_ACCOUNT="peerpodctrl-controller-manager"
+export CTRL_ROLE_NAME="PeerpodCtrl-IRSA-Role"
+```
+
+Create the trust policy:
+
+```bash
+cat > /tmp/peerpod-ctrl-trust-policy.json <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": {
+        "Federated": "arn:aws:iam::${ACCOUNT_ID}:oidc-provider/${OIDC_PROVIDER}"
+      },
+      "Action": "sts:AssumeRoleWithWebIdentity",
+      "Condition": {
+        "StringEquals": {
+          "${OIDC_PROVIDER}:sub": "system:serviceaccount:${NAMESPACE}:${CTRL_SERVICE_ACCOUNT}",
+          "${OIDC_PROVIDER}:aud": "sts.amazonaws.com"
+        }
+      }
+    }
+  ]
+}
+EOF
+```
+
+Create the role and attach permissions:
+
+```bash
+aws iam create-role \
+  --role-name ${CTRL_ROLE_NAME} \
+  --assume-role-policy-document file:///tmp/peerpod-ctrl-trust-policy.json \
+  --description "IRSA role for PeerPod Controller on EKS"
+
+aws iam attach-role-policy \
+  --role-name ${CTRL_ROLE_NAME} \
+  --policy-arn arn:aws:iam::aws:policy/AmazonEC2FullAccess
+```
+
+> **Note:** `AmazonEC2FullAccess` grants broad EC2 permissions. For production workloads, it is strongly
+> recommended to replace it with a custom least-privilege policy scoped to the specific EC2 actions
+> CAA requires.
+> See the [AWS IRSA documentation](https://github.com/confidential-containers/cloud-api-adaptor/blob/main/src/cloud-api-adaptor/docs/aws-irsa.md) for more configuration options.
+
+Export the role ARN:
+
+```bash
+export CTRL_ROLE_ARN=$(aws iam get-role \
+  --role-name ${CTRL_ROLE_NAME} \
+  --query 'Role.Arn' \
+  --output text)
+
+echo "Controller Role ARN: ${CTRL_ROLE_ARN}"
+```
+
+{{% /tab %}}
+
+{{< /tabpane >}}
 
 ## Deploy the CAA Helm chart
 
@@ -330,33 +521,80 @@ helm install cert-manager jetstack/cert-manager \
    EOF
     ```
 
-2. Create the secret using `kubectl`:
+2. Create credentials and install the Helm chart:
 
-   See [providers/aws-secrets.yaml.template](https://github.com/confidential-containers/cloud-api-adaptor/blob/main/src/cloud-api-adaptor/install/charts/peerpods/providers/aws-secrets.yaml.template) for required keys.
+   Below commands use customization options `-f` and `--set` which are described [here](../../getting-started/installation/advanced_configuration).
 
-    ```bash
-    kubectl create secret generic my-provider-creds \
-    -n confidential-containers-system \
-    --from-literal=AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID} \
-    --from-literal=AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY} \
-    --from-file=id_rsa.pub=${SSH_KEY}
-    ```
+{{< tabpane text=true right=true persist=header >}}
 
-   > **Note**: `--from-file=id_rsa.pub=${SSH_KEY}` is optional. It allows user to SSH into the pod VMs for troubleshooting purposes.
-   > This option works only for custom debug enabled pod VM images. The prebuilt pod VM images do not have SSH connection enabled.
+{{% tab header="Static Credentials" %}}
 
-3. Install helm chart:
+Create the secret using `kubectl`. See [providers/aws-secrets.yaml.template](https://github.com/confidential-containers/cloud-api-adaptor/blob/main/src/cloud-api-adaptor/install/charts/peerpods/providers/aws-secrets.yaml.template) for required keys.
 
-   Below command uses customization options `-f` and `--set` which are described [here](../../getting-started/installation/advanced_configuration).
+```bash
+kubectl create secret generic my-provider-creds \
+  -n confidential-containers-system \
+  --from-literal=AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID} \
+  --from-literal=AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY} \
+  --from-file=id_rsa.pub=${SSH_KEY}
+```
 
-    ```bash
-    helm install peerpods . \
-      -f providers/aws.yaml \
-      --set secrets.mode=reference \
-      --set secrets.existingSecretName=my-provider-creds \
-      --dependency-update \
-      -n confidential-containers-system
-    ```
+> **Note**: `--from-file=id_rsa.pub=${SSH_KEY}` is optional. It allows user to SSH into the pod VMs for troubleshooting purposes.
+> This option works only for custom debug enabled pod VM images. The prebuilt pod VM images do not have SSH connection enabled.
+
+Install the Helm chart:
+
+```bash
+helm install peerpods . \
+  -f providers/aws.yaml \
+  --set secrets.mode=reference \
+  --set secrets.existingSecretName=my-provider-creds \
+  --dependency-update \
+  -n confidential-containers-system
+```
+
+{{% /tab %}}
+
+{{% tab header="IRSA (EKS)" %}}
+
+When using IRSA, no AWS credentials secret is needed. The CAA pods authenticate via the
+IAM role configured in the [Configure Authentication](#configure-authentication) section.
+
+Install the Helm chart with IRSA annotations:
+
+```bash
+helm install peerpods . \
+  -f providers/aws.yaml \
+  --set "daemonset.serviceAccount.annotations.eks\.amazonaws\.com/role-arn=${CAA_ROLE_ARN}" \
+  --set "resourceCtrl.serviceAccount.annotations.eks\.amazonaws\.com/role-arn=${CTRL_ROLE_ARN}" \
+  --dependency-update \
+  -n confidential-containers-system
+```
+
+> **Note:** The `resourceCtrl.serviceAccount.annotations` line is only required if you are deploying Peerpod-ctrl.
+> If not, omit that `--set` flag and skip the [Peerpod-ctrl IAM role](#create-iam-role-for-peerpod-ctrl-optional) step above.
+
+To verify IRSA is working, check the service account annotation and pod environment:
+
+```bash
+kubectl get serviceaccount cloud-api-adaptor \
+  -n confidential-containers-system \
+  -o jsonpath='{.metadata.annotations.eks\.amazonaws\.com/role-arn}'
+```
+
+```bash
+CAA_POD=$(kubectl get pods -n confidential-containers-system \
+  -l app=cloud-api-adaptor \
+  -o jsonpath='{.items[0].metadata.name}')
+
+kubectl exec -n confidential-containers-system ${CAA_POD} -- env | grep AWS
+```
+
+The output should include `AWS_WEB_IDENTITY_TOKEN_FILE` and `AWS_ROLE_ARN` variables.
+
+{{% /tab %}}
+
+{{< /tabpane >}}
 
 Generic Peer pods Helm charts deployment instructions are also described
 [here](https://github.com/confidential-containers/cloud-api-adaptor/tree/main/src/cloud-api-adaptor/install/charts/peerpods/README.md).
