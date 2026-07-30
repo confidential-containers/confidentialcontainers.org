@@ -25,8 +25,8 @@ resources to the pod.
 # Retrieval Augmented Generation
 
 In addition to the general AI usages mentioned above, CoCo can help secure popular RAG deployments.
-RAG deployments often include repositories of confidential information used to augment the LLM’s
-latent knowledge. To secure those sensitive repositories including their representations in vector
+RAG deployments often include repositories of confidential information used to augment the latent
+knowledge of LLMs. To secure those sensitive repositories including their representations in vector
 databases, deploy all containers using CoCo.
 
 Access to the confidential repositories and vector databases should be gated on correct attestation
