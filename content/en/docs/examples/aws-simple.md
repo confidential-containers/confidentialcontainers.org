@@ -298,6 +298,21 @@ providerConfigs:
 EOF
 ```
 
+### Install cert-manager
+
+CAA requires cert-manager to be installed. Unless you already have it
+installed deploy it via:
+
+```bash
+helm repo add jetstack https://charts.jetstack.io
+helm install cert-manager jetstack/cert-manager \
+  --namespace cert-manager \
+  --create-namespace \
+  --set crds.enabled=true \
+  --wait \
+  --timeout 5m
+```
+
 ### Deploy helm chart on the Kubernetes cluster
 
 1. Create namespace managed by Helm:
