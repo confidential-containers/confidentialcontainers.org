@@ -174,7 +174,7 @@ by running the following CLI:
 
 ```bash
 export PODVM_AMI_ID=$(aws ec2 describe-images \
-    --filters Name=name,Values="podvm-fedora-amd64-${CAA_VERSION//./-}" \
+    --filters Name=name,Values="podvm-ubuntu-amd64-${CAA_VERSION//./-}" \
     --query 'Images[*].[ImageId]' --output text)
 
 echo $PODVM_AMI_ID
