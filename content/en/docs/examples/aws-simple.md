@@ -131,7 +131,7 @@ aws ec2 authorize-security-group-ingress --group-id "$EKS_CLUSTER_SG" --protocol
 {{% tab header="Last Release" %}}
 
 ```bash
-export CAA_VERSION="0.17.0"
+export CAA_VERSION="0.22.0"
 curl -LO "https://github.com/confidential-containers/cloud-api-adaptor/archive/refs/tags/v${CAA_VERSION}.tar.gz"
 tar -xvzf "v${CAA_VERSION}.tar.gz"
 cd "cloud-api-adaptor-${CAA_VERSION}/src/cloud-api-adaptor/install/charts/peerpods"
