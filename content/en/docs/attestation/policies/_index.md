@@ -51,14 +51,14 @@ Both policies use OPA.
 Both types of policies can be provisioned with the KBS Client.
 ```bash
 kbs-client --url <kbs-url> config \
-    --auth-private-key <admin-private-key> set-resource-policy \
+    --admin-token-file <admin-token-file> set-resource-policy \
     --policy-file <path-to-policy-file>
 ```
 
 The attestation service policy is set in a similar manner.
 ```bash
 kbs-client --url <kbs-url> config \
-    --auth-private-key <admin-private-key> set-attestation-policy \
+    --admin-token-file <admin-token-file> set-attestation-policy \
     --policy-file <path-to-policy-file>
 ```
 
@@ -73,7 +73,7 @@ The KBS Client has a few simple policies built into it.
 You can set one of these policies with a command like this.
 ```bash
 ./kbs-client --url <kbs-url>
-    config --auth-private-key <admin-private-key>
+    config --admin-token-file <admin-token-file>
     set-resource-policy --affirming
 ```
 

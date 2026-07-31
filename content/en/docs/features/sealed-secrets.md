@@ -153,7 +153,7 @@ Run the following command to add the secret to KBS storage:
 
 ```bash
 ./kbs-client --url <SCHEME>://<HOST>:<PORT> config \
-  --auth-private-key private.key \
+  --admin-token-file admin-token \
   set-resource \
   --resource-file ./my_secret \
   --path ${SIGNING_RESOURCE_URI}
@@ -220,7 +220,7 @@ Run the following command to add the public key to KBS storage:
 
 ```bash
 ./kbs-client --url <SCHEME>://<HOST>:<PORT> config \
-  --auth-private-key kbs.key \
+  --admin-token-file admin-token \
   set-resource \
   --resource-file ./public_jwk.json \
   --path ${SIGNING_KID_KBS_URI}

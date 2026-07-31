@@ -333,7 +333,7 @@ Let’s add the to-be-fetched resource to the KBS first. Think of that resource 
 
 ```console
 $ echo "MySecretKey" > secret.txt
-$ ./kbs-client --url "http://$KBS_HOST:$KBS_PORT" config --auth-private-key "$KBS_PRIVATE_KEY" set-resource --path default/secret/1 --resource-file secret.txt
+$ ./kbs-client --url "http://$KBS_HOST:$KBS_PORT" config --admin-token-file "$KBS_ADMIN_TOKEN" set-resource --path default/secret/1 --resource-file secret.txt
 Set resource success
  resource: TXlTZWNyZXRLZXkK
 ```
@@ -409,7 +409,7 @@ The `GetResource` request to CDH is an attested operation. The policy in **resou
 Apply the resources_policy.rego policy to the KBS, then respin the coco-demo-04 pod, and you will see `MySecretKey` is now fetched:
 
 ```console
-$ ./kbs-client --url "http://$KBS_HOST:$KBS_PORT" config --auth-private-key "$KBS_PRIVATE_KEY" set-resource-policy --policy-file resources_policy.rego
+$ ./kbs-client --url "http://$KBS_HOST:$KBS_PORT" config --admin-token-file "$KBS_ADMIN_TOKEN" set-resource-policy --policy-file resources_policy.rego
 Set resource policy success
  policy: cGFja2FnZSBwb2xpY3kKCmRlZmF1bHQgYWxsb3cgPSBmYWxzZQoKYWxsb3cgewogICAgaW5wdXRbInRlZSJdID09ICJzYW1wbGUiCn0K
 $ kubectl apply -f coco-demo-04.yaml
@@ -599,7 +599,7 @@ The reason why it failed is because the decryption key wasn’t found in the KBS
 
 ```console
 $ echo "HUlOu8NWz8si11OZUzUJMnjiq/iZyHBJZMSD3BaqgMc=" | base64 -d > image_key.txt
-$ ./kbs-client --url "http://$KBS_HOST:$KBS_PORT" config --auth-private-key "$KBS_PRIVATE_KEY" set-resource --path default/key/ssh-demo --resource-file image_key.txt
+$ ./kbs-client --url "http://$KBS_HOST:$KBS_PORT" config --admin-token-file "$KBS_ADMIN_TOKEN" set-resource --path default/key/ssh-demo --resource-file image_key.txt
 Set resource success
  resource: HUlOu8NWz8si11OZUzUJMnjiq/iZyHBJZMSD3BaqgMc=
 ```
