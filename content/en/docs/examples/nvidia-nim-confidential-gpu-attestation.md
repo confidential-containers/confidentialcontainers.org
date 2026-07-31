@@ -600,13 +600,13 @@ docker compose \
   ps
 ```
 
-Keep `KBS_URL`, the admin private key, and the KBS HTTPS certificate; later checkpoints use them to
+Keep `KBS_URL`, the admin token, and the KBS HTTPS certificate; later checkpoints use them to
 configure KBS resources and to build pod initdata:
 
 ```bash
-KBS_ADMIN_PRIVATE_KEY_FILE="${KBS_CONFIG_DIR}/private.key"
+KBS_ADMIN_TOKEN_FILE="${KBS_CONFIG_DIR}/admin-token"
 KBS_CERT_FILE="${KBS_CONFIG_DIR}/kbs-https.crt"
-test -s "${KBS_ADMIN_PRIVATE_KEY_FILE}"
+test -s "${KBS_ADMIN_TOKEN_FILE}"
 test -s "${KBS_CERT_FILE}"
 ```
 
@@ -647,7 +647,7 @@ printf 'checkpoint2-probe\n' > "${KBS_WORKDIR}/checkpoint2-probe.txt"
   --cert-file "${KBS_CERT_FILE}" \
   --url "${KBS_URL}" \
   config \
-  --auth-private-key "${KBS_ADMIN_PRIVATE_KEY_FILE}" \
+  --admin-token-file "${KBS_ADMIN_TOKEN_FILE}" \
   set-resource \
   --path default/checkpoint2/probe \
   --resource-file "${KBS_WORKDIR}/checkpoint2-probe.txt"
@@ -656,16 +656,16 @@ printf 'checkpoint2-probe\n' > "${KBS_WORKDIR}/checkpoint2-probe.txt"
   --cert-file "${KBS_CERT_FILE}" \
   --url "${KBS_URL}" \
   config \
-  --auth-private-key "${KBS_ADMIN_PRIVATE_KEY_FILE}" \
+  --admin-token-file "${KBS_ADMIN_TOKEN_FILE}" \
   delete-resource \
   --path default/checkpoint2/probe
 ```
 
-Keep this shell, or save `KBS_CLIENT`, `KBS_WORKDIR`, `KBS_ADMIN_PRIVATE_KEY_FILE`,
+Keep this shell, or save `KBS_CLIENT`, `KBS_WORKDIR`, `KBS_ADMIN_TOKEN_FILE`,
 `KBS_CERT_FILE`, and `KBS_URL` somewhere private so they can be reused while working through the
 next checkpoints. Do not remove `KBS_WORKDIR`; it contains the Trustee source tree, Compose
 configuration, demo state, and generated tutorial files. Later `kbs-client` commands authenticate to
-KBS with the Compose-generated admin private key, so protect it as an administrator credential.
+KBS with the Compose-generated admin token, so protect it as an administrator credential.
 
 ## Checkpoint 3: Prepare the TEE NIM Manifest and Sealed Secret
 
@@ -1482,7 +1482,7 @@ echo base64-encoded credential material:
   --cert-file "${KBS_CERT_FILE}" \
   --url "${KBS_URL}" \
   config \
-  --auth-private-key "${KBS_ADMIN_PRIVATE_KEY_FILE}" \
+  --admin-token-file "${KBS_ADMIN_TOKEN_FILE}" \
   set-resource \
   --path default/credentials/nvcr \
   --resource-file "${KBS_WORKDIR}/nvcr-auth.json" \
@@ -1492,7 +1492,7 @@ echo base64-encoded credential material:
   --cert-file "${KBS_CERT_FILE}" \
   --url "${KBS_URL}" \
   config \
-  --auth-private-key "${KBS_ADMIN_PRIVATE_KEY_FILE}" \
+  --admin-token-file "${KBS_ADMIN_TOKEN_FILE}" \
   set-resource \
   --path default/ngc-api-key/instruct \
   --resource-file "${KBS_WORKDIR}/ngc-api-key-instruct" \
@@ -1502,7 +1502,7 @@ echo base64-encoded credential material:
   --cert-file "${KBS_CERT_FILE}" \
   --url "${KBS_URL}" \
   config \
-  --auth-private-key "${KBS_ADMIN_PRIVATE_KEY_FILE}" \
+  --admin-token-file "${KBS_ADMIN_TOKEN_FILE}" \
   set-resource \
   --path default/security-policy/nim \
   --resource-file "${KBS_WORKDIR}/nim-image-policy.json"
@@ -1511,7 +1511,7 @@ echo base64-encoded credential material:
   --cert-file "${KBS_CERT_FILE}" \
   --url "${KBS_URL}" \
   config \
-  --auth-private-key "${KBS_ADMIN_PRIVATE_KEY_FILE}" \
+  --admin-token-file "${KBS_ADMIN_TOKEN_FILE}" \
   set-resource \
   --path default/cosign-public-key/nim \
   --resource-file "${KBS_WORKDIR}/nvidia-cosign.pub"
@@ -1526,7 +1526,7 @@ referenced plaintext secret from KBS.
   --cert-file "${KBS_CERT_FILE}" \
   --url "${KBS_URL}" \
   config \
-  --auth-private-key "${KBS_ADMIN_PRIVATE_KEY_FILE}" \
+  --admin-token-file "${KBS_ADMIN_TOKEN_FILE}" \
   set-resource \
   --path default/signing-key/sealed-secret \
   --resource-file "${KBS_WORKDIR}/signing-key-public.jwk"
@@ -1539,7 +1539,7 @@ Seed the SNP reference values used by the default Trustee sample policy:
   --cert-file "${KBS_CERT_FILE}" \
   --url "${KBS_URL}" \
   config \
-  --auth-private-key "${KBS_ADMIN_PRIVATE_KEY_FILE}" \
+  --admin-token-file "${KBS_ADMIN_TOKEN_FILE}" \
   set-sample-reference-value \
   snp_launch_measurement "${SNP_LAUNCH_MEASUREMENT}"
 
@@ -1547,7 +1547,7 @@ Seed the SNP reference values used by the default Trustee sample policy:
   --cert-file "${KBS_CERT_FILE}" \
   --url "${KBS_URL}" \
   config \
-  --auth-private-key "${KBS_ADMIN_PRIVATE_KEY_FILE}" \
+  --admin-token-file "${KBS_ADMIN_TOKEN_FILE}" \
   set-sample-reference-value \
   --as-integer \
   snp_bootloader "${SNP_BOOTLOADER}"
@@ -1556,7 +1556,7 @@ Seed the SNP reference values used by the default Trustee sample policy:
   --cert-file "${KBS_CERT_FILE}" \
   --url "${KBS_URL}" \
   config \
-  --auth-private-key "${KBS_ADMIN_PRIVATE_KEY_FILE}" \
+  --admin-token-file "${KBS_ADMIN_TOKEN_FILE}" \
   set-sample-reference-value \
   --as-integer \
   snp_microcode "${SNP_MICROCODE}"
@@ -1565,7 +1565,7 @@ Seed the SNP reference values used by the default Trustee sample policy:
   --cert-file "${KBS_CERT_FILE}" \
   --url "${KBS_URL}" \
   config \
-  --auth-private-key "${KBS_ADMIN_PRIVATE_KEY_FILE}" \
+  --admin-token-file "${KBS_ADMIN_TOKEN_FILE}" \
   set-sample-reference-value \
   --as-integer \
   snp_snp_svn "${SNP_SNP_SVN}"
@@ -1574,7 +1574,7 @@ Seed the SNP reference values used by the default Trustee sample policy:
   --cert-file "${KBS_CERT_FILE}" \
   --url "${KBS_URL}" \
   config \
-  --auth-private-key "${KBS_ADMIN_PRIVATE_KEY_FILE}" \
+  --admin-token-file "${KBS_ADMIN_TOKEN_FILE}" \
   set-sample-reference-value \
   --as-integer \
   snp_tee_svn "${SNP_TEE_SVN}"
@@ -1614,7 +1614,7 @@ EOF
   --cert-file "${KBS_CERT_FILE}" \
   --url "${KBS_URL}" \
   config \
-  --auth-private-key "${KBS_ADMIN_PRIVATE_KEY_FILE}" \
+  --admin-token-file "${KBS_ADMIN_TOKEN_FILE}" \
   set-resource-policy \
   --policy-file "${KBS_WORKDIR}/nim-kbs-resource-policy.rego"
 ```

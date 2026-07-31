@@ -244,7 +244,7 @@ Run the following command to add the public key to KBS storage:
 
 ```bash
 ./kbs-client --url <SCHEME>://<HOST>:<PORT> config \
-  --auth-private-key private.key \
+  --admin-token-file admin-token \
   set-resource \
   --resource-file cosign.pub \
   --path default/sig-public-key/test
@@ -325,7 +325,7 @@ Run the following command to add the security policy to KBS storage:
 
 ```bash
 ./kbs-client --url <SCHEME>://<HOST>:<PORT> config \
-  --auth-private-key private.key \
+  --admin-token-file admin-token \
   set-resource \
   --resource-file ./security-policy.json \
   --path default/security-policy/test

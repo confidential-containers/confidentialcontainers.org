@@ -29,7 +29,7 @@ the requests are proxied through the trusted admin interface.
 
 To set a reference value, use a command like this.
 ```bash
-./kbs-client config --auth-private-key <admin-private-key> set-sample-reference-value <rv-name> <rv-value>
+./kbs-client config --admin-token-file <admin-token-file> set-sample-reference-value <rv-name> <rv-value>
 ```
 
 By default, the reference value will be added as a list containing one string value.
@@ -44,7 +44,7 @@ use the RVPS Tool described below.
 
 To view reference values, you can use the following command.
 ```bash
-./kbs-client config --auth-private-key <admin-private-key> get-reference-values
+./kbs-client config --admin-token-file <admin-token-file> get-reference-values
 ```
 
 

@@ -65,7 +65,7 @@ In general most commands will have the same form.
 Here is an example command that sets a resource in the KBS.
 ```bash
 kbs-client --url <url-of-kbs> config \
-    --auth-private-key <admin-private-key> set-resource \
+    --admin-token-file <admin-token-file> set-resource \
     --path <resource-name> --resource-file <path-to-resource-file>
 ```
 
@@ -76,11 +76,11 @@ Depending on how and where Trustee is deployed, the URL will be different.
 For example, if you use the docker compose deployment, the KBS URL
 will typically be the IP of your local node with port 8080.
 
-#### Private Key
+#### Admin Token
 
-All `kbs-client config` commands must take an `--auth-private-key` flag.
+All `kbs-client config` commands must take an `--admin-token-file` flag.
 Configuring the KBS is a privileged operation so the configuration endpoint
 must be protected.
-The admin private key is usually set before deploying Trustee.
-Refer to the installation guide for where your private key is stored,
+The admin token is usually set before deploying Trustee.
+Refer to the installation guide for where your admin token is stored,
 and point the client to it.
