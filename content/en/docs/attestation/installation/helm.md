@@ -94,7 +94,7 @@ The Helm commands on this page deploy the latest Helm chart.
     kubectl port-forward -n coco-trustee svc/trustee-kbs 8080:8080
     ```
 
-Refer to the [validate the deployment](helm.md#validate-the-deployment) section for details on checking your Trustee instance after instalation.
+Refer to the [validate the deployment](helm.md#validate-the-deployment) section for details on checking your Trustee instance after installation.
 
 ## Helm configuration options
 
