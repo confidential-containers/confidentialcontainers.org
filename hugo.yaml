@@ -7,6 +7,8 @@ copyright: >-
 # Language settings
 contentDir: content/en
 defaultContentLanguage: en
+defaultContentLanguageInSubdir: false
+enableMissingTranslationPlaceholders: false
 languageCode: en-us
 languages:
   en:
@@ -16,6 +18,13 @@ languages:
     params:
       title: Confidential Containers
       description: Cloud Native Confidential Computing; Run Confidential Containers on Kubernetes
+  zh-cn:
+    languageName: 简体中文
+    contentDir: content/zh-cn
+    weight: 2
+    params:
+      title: Confidential Containers
+      description: 云原生机密计算；在 Kubernetes 上运行机密容器
 
 enableRobotsTXT: true
 enableEmoji: true

@@ -1,0 +1,9 @@
+# Site-level overrides / additions for Docsy UI strings.
+# Theme already ships most zh-cn strings; these keys are missing upstream.
+
+# Table of contents
+[toc_on_this_page]
+other = "本页内容"
+
+[toc_top_of_page]
+other = "回到顶部"
