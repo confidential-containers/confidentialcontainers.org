@@ -49,6 +49,7 @@ The following platforms are supported.
 | -------- | ----- | ----- |
 | SNP | Azure ||
 | TDX | Azure ||
+| TDX | Alibaba Cloud ||
 | Secure Execution | IBM ||
 | None | AWS | Under development |
 | SNP | GCP ||
@@ -70,6 +71,7 @@ which is able to attest the following platforms:
 | IBM Secure Execution |
 | ARM CCA | 
 | Hygon CSV |
+| Hygon DCU |
 | NVIDIA GPU |
 
 Trustee can be used with Confidential Containers or to attest standalone confidential guests.
