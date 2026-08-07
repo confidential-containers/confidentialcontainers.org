@@ -2,7 +2,7 @@
 title: Architecture
 
 description: Trustee Design Principles
-weight: 1
+weight: 2
 categories:
 - attestation
 tags:
