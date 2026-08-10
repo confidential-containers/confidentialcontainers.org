@@ -19,8 +19,8 @@ title: Confidential Containers
 利用机密计算与硬件隔离，保护<strong>正在运行</strong>的容器。
 </div>
 <div class="p-5">
-<a class="btn btn-lg btn-primary me-3 mb-4" href="/zh-cn/docs/overview/">
-查看概览<i class="fas fa-arrow-alt-circle-right ms-2"></i>
+<a class="btn btn-lg btn-primary me-3 mb-4" href="/zh-cn/docs/getting-started/">
+快速开始<i class="fas fa-arrow-alt-circle-right ms-2"></i>
 </a>
 <a class="btn btn-lg btn-secondary me-3 mb-4" href="/docs/overview/">
 English Overview<i class="fas fa-arrow-alt-circle-right ms-2"></i>
