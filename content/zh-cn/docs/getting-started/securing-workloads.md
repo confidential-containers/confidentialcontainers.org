@@ -1,6 +1,6 @@
 ---
-title: 保护工作负载
-description: 使用合适的 RuntimeClass 和策略配置生产环境部署
+title: 工作负载加固
+description: 为生产环境配置合适的 RuntimeClass 和策略
 weight: 35
 categories:
 - getting-started
@@ -29,8 +29,8 @@ categories:
 - `kata-qemu-tdx` - Intel TDX（Trust Domain Extensions）
 - `kata-qemu-snp` - AMD SEV-SNP（Secure Encrypted Virtualization）
 - `kata-qemu-sev` - AMD SEV（较早一代）
-- `kata-qemu-nvidia-gpu-tdx` - NVIDIA CC GPU 加 Intel TDX
-- `kata-qemu-nvidia-gpu-snp` - NVIDIA CC GPU 加 AMD SNP
+- `kata-qemu-nvidia-gpu-tdx` - NVIDIA CC GPU 加 Intel TDX 组合
+- `kata-qemu-nvidia-gpu-snp` - NVIDIA CC GPU 加 AMD SNP 组合
 
 **用于 s390x 生产环境：**
 - `kata-qemu-se` - IBM Secure Execution

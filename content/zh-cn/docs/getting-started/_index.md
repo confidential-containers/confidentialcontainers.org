@@ -1,6 +1,6 @@
 ---
-title: 入门指南
-description: Confidential Containers 入门概览
+title: 快速开始
+description: Confidential Containers 快速开始概览
 weight: 20
 ---
 
