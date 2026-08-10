@@ -74,8 +74,8 @@ kubectl get runtimeclass
 | `kata-qemu-coco-dev-runtime-rs` | 开发/测试运行时（基于 Rust） |
 | `kata-qemu-snp` | AMD SEV-SNP |
 | `kata-qemu-tdx` | Intel TDX |
-| `kata-qemu-nvidia-gpu-snp` | 启用 AMD SEV-SNP 保护的 NVIDIA GPU |
-| `kata-qemu-nvidia-gpu-tdx` | 启用 Intel TDX 保护的 NVIDIA GPU |
+| `kata-qemu-nvidia-gpu-snp` | NVIDIA CC GPU 加 AMD SNP 组合 |
+| `kata-qemu-nvidia-gpu-tdx` | NVIDIA CC GPU 加 Intel TDX 组合|
 {{% /tab %}}
 {{% tab header="s390x" lang="bash" %}}
 | runtimeclass | 说明 |

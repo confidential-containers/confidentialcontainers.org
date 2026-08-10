@@ -1,6 +1,6 @@
 ---
-title: 简单工作负载
-description: 运行一个简单的机密工作负载
+title: 基础工作负载
+description: 运行一个基础的机密工作负载
 weight: 30
 categories:
 - getting-started
