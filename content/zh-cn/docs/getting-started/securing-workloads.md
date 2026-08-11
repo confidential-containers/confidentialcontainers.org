@@ -1,5 +1,5 @@
 ---
-title: 工作负载加固
+title: 加固工作负载
 description: 为生产环境配置合适的 RuntimeClass 和策略
 weight: 35
 categories:
@@ -58,7 +58,7 @@ spec:
 
 {{% alert title="说明" color="info" %}}
 设置 `runtimeClassName` 字段通常已经足够。
-有些示例为了兼容较旧配置，还会保留 `io.containerd.cri.runtime-handler` 注解，
+有些示例为了兼容较旧配置，还会保留 `io.containerd.cri.runtime-handler` 注解（annotation），
 但在使用 RuntimeClass 时，这个注解通常是冗余的。
 {{% /alert %}}
 
@@ -86,25 +86,25 @@ spec:
 [NVIDIA GPU 示例](../../examples/nvidia-gpu-examples/)。
 
 {{% alert title="说明" color="info" %}}
-所选 RuntimeClass 必须与硬件能力匹配。
+所选 RuntimeClass 必须与你的硬件能力匹配。
 如果 RuntimeClass 与实际硬件不一致（例如在 AMD 硬件上使用 `kata-qemu-tdx`），
 Pod 创建将会失败。
 {{% /alert %}}
 
 ## 理解 CoCo 策略体系
 
-Confidential Containers 使用**三类策略**，分别在不同层面保护工作负载。
-若要安全地部署到生产环境，理解这三类策略至关重要。
+Confidential Containers 使用**三类策略（policy）**，分别在不同层面保护工作负载。
+若要加固生产环境部署，理解这三类策略至关重要。
 
 ### 三类策略
 
 | 策略类型 | 执行位置 | 控制内容 | 配置方式 |
 | -------- | -------- | -------- | -------- |
-| **Kata Agent 策略** | TEE 内部，由 Kata Agent 执行 | 控制 Agent 可执行的操作（如创建容器、对 Pod 执行 `exec` 等） | 通过包含 init-data 的 Pod 注解配置 |
-| **KBS 资源策略** | 由 Trustee KBS 执行 | 控制哪些机密信息可以释放给哪些工作负载 | 通过 KBS Client 或 Trustee Operator 配置 |
-| **证明服务策略** | 由 Trustee AS 执行 | 控制如何评估硬件证据（例如接受哪些 TCB 状态） | 通过 KBS Client 或 Trustee Operator 配置 |
+| **Kata Agent 策略** （**Kata  Agent Policy**） | TEE 内部，由 Kata Agent 执行 | 控制 Agent 可执行的操作（如创建容器、对 Pod 执行 `exec` 等） | 通过包含 init-data 的 Pod 注解配置 |
+| **KBS 资源策略** （**KBS Resource Policy**）| 由 Trustee KBS 执行 | 控制哪些机密信息可以释放给哪些工作负载 | 通过 KBS Client 或 Trustee Operator 配置 |
+| **远程证明策略** | 由 Trustee AS 执行 | 控制如何评估硬件证据（例如接受哪些 TCB 状态） | 通过 KBS Client 或 Trustee Operator 配置 |
 
-{{< figure src="/img/CoCoMeasurementsAndConfig.svg" alt="展示 kata agent 策略、KBS 资源策略和证明服务策略如何在证明流程中协同工作的示意图" >}}
+{{< figure src="/img/CoCoMeasurementsAndConfig.svg" alt="展示 kata agent 策略、KBS 资源策略和远程证明策略如何在证明流程中协同工作的示意图" >}}
 
 {{% alert title="说明" color="info" %}}
 图中展示的 Rego 文件名仅为示例。
@@ -141,7 +141,7 @@ CreateContainerRequest if {
 Kata Agent 策略会嵌入到 Init-Data 配置文件中。
 该文件还可提供其他配置，例如 Trustee 的地址信息。
 
-**延伸阅读：**[Agent Policies and Init-Data](../../features/initdata/)
+**延伸阅读：**[Kata Agent 策略和 Init-Data](../../features/initdata/)
 
 ### 2. KBS 资源策略（KBS 侧）
 
@@ -150,14 +150,14 @@ KBS 资源策略用于控制在何种条件下释放哪些机密信息。
 
 **典型用途包括：**
 - 验证工作负载是否使用了特定的 Kata Agent 策略（通过 Init-Data 哈希）
-- 仅向通过 TDX 远程证明的TDVM实例释放数据库凭据
+- 仅向通过 TDX 远程证明的 TDVM 实例释放数据库凭据
 - 要求特定的信任级别（例如 `affirming` 或 `contraindicated`）
 - 为不同平台（TDX 或 SNP）下发不同的机密信息
 
 **示例：校验 Init-Data 哈希**
 
 当你在 Pod 中提供 Init-Data（其中包含 Kata Agent 策略）时，
-证明服务会对其进行校验，并将相应哈希写入令牌。
+证明服务（Attestation Service）会对其进行校验，并将相应哈希写入令牌。
 你的 KBS 资源策略可以进一步验证这个特定的 Init-Data 哈希，
 从而确保实际使用的是期望的 Kata Agent 策略与配置。
 
@@ -176,23 +176,23 @@ allow if {
 ```
 
 请使用你在 `initdata.toml` 中指定的哈希算法计算期望值。
-例如，对 TDX 场景，通常会指定 `sha384`，此时可在命令行中执行：
+例如，对 TDX 场景，通常会使用 `sha384`，此时可在命令行中执行：
 
 ```bash
 sha384sum initdata.toml
 ```
 
-**延伸阅读：**[KBS Resource Policies](../../attestation/policies/#kbs-resource-policies)
+**延伸阅读：**[KBS 资源策略](../../attestation/policies/#kbs-resource-policies)
 
-### 3. 证明服务策略（Attestation Service 侧）
+### 3. 远程证明策略（Attestation Service 侧）
 
-证明服务策略定义了**如何评估硬件证据**，包括：
+远程证明策略定义了**如何评估硬件证据**，包括：
 接受哪些测量值、与哪些参考值进行比对，以及如何计算信任向量。
 
 **典型用途包括：**
 - 定义可接受的固件版本
 - 为不同工作负载指定所需的安全级别
-- 将硬件测量值映射为可信声明
+- 将硬件测量值映射为可信声明（trust claims）
 
 **延伸阅读：**[Attestation Service Policies](../../attestation/policies/#attestation-service-policies)
 
