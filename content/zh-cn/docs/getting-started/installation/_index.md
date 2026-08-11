@@ -10,7 +10,7 @@ tags:
 ---
 
 {{% alert title="说明" color="primary" %}}
-安装 Confidential Containers 之前，请先完成前提条件章节中的准备工作。
+安装 Confidential Containers 之前，请先完成[前提条件](../prerequisites/)章节中的准备工作。
 {{% /alert %}}
 
 ## 使用 Helm 安装 CoCo
@@ -18,7 +18,7 @@ tags:
 通过 Confidential Containers Charts 仓库提供的 Helm Chart 安装 CoCo 运行时。
 
 {{< tabpane text=true right=true >}}
-{{% tab header="最新发布版本" lang="bash" %}}
+{{% tab header="最新版本" lang="bash" %}}
 安装最新正式发布的版本：
 ```bash
 helm install coco oci://ghcr.io/confidential-containers/charts/confidential-containers \
@@ -53,7 +53,7 @@ helm install coco oci://ghcr.io/confidential-containers/charts/confidential-cont
 kubectl get pods -n coco-system --watch
 ```
 
-如果需要了解特定平台的安装选项（例如 `s390x`、`peer-pods`）或高级配置，请参见
+如果需要了解特定场景的安装选项（例如 `s390x`、`peer-pods`）或高级配置，请参见
 [Charts 仓库文档](https://github.com/confidential-containers/charts)。
 
 ### 验证安装
