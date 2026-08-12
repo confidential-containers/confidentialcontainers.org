@@ -19,7 +19,7 @@ tags:
 
 {{< tabpane text=true right=true >}}
 {{% tab header="最新版本" lang="bash" %}}
-安装最新正式发布的版本：
+安装最新版本：
 ```bash
 helm install coco oci://ghcr.io/confidential-containers/charts/confidential-containers \
   --namespace coco-system \
@@ -74,8 +74,8 @@ kubectl get runtimeclass
 | `kata-qemu-coco-dev-runtime-rs` | 开发/测试运行时（基于 Rust） |
 | `kata-qemu-snp` | AMD SEV-SNP |
 | `kata-qemu-tdx` | Intel TDX |
-| `kata-qemu-nvidia-gpu-snp` | NVIDIA CC GPU 加 AMD SNP 组合 |
-| `kata-qemu-nvidia-gpu-tdx` | NVIDIA CC GPU 加 Intel TDX 组合|
+| `kata-qemu-nvidia-gpu-snp` | NVIDIA GPU 加 AMD SNP 组合 |
+| `kata-qemu-nvidia-gpu-tdx` | NVIDIA GPU 加 Intel TDX 组合|
 {{% /tab %}}
 {{% tab header="s390x" lang="bash" %}}
 | runtimeclass | 说明 |
