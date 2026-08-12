@@ -62,7 +62,7 @@ spec:
 但在使用 RuntimeClass 时，这个注解通常是冗余的。
 {{% /alert %}}
 
-**使用Intel TDX 加 NVIDIA Hopper CC GPU：**
+**使用Intel TDX 加 NVIDIA Hopper GPU：**
 
 ```yaml
 apiVersion: v1
