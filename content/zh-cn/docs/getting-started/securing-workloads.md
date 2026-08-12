@@ -29,8 +29,8 @@ categories:
 - `kata-qemu-tdx` - Intel TDX（Trust Domain Extensions）
 - `kata-qemu-snp` - AMD SEV-SNP（Secure Encrypted Virtualization）
 - `kata-qemu-sev` - AMD SEV（较早一代）
-- `kata-qemu-nvidia-gpu-tdx` - NVIDIA CC GPU 加 Intel TDX 组合
-- `kata-qemu-nvidia-gpu-snp` - NVIDIA CC GPU 加 AMD SNP 组合
+- `kata-qemu-nvidia-gpu-tdx` - NVIDIA GPU 加 Intel TDX 组合
+- `kata-qemu-nvidia-gpu-snp` - NVIDIA GPU 加 AMD SNP 组合
 
 **用于 s390x 生产环境：**
 - `kata-qemu-se` - IBM Secure Execution
