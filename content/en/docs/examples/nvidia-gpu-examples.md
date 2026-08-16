@@ -20,8 +20,10 @@ sealed secrets, guest pull, and generated agent policy, see
 [NVIDIA NIM deployment scenario with GPU attestation]({{< relref "nvidia-nim-confidential-gpu-attestation.md" >}}).
 
 In brief: NVIDIA Hopper, NVIDIA Blackwell, and NVIDIA RTX Pro 6000 all support Single-GPU passthrough (SPT).
-Hopper and Blackwell additionally support Multi-GPU passthrough (MPT).
-Protected PCIe (PPCIE) mode is unique to Hopper multi-gpu usages.
+Hopper and Blackwell additionally support Multi-GPU configurations (PPCIE and MPT respectively).
+Protected PCIe (PPCIE) mode is unique to Hopper multi-gpu usages and requires the NVLink switches be placed in PPCIE mode (which CoCo does for you).
+Muti-GPU Passthrough (MPT) mode enables end to end encryption between Blackwell GPUs.
+NVIDIA RTX Pro does not support a multi-GPU configuration.
 The following sections are example pod fragments aligned to each case.
 
 {{% alert title="Match your hardware" color="info" %}}
@@ -59,9 +61,8 @@ spec:
 ```
 
 
-## 2. Blackwell: multi-GPU passthrough (MPT)
+## 2. Blackwell (B200, B300): multi-GPU passthrough (MPT)
 
-This assigns all of the host's GPUs to one pod so they act as a single confidential group, rather than as separate GPUs that each run on their own. The `nvidia.com/pgpu` value is only the number of GPUs you request, not the mode. An RTX Pro 6000 can use a value of 8, for example, and still run as eight separate single-GPU passthroughs rather than multi-GPU passthrough.
 
 Use the same pod as above, but change the resource section:
 
