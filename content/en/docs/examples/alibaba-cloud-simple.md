@@ -34,43 +34,53 @@ Install Required Tools:
 ## Create pod VM Image
 
 > **Note:**
-> There is a pre-built Community Image (id:`m-2ze1w9aj2aonwckv64cw`) for version `0.13.0` in `cn-beijing` that you can use for testing.
+> There is a pre-built Community Image (id:`m-j6c3kfz2vhu6ze04wacb`) for version `0.22.0` in `cn-hongkong` that you can use for testing.
+> You can also use the region-specific image IDs listed under [Export PodVM image version](#export-podvm-image-version) below.
 
-If you want to build a pod VM image yourself, please follow the steps.
+If you want to build a pod VM image yourself, follow the steps below. The current PodVM build uses [mkosi](https://github.com/systemd/mkosi) and targets **Ubuntu 26.04** (`resolute`). See the [PodVM README](https://github.com/confidential-containers/cloud-api-adaptor/blob/main/src/cloud-api-adaptor/podvm/README.md) for prerequisites and customization options.
 
-1. Create pod VM image.
+1. Build the Ubuntu 26.04 PodVM image.
   ```bash
-    PODVM_DISTRO=alinux \
-    CLOUD_PROVIDER=alibabacloud \
-    IMAGE_URL=https://alinux3.oss-cn-hangzhou.aliyuncs.com/aliyun_3_x64_20G_nocloud_alibase_20250117.qcow2 \
-    make podvm-builder podvm-binaries podvm-image
+  cd podvm
+  make
   ```
 
-  The built image will be available in the root path of following newly built docker image: `quay.io/confidential-containers/podvm-alibabacloud-alinux-amd64:<sha256>`
-  with name like `podvm-*.qcow2`. You need to export it from the container image.
+  This builds the PodVM binaries and the OS image. The resulting qcow2 file is:
 
-2. Upload to OSS storage and create ECS Image.
+  ```text
+  podvm/build/podvm-ubuntu-amd64.qcow2
+  ```
 
-  You will then need to upload the Pod VM image to OSS (Object Storage Service). 
+  To rebuild only the OS image after binaries are already present:
+
   ```bash
+  cd podvm
+  make image
+  ```
+
+2. Upload to OSS storage and create an ECS Image.
+
+  From `src/cloud-api-adaptor`, upload the qcow2 file to OSS (Object Storage Service):
+  ```bash
+  cd ..
   export REGION_ID=<region-id>
-  export IMAGE_FILE=<path-to-qcow2-file>
+  export IMAGE_FILE=podvm/build/podvm-ubuntu-amd64.qcow2
   export BUCKET=<OSS-bucket-name>
   export OBJECT=<object-name>
 
   aliyun oss cp ${IMAGE_FILE} oss://${BUCKET}/${OBJECT}
   ```
 
-  Then, mark the image file as an ECS Image
+  Then import it as an ECS image:
   ```bash
   export IMAGE_NAME=$(basename ${IMAGE_FILE%.*})
   aliyun ecs ImportImage --ImageName ${IMAGE_NAME} \
-      --region ${REGION_ID} --RegionId ${REGION_ID}
+      --region ${REGION_ID} --RegionId ${REGION_ID} \
       --BootMode UEFI \
       --DiskDeviceMapping.1.OSSBucket ${BUCKET} --DiskDeviceMapping.1.OSSObject ${OBJECT} \
       --Features.NvmeSupport supported \
       --method POST --force
-  
+
   export POD_IMAGE_ID=<ImageId>
   ```
 
@@ -170,7 +180,7 @@ later.
 {{% tab header="Last Release" %}}
 
 ```bash
-export CAA_VERSION="0.17.0"
+export CAA_VERSION="0.22.0"
 curl -LO "https://github.com/confidential-containers/cloud-api-adaptor/archive/refs/tags/v${CAA_VERSION}.tar.gz"
 tar -xvzf "v${CAA_VERSION}.tar.gz"
 cd "cloud-api-adaptor-${CAA_VERSION}/src/cloud-api-adaptor/install/charts/peerpods"
@@ -202,15 +212,17 @@ Exports the PodVM image ID used by peer pods. This variable tells the deployment
 to use when creating peer pod virtual machines in Alibaba Cloud.
 
 ```bash
-export IMAGEID="m-2zef6zaa0j0qz3sunhjp"
+export IMAGEID="m-j6c3kfz2vhu6ze04wacb"
 ```
 
 > **Note:** Alibaba Cloud builds the images ahead of time. Different regions has different image id to use.
 >
 > | region | IMAGEID |
 > |---|---|
-> | cn-beijing | m-2zef6zaa0j0qz3sunhjp |
-> | ap-southeast-1 | m-t4n9ocuen5sy6rhbxbk1 |
+> | cn-beijing | m-2ze2vxvrxsbue3sf8b02 |
+> | cn-hongkong | m-j6c3kfz2vhu6ze04wacb |
+> | cn-hangzhou | m-bp146ws6x3iyuwjvbdw2 |
+> | ap-southeast-1 | m-t4ng1w8ipua3c0o57hor |
 
 ### Export CAA container image path
 
