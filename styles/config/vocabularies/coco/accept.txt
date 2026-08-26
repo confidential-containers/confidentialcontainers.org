@@ -1,6 +1,21 @@
 # Refer to vale vocabularies page: https://vale.sh/docs/topics/vocab/
 #
 ACK
+Adnan
+ciphertext
+crypto
+cryptsetup
+Mohammed
+NVMe
+params
+pluggable
+PVCs
+PVs
+Mountpoint
+teardown
+unformatted
+[Uu]pstreaming
+workqueue
 (?i)allowlist
 (?i)allowlists
 APIs
