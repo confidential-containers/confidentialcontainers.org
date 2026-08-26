@@ -121,7 +121,7 @@ CAA picks up `mountInfo.json` and:
 These steps run inside the PodVM. The agent-protocol-forwarder sits in front of kata-agent. When Kata sends `CreateContainer`, the interceptor looks at the `cloud_volumes` annotation. If `encrypt-type` is set, it takes the encrypted path below instead of a normal format-and-mount.
 
 1. **Device detection.** The interceptor finds the attached block device (`/dev/disk/azure/data/by-lun/<LUN>` on Azure, `/dev/disk/by-id/nvme-Amazon_Elastic_Block_Store_*` on AWS).
-2. **LUKS header check.** `isLuks()` reads the first 6 bytes for the LUKS magic (`LUKS\xba\xbe`) so we know whether this is a first mount or a remount. It does not check the rest of the header. CDH later opens the volume with cryptsetup and the passphrase from KBS. If the header was changed and that passphrase no longer unlocks a keyslot, the open fails.
+2. **LUKS header check.** `isLuks()` reads the first 6 bytes for the LUKS magic (`LUKS\xba\xbe`) so we know whether this is a first mount or a remount. It does not check the rest of the header. CDH later opens the volume with cryptsetup and the passphrase from KBS. If the header was changed and that passphrase no longer unlocks a key slot, the open fails.
 3. **CDH SecureMount call.** Connects to CDH via TTRPC at `/run/confidential-containers/cdh.sock`. The interceptor sets:
    - `sourceType`: `"empty"` for a fresh disk, `"encrypted"` if the LUKS header was found
    - `key`: `"kbs:///"` plus the `kbs-key-id` from StorageClass (e.g. `"kbs:///default/luks-key/volume-key"`)
