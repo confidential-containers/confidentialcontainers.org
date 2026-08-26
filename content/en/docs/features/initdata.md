@@ -67,14 +67,8 @@ default StatsContainerRequest := true
 # Block exec by default
 default ExecProcessRequest := false
 
-# Block container creation by default
-default CreateContainerRequest := false
-
-# Only allow specific image digests
-CreateContainerRequest if {
-	some storage in input.storages
-	storage.source == "docker.io/library/nginx@sha256:e56797eab4a5300158cc015296229e13a390f82bfc88803f45b08912fd5e3348"
-}
+# Allow creating any container by default
+default CreateContainerRequest := true
 
 # Optionally allow specific commands
 ExecProcessRequest if {
@@ -236,14 +230,8 @@ default StatsContainerRequest := true
 # Block exec by default
 default ExecProcessRequest := false
 
-# Block container creation by default
-default CreateContainerRequest := false
-
-# Only allow specific image digests
-CreateContainerRequest if {
-    some storage in input.storages
-    storage.source == "docker.io/library/nginx@sha256:e56797eab4a5300158cc015296229e13a390f82bfc88803f45b08912fd5e3348"
-}
+# Allow creating any container by default
+default CreateContainerRequest := true
 
 # Optionally allow specific commands
 ExecProcessRequest if {
