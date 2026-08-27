@@ -12,7 +12,7 @@ author: Mohammed Adnan ([@mohammedadnan21](https://github.com/mohammedadnan21))
 
 When you use the Kata remote hypervisor ([peer-pods](https://github.com/confidential-containers/cloud-api-adaptor)) for confidential containers, you can run into problems if your workload relies on Kubernetes CSI storage for persistent data.
 
-Until v0.21.0 we had [csi-wrapper](https://github.com/confidential-containers/cloud-api-adaptor/tree/v0.21.0/src/csi-wrapper). It sat in front of existing CSI drivers and replayed attach/mount inside the PodVM (the confidential VM that runs the pod). [This post](https://www.redhat.com/en/blog/persistent-volume-support-peer-pods-technical-deep-dive) is the deep dive if you want the internals. It worked, but it had [limits](https://github.com/confidential-containers/cloud-api-adaptor/issues/1374) that showed up as soon as you tried it on a managed cluster. The volume still counted against the node's attach limit even though it wasn't attached there. Some CSI drivers talk to the API server and cache Nodes or PVs, then get confused when the "node" is a VM with no Node object. And you can't patch CSI drivers on OpenShift or AKS. That code isn't in current CAA releases.
+Until v0.21.0 we had [csi-wrapper](https://github.com/confidential-containers/cloud-api-adaptor/tree/v0.21.0/src/csi-wrapper). It sat in front of existing CSI drivers and replayed attach/mount inside the PodVM (the confidential VM that runs the pod). [This post](https://www.redhat.com/en/blog/persistent-volume-support-peer-pods-technical-deep-dive) is the deep dive if you want the internals. It worked, but it had [limits](https://github.com/confidential-containers/cloud-api-adaptor/issues/1374) that showed up as soon as you tried it on a managed cluster. The volume still counted against the node's attach limit even though it wasn't attached there. Some CSI drivers talk to the API server and cache Nodes or PVs, then get confused when the "node" is a VM with no Node object. And you can't patch CSI drivers on OpenShift or AKS. That code isn't in current Cloud API Adaptor (CAA) releases.
 
 For the last few months we've been doing this a different way. A dedicated [CSI driver](https://github.com/confidential-devhub/caa-csi-block-driver) creates the cloud disk, writes Kata [direct-volume](https://github.com/kata-containers/kata-containers/blob/main/docs/design/direct-blk-device-assignment.md) metadata, and CAA attaches the disk to the PodVM. Encryption is optional. If you turn it on, the LUKS key comes from [Trustee/KBS](https://github.com/confidential-containers/trustee) only after the PodVM attests. The host never sees the passphrase. That path landed in CAA main in [#3155](https://github.com/confidential-containers/cloud-api-adaptor/pull/3155). It is not in the latest release (v0.22.0); you need a build from main.
 
@@ -48,6 +48,8 @@ Other scenarios we defend against:
 - **MITM on key delivery**: attestation establishes an encrypted session between the PodVM and KBS. The key comes back JWE-wrapped.
 
 What's trusted: the PodVM (hardware-attested TEE) and KBS. Everything else we treat as potentially compromised — the control plane, worker node, hypervisor, storage backend.
+
+Rollback is out of scope. Someone with storage access can restore an older snapshot of the encrypted disk. LUKS does not stop that. Stopping it would need extra machinery, such as a monotonic counter, which this path does not have.
 
 ## Architecture
 
@@ -245,6 +247,8 @@ confidential data
 ```
 
 The volume at `/secure` is LUKS2-encrypted on the cloud disk. If someone snapshots that volume or pulls it offline, they get ciphertext. The key only exists inside the TEE after attestation, so there's no way to recover the data from the host side.
+
+To read the data after that pod is gone, start a new pod with the same PVC. Same StorageClass and `kbs-key-id`. The new PodVM attests, gets the key, and opens the existing volume. You do not format again.
 
 ## Multi-Provider Support
 
