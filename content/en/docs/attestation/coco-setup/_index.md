@@ -1,7 +1,7 @@
 ---
 title: CoCo Setup
 description: Setting up attestation with CoCo 
-weight: 1
+weight: 3
 categories:
 - attestation
 tags:
