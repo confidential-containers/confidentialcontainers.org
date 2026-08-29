@@ -1,5 +1,5 @@
 ---
-date: 2026-02-11
+date: 2026-08-19
 title: Deploy Trustee in Kubernetes
 linkTitle: Deploy Trustee in Kubernetes
 description: >
@@ -74,7 +74,7 @@ EOF
 
 {{% alert color="info" %}}
 Note that the Trustee operator has been already published in the operator [hub catalog](https://operatorhub.io/).
-Trustee operator v0.17.0 is aligned to CoCo v.0.18.0 release.
+Trustee operator v0.21.0 is aligned to CoCo v.0.22.0 release.
 {{% /alert %}}
 
 ### Check Trustee Operator installation
@@ -89,7 +89,7 @@ We should expect something like:
 
 ```text
 NAME                       DISPLAY            VERSION   REPLACES                  PHASE
-trustee-operator.v0.17.0   Trustee Operator   0.17.0    trustee-operator.v0.5.0   Succeeded
+trustee-operator.v0.21.0   Trustee Operator   0.21.0    trustee-operator.v0.19.0  Succeeded
 ```
 
 ## Configuration
@@ -144,7 +144,7 @@ spec:
     - kbs-service
   secretName: trustee-token-cert
   issuerRef:
-    name: kbs-token
+    name: kbs-https
   privateKey:
     algorithm: ECDSA
     encoding: PKCS8
@@ -212,23 +212,23 @@ This ConfigMap mounts the main KBS configuration file onto the trustee container
 
 This ConfigMap mounts the resource-policy onto the trustee container filesystem. It can be permissive or restrictive depending on the TrusteeConfig `profileType`. Typically there is no need to edit the ConfigMap content, unless required for specific use cases.
 
-<u>`trusteeconfig-attestation-policy`</u>
+<u>`trusteeconfig-attestation-policy-cpu`</u>
 
-This ConfigMap mounts the attestation-policy onto the trustee container filesystem. Typically there is no need to edit the ConfigMap content, it works out-of-the-box.
+This ConfigMap mounts the CPU attestation-policy onto the trustee container filesystem. Typically there is no need to edit the ConfigMap content, it works out-of-the-box.
+
+<u>`trusteeconfig-attestation-policy-gpu`</u>
+
+This ConfigMap mounts the GPU attestation-policy onto the trustee container filesystem. Typically there is no need to edit the ConfigMap content, it works out-of-the-box.
 
 <u>`trusteeconfig-rvps-reference-values`</u>
 
 This ConfigMap mounts the RVPS reference values onto the trustee container filesystem. A sample list of reference values is set by default, so in production it is recommended to edit the ConfigMap and insert some measured PCR values.
 
-<u>`trusteeconfig-tdx-config`</u>
-
-This ConfigMap is specific for the Intel TDX platform and mounts the PCCS configuration file onto the trustee container filesystem. It's boiler-plate configuration and it works out-of-the-box.
-
 <u>`trusteeconfig-auth-secret`</u>
 
 This Secret resource automatically mounts a private/public key pair onto the trustee container's filesystem. An administrator possessing the corresponding private key can then invoke the trustee's admin API to add new secrets or modify policies.
 
-<u>`kbsres1`</u>
+<u>`attestation-status`</u>
 
 This is a sample Secret for testing purposes. The secret can be retrieved by any attested client.
 
@@ -351,7 +351,7 @@ metadata:
 spec:
   containers:
   - name: kbs-client
-    image: quay.io/confidential-containers/kbs-client:v0.17.0
+    image: quay.io/confidential-containers/kbs-client:v0.21.0
     imagePullPolicy: IfNotPresent
     command:
       - sleep
@@ -376,17 +376,17 @@ default allow = true
 ```console
 $ kubectl get secret trustee-tls-cert -n operators -o json | jq -r '.data."tls.crt"' | base64 --decode > https.crt
 $ kubectl cp -n operators https.crt kbs-client:/
-$ kubectl exec -it -n operators kbs-client -- kbs-client --cert-file https.crt --url https://kbs-service:8080 get-resource --path default/kbsres1/key1
-cmVzMXZhbDE=
+$ kubectl exec -it -n operators kbs-client -- kbs-client --cert-file https.crt --url https://kbs-service:8080 get-resource --path default/attestation-status/status
+c3VjY2Vzcw==
 ```
 
 If we type the command:
 
 ```bash
-echo cmVzMXZhbDE= | base64 -d
+echo c3VjY2Vzcw== | base64 -d
 ```
 
-We’ll get *res1val1*, the secret we created before.
+We’ll get *success*, the default secret created by TrusteeConfig.
 
 ## Summary
 
