@@ -6,6 +6,24 @@ html body {
   font-family: "Inter", sans-serif;
 }
 
-.tab-content .tab-pane .highlight {
-  margin-bottom: 1em;
+.tab-content .tab-pane {
+  .highlight {
+    margin-bottom: 1em;
+  }
+
+  &:has(> .highlight:only-child) {
+    padding-bottom: 0;
+  }
+
+  > .highlight:only-child {
+    margin-bottom: 0;
+
+    > pre {
+      border: 0;
+    }
+  }
+}
+
+.td-content blockquote {
+  border-left: 6px solid var(--bs-secondary-color);
 }
