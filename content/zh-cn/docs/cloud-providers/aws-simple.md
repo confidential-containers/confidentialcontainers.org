@@ -1,14 +1,14 @@
 ---
-title: AWS
+title: AWS (EKS)
 description: 在 AWS 上使用 Cloud API Adaptor (CAA) 的 Peer Pods Helm Chart
 categories:
-- examples
+  - cloud-providers
 tags:
-- helm
-- caa
-- aws
-- eks
-- irsa
+  - helm
+  - caa
+  - aws
+  - eks
+  - irsa
 ---
 
 > **说明：** 本文为英文文档的中文译版，英文原版请参见 [AWS 示例（英文版）](https://confidentialcontainers.org/docs/examples/aws-simple/)。

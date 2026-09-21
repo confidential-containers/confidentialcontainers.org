@@ -3,6 +3,6 @@ title: Examples
 description: Example CoCo Deployments 
 categories:
 - examples 
-weight: 53 
+weight: 54 
 ---
 

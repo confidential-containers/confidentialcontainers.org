@@ -1,12 +1,13 @@
 ---
-title: Azure
+title: Azure Kubernetes Service (AKS)
 description: 在 Azure 上使用 Cloud API Adaptor (CAA) 的 Peer Pods Helm Chart
 categories:
-- examples
+  - cloud-providers
 tags:
-- helm
-- caa
-- azure
+  - helm
+  - caa
+  - azure
+  - aks
 ---
 
 > **说明：** 本文为英文文档的中文译版，英文原版请参见 [Azure 示例（英文版）](https://confidentialcontainers.org/docs/examples/azure-simple/)。

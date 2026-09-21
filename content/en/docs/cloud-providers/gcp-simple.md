@@ -1,8 +1,8 @@
 ---
-title: GCP
+title: Google Cloud Platform (GCP)
 description: Peer Pods Helm Chart using Cloud API Adaptor (CAA) on GCP
 categories:
-  - examples
+  - cloud-providers
 tags:
   - helm
   - caa
