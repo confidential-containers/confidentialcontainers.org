@@ -184,7 +184,11 @@ make image
 {{% tab header="最新发布" %}}
 
 ```bash
-export CAA_VERSION="0.22.0"
+CAA_VERSION="$(
+  curl -fsSL \
+    "https://api.github.com/repos/confidential-containers/cloud-api-adaptor/releases/latest" |
+    jq -er '.tag_name | sub("^v"; "")'
+)"
 curl -LO "https://github.com/confidential-containers/cloud-api-adaptor/archive/refs/tags/v${CAA_VERSION}.tar.gz"
 tar -xvzf "v${CAA_VERSION}.tar.gz"
 cd "cloud-api-adaptor-${CAA_VERSION}/src/cloud-api-adaptor/install/charts/peerpods"
