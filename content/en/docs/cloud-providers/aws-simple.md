@@ -1,14 +1,14 @@
 ---
-title: AWS
+title: AWS (EKS)
 description: Peer Pods Helm Chart using Cloud API Adaptor (CAA) on AWS
 categories:
-- examples
+  - cloud-providers
 tags:
-- helm
-- caa
-- aws
-- eks
-- irsa
+  - helm
+  - caa
+  - aws
+  - eks
+  - irsa
 ---
 
 This documentation will walk you through setting up CAA (a.k.a. Peer Pods) on AWS Elastic Kubernetes Service (EKS). It explains how to deploy:

@@ -1,15 +1,12 @@
 ---
-
-title: Alibaba Cloud
+title: Alibaba Cloud (ACK)
 description: Cloud API Adaptor (CAA) on Alibaba Cloud
 categories:
-
-- examples
+  - cloud-providers
 tags:
-- caa
-- alibaba cloud
-- ack
-
+  - caa
+  - alibaba cloud
+  - ack
 ---
 
 This documentation will walk you through setting up CAA (a.k.a. Peer Pods) on Alibaba Cloud Container Service for Kubernetes (ACK) and Alibaba Cloud Elastic Compute Service (ECS). It explains how to deploy:

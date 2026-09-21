@@ -2,11 +2,11 @@
 title: 阿里云
 description: 在阿里云上部署 Cloud API Adaptor (CAA)
 categories:
-- examples
+  - cloud-providers
 tags:
-- caa
-- alibaba cloud
-- ack
+  - caa
+  - alibaba cloud
+  - ack
 ---
 
 > **说明：** 本文为英文文档的中文译版，英文原版请参见[阿里云示例（英文版）](https://confidentialcontainers.org/docs/examples/alibaba-cloud-simple/)。
