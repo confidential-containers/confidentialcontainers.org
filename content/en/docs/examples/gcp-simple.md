@@ -8,6 +8,7 @@ tags:
   - caa
   - gcp
   - gke
+  - wif
 ---
 
 This documentation will walk you through setting up Cloud API Adaptor (CAA) (a.k.a. Peer Pods) on 
@@ -56,10 +57,11 @@ Google Cloud Project:
 
    This API is required to create and manage the GKE cluster.
 
-4. Set the `GCP_REGION` environment variable to the desired region for your GKE cluster with Intel® TDX supported instances:
+4. Set the region and cluster name:
 
     ```bash
     export GCP_REGION="us-central1"
+    export CLUSTER_NAME="caa-gke"
     ```
 
     {{% alert title="Note" color="primary" %}}
@@ -72,9 +74,7 @@ Google Cloud Project:
 Deploy a single node Kubernetes cluster using GKE:
 
 ```bash
-export GKE_CLUSTER_NAME="caa-gke"
-
-gcloud container clusters create "${GKE_CLUSTER_NAME}" \
+gcloud container clusters create "${CLUSTER_NAME}" \
   --zone ${GCP_REGION}-a \
   --machine-type "e2-standard-4" \
   --image-type UBUNTU_CONTAINERD \
@@ -87,7 +87,7 @@ The `UBUNTU_CONTAINERD` image type is specified to ensure compatibility with the
 Get cluster credentials:
 
 ```bash
-gcloud container clusters get-credentials "${GKE_CLUSTER_NAME}" \
+gcloud container clusters get-credentials "${CLUSTER_NAME}" \
   --zone "${GCP_REGION}-a" \
   --project "${GCP_PROJECT_ID}"
 ```
@@ -142,61 +142,6 @@ gcloud compute firewall-rules create allow-port-15150-restricted \
    --allow=tcp:15150 \
    --source-ranges=[YOUR_EXTERNAL_IP]
 ```
-
-## Setup CAA Requirements
-
-### Enable Additional APIs
-
-Enable the Compute Engine and IAM APIs required for CAA:
-
-```bash
-gcloud services enable compute.googleapis.com iam.googleapis.com \
-  --project="${GCP_PROJECT_ID}"
-```
-
-These APIs are required to:
-
-- provision the confidential PodVM instances and related networking resources,
-- create and authorize the service account that Cloud API Adaptor uses to access GCP.
-
-### Create Service Account and Credentials
-
-1. Create a service account for peer pods and grant it the required permissions:
-
-   ```bash
-   gcloud iam service-accounts create peerpods \
-     --description="Peerpods Service Account" \
-     --display-name="Peerpods Service Account"
-
-   gcloud projects add-iam-policy-binding ${GCP_PROJECT_ID} \
-     --member="serviceAccount:peerpods@${GCP_PROJECT_ID}.iam.gserviceaccount.com" \
-     --role="roles/compute.instanceAdmin.v1"
-
-   gcloud projects add-iam-policy-binding ${GCP_PROJECT_ID} \
-     --member="serviceAccount:peerpods@${GCP_PROJECT_ID}.iam.gserviceaccount.com" \
-     --role="roles/iam.serviceAccountUser"
-   ```
-
-   These roles allow the Cloud API Adaptor to:
-
-   - create, start/stop, and delete the Compute Engine instances used as **PodVMs** (`roles/compute.instanceAdmin.v1`),
-   - run actions as the `peerpods` service account when provisioning those resources (service-account impersonation via `roles/iam.serviceAccountUser`).
-
-   > **Note**: IAM policy updates can take a few minutes to propagate. If later steps fail with permission errors, wait briefly and retry.
-
-2. Set the `GOOGLE_APP_CREDENTIALS` environment variable to point to the credentials file that will be generated in the next step:
-
-    ```bash
-    export GOOGLE_APP_CREDENTIALS=~/.config/gcloud/peerpods_application_key.json
-    ```
-
-3. Generate and save the credentials file:
-
-    ```bash
-    gcloud iam service-accounts keys create \
-      "${GOOGLE_APP_CREDENTIALS}" \
-      --iam-account="peerpods@${GCP_PROJECT_ID}.iam.gserviceaccount.com"
-    ```
 
 ## Build and publish the PodVM image
 
@@ -600,6 +545,183 @@ providerConfigs:
 EOF
 ```
 
+### Configure Authentication
+
+Choose how CAA authenticates with GCP. You can use either static credentials (service account key file)
+or [Workload Identity Federation (WIF)](https://cloud.google.com/iam/docs/workload-identity-federation).
+
+> **Note:** Workload Identity Federation (WIF) is the recommended authentication method for GKE deployments.
+> With WIF, the CAA pods authenticate via OIDC — no static GCP credentials are stored in Kubernetes secrets.
+
+#### Create GCP Service Account
+
+Create a GCP service account with the necessary permissions for CAA to manage peer pod VMs:
+
+```bash
+export GSA_NAME="cloud-api-adaptor"
+export GSA_EMAIL="${GSA_NAME}@${GCP_PROJECT_ID}.iam.gserviceaccount.com"
+
+gcloud iam service-accounts create ${GSA_NAME} \
+  --description="Cloud API Adaptor Service Account" \
+  --display-name="Cloud API Adaptor Service Account" \
+  --project=${GCP_PROJECT_ID}
+
+gcloud projects add-iam-policy-binding ${GCP_PROJECT_ID} \
+  --member="serviceAccount:${GSA_EMAIL}" \
+  --role="roles/compute.instanceAdmin.v1"
+
+gcloud projects add-iam-policy-binding ${GCP_PROJECT_ID} \
+  --member="serviceAccount:${GSA_EMAIL}" \
+  --role="roles/iam.serviceAccountUser"
+```
+
+These roles allow the Cloud API Adaptor to:
+- create, start/stop, and delete the Compute Engine instances used as **PodVMs** (`roles/compute.instanceAdmin.v1`)
+- run actions as the service account when provisioning those resources (`roles/iam.serviceAccountUser`)
+
+> **Note**: IAM policy updates can take a few minutes to propagate. If later steps fail with permission errors, wait briefly and retry.
+
+#### Choose Authentication Method
+
+{{< tabpane text=true right=true persist=header >}}
+
+{{% tab header="Static Credentials" %}}
+
+Generate and save the service account key file:
+
+```bash
+export GOOGLE_APPLICATION_CREDENTIALS=~/.config/gcloud/peerpods_application_key.json
+
+gcloud iam service-accounts keys create \
+  ${GOOGLE_APPLICATION_CREDENTIALS} \
+  --iam-account=${GSA_EMAIL}
+
+```
+
+{{% /tab %}}
+
+{{% tab header="Workload Identity Federation (GKE)" %}}
+
+Workload Identity Federation eliminates the need for long-lived service account key files stored in Kubernetes secrets,
+and is the recommended authentication method for GKE.
+
+**Enable Required APIs**
+
+```bash
+gcloud services enable compute.googleapis.com iam.googleapis.com iamcredentials.googleapis.com sts.googleapis.com \
+  --project=${GCP_PROJECT_ID}
+```
+
+**Set Variables**
+
+```bash
+export CAA_K8S_SERVICE_ACCOUNT="cloud-api-adaptor"
+export GKE_WORKLOAD_POOL="${GCP_PROJECT_ID}.svc.id.goog"
+```
+
+> **Note:** `CLUSTER_NAME`, `GCP_REGION`, `GSA_NAME`, and `GSA_EMAIL` were already set in previous sections.
+
+**Enable GKE Workload Identity**
+
+Check if Workload Identity is already enabled on your cluster:
+
+```bash
+gcloud container clusters describe ${CLUSTER_NAME} \
+  --zone=${GCP_REGION}-a \
+  --format="value(workloadIdentityConfig.workloadPool)"
+```
+
+If the output is empty, enable Workload Identity:
+
+```bash
+gcloud container clusters update ${CLUSTER_NAME} \
+  --zone=${GCP_REGION}-a \
+  --workload-pool=${GKE_WORKLOAD_POOL}
+```
+
+> **Note:** This operation may take several minutes.
+
+**Get Cluster OIDC Issuer and Project Number**
+
+```bash
+# Note: Use 'locations' instead of 'zones' for the OIDC issuer URL
+export OIDC_ISSUER="https://container.googleapis.com/v1/projects/${GCP_PROJECT_ID}/locations/${GCP_REGION}-a/clusters/${CLUSTER_NAME}"
+
+export PROJECT_NUMBER=$(gcloud projects describe ${GCP_PROJECT_ID} \
+  --format="value(projectNumber)")
+
+echo "OIDC Issuer: ${OIDC_ISSUER}"
+echo "Project Number: ${PROJECT_NUMBER}"
+
+# Verify the OIDC endpoint is accessible
+curl -s "${OIDC_ISSUER}/.well-known/openid-configuration" | jq .issuer
+```
+
+**Create Workload Identity Pool and OIDC Provider**
+
+Create a custom workload identity pool for direct token exchange:
+
+```bash
+export WI_POOL_NAME="caa-direct-wif-pool"
+
+gcloud iam workload-identity-pools create ${WI_POOL_NAME} \
+  --location=global \
+  --description="Workload Identity pool for cloud-api-adaptor with hostNetwork true" \
+  --display-name="CAA Direct WIF Pool" \
+  --project=${GCP_PROJECT_ID}
+```
+
+> **Note**: If you get an error that the pool already exists, it may be in a soft-deleted state (GCP delays actual deletion for 30 days). Either use a different pool name or undelete it.
+
+Create an OIDC provider for your GKE cluster:
+
+```bash
+export OIDC_PROVIDER_NAME="${CLUSTER_NAME}-oidc-provider"
+
+gcloud iam workload-identity-pools providers create-oidc ${OIDC_PROVIDER_NAME} \
+  --project=${GCP_PROJECT_ID} \
+  --location=global \
+  --workload-identity-pool=${WI_POOL_NAME} \
+  --issuer-uri="${OIDC_ISSUER}" \
+  --allowed-audiences="${GKE_WORKLOAD_POOL}" \
+  --attribute-mapping="google.subject=assertion.sub,attribute.namespace=assertion['kubernetes.io']['namespace'],attribute.service_account_name=assertion['kubernetes.io']['serviceaccount']['name']" \
+  --attribute-condition="assertion.sub.startsWith('system:serviceaccount:')"
+```
+
+**Bind Kubernetes Service Account to GCP Service Account**
+
+Allow the Kubernetes service account to impersonate the GCP service account:
+
+```bash
+gcloud iam service-accounts add-iam-policy-binding ${GSA_EMAIL} \
+  --member="principalSet://iam.googleapis.com/projects/${PROJECT_NUMBER}/locations/global/workloadIdentityPools/${WI_POOL_NAME}/attribute.service_account_name/${CAA_K8S_SERVICE_ACCOUNT}" \
+  --role="roles/iam.workloadIdentityUser" \
+  --project=${GCP_PROJECT_ID}
+
+gcloud iam service-accounts add-iam-policy-binding ${GSA_EMAIL} \
+  --member="principalSet://iam.googleapis.com/projects/${PROJECT_NUMBER}/locations/global/workloadIdentityPools/${WI_POOL_NAME}/attribute.service_account_name/${CAA_K8S_SERVICE_ACCOUNT}" \
+  --role="roles/iam.serviceAccountTokenCreator" \
+  --project=${GCP_PROJECT_ID}
+```
+
+**Save the WIF Configuration**
+
+> **Note:** Include the //iam.googleapis.com/ prefix
+
+```bash
+export PROVIDER_NAME="//iam.googleapis.com/projects/${PROJECT_NUMBER}/locations/global/workloadIdentityPools/${WI_POOL_NAME}/providers/${OIDC_PROVIDER_NAME}"
+
+echo "Provider Name: ${PROVIDER_NAME}"
+echo "GSA Email: ${GSA_EMAIL}"
+```
+
+> **Note:** For more detailed configuration options and troubleshooting, see the
+> [GCP WIF documentation](https://github.com/confidential-containers/cloud-api-adaptor/blob/main/src/cloud-api-adaptor/docs/gcp-wif.md).
+
+{{% /tab %}}
+
+{{< /tabpane >}}
+
 ### Deploy the CAA Helm chart
 
 1. Create file `namespace.yaml` with the following content:
@@ -650,30 +772,89 @@ EOF
    EOF
    ```
 
-4. Create a Kubernetes Secret that stores the GCP service-account credentials:
+4. Create credentials and install the Helm chart:
 
-   See [providers/gcp-secrets.yaml.template](https://github.com/confidential-containers/cloud-api-adaptor/blob/main/src/cloud-api-adaptor/install/charts/peerpods/providers/gcp-secrets.yaml.template) for required keys.
+   Below commands use customization options `-f` and `--set` which are described [here](../../getting-started/installation/advanced_configuration).
 
-   ```bash
-   kubectl create secret generic my-provider-creds \
-     -n confidential-containers-system \
-     --from-file=GCP_CREDENTIALS="${GOOGLE_APP_CREDENTIALS}"
-   ```
+{{< tabpane text=true right=true persist=header >}}
 
-   The CAA Helm chart references this secret to authenticate to Google Cloud when provisioning PodVMs.
+{{% tab header="Static Credentials" %}}
 
-5. Install helm chart:
+Create the secret using `kubectl`. See [providers/gcp-secrets.yaml.template](https://github.com/confidential-containers/cloud-api-adaptor/blob/main/src/cloud-api-adaptor/install/charts/peerpods/providers/gcp-secrets.yaml.template) for required keys.
 
-   Below command uses customization options `-f` and `--set` which are described [here](../../getting-started/installation/advanced_configuration).
+```bash
+kubectl create secret generic my-provider-creds \
+  -n confidential-containers-system \
+  --from-file=GCP_CREDENTIALS="${GOOGLE_APPLICATION_CREDENTIALS}"
+```
 
-    ```bash
-    helm install peerpods . \
-      -f providers/gcp.yaml \
-      --set secrets.mode=reference \
-      --set secrets.existingSecretName=my-provider-creds \
-      --dependency-update \
-      -n confidential-containers-system
-    ```
+Install the Helm chart:
+
+```bash
+helm install peerpods . \
+  -f providers/gcp.yaml \
+  --set secrets.mode=reference \
+  --set secrets.existingSecretName=my-provider-creds \
+  --dependency-update \
+  -n confidential-containers-system
+```
+
+{{% /tab %}}
+
+{{% tab header="Workload Identity Federation (GKE)" %}}
+
+When using WIF, no GCP credentials secret is needed. The CAA pods authenticate via the
+GCP service account configured in the [Configure Authentication](#configure-authentication) section.
+
+Create a WIF-specific values file:
+
+```bash
+cat > providers/gcp-wif-values.yaml <<EOF
+# WIF-specific configuration
+gcp:
+  workloadIdentityFederation:
+    enable: true
+    serviceAccount: "${GSA_EMAIL}"
+    workloadPool: "${GKE_WORKLOAD_POOL}"
+    cluster: "${PROVIDER_NAME}"
+EOF
+```
+
+Install the Helm chart with both the provider configuration and WIF configuration:
+
+```bash
+helm install peerpods . \
+  -f providers/gcp.yaml \
+  -f providers/gcp-wif-values.yaml \
+  --dependency-update \
+  -n confidential-containers-system
+```
+
+To verify WIF is working, check the secret contains the WIF credentials JSON:
+
+```bash
+kubectl get secret peer-pods-secret \
+  -n confidential-containers-system \
+  -o jsonpath='{.data.GCP_WIF_CREDENTIALS}' | base64 -d | jq
+```
+
+Expected output should show a credentials JSON with `"type": "external_account"`.
+
+Check the CAA pod logs to verify authentication:
+
+```bash
+CAA_POD=$(kubectl get pods -n confidential-containers-system \
+  -l app=cloud-api-adaptor \
+  -o jsonpath='{.items[0].metadata.name}')
+
+kubectl logs -n confidential-containers-system ${CAA_POD} | grep "GCP_WIF_CREDENTIALS"
+```
+
+The output should show `$GCP_WIF_CREDENTIALS is SET`.
+
+{{% /tab %}}
+
+{{< /tabpane >}}
 
 Generic Peer pods Helm charts deployment instructions are also described 
 [here](https://github.com/confidential-containers/cloud-api-adaptor/tree/main/src/cloud-api-adaptor/install/charts/peerpods/README.md).
@@ -960,7 +1141,7 @@ To uninstall Confidential Containers from GKE cluster, use the following command
      --namespace confidential-containers-system
    ```
 
-5. Delete secret with provider credentials `my-provider-creds`:
+5. Delete secret with provider credentials `my-provider-creds` (if exist):
 
    ```bash
    kubectl delete secret my-provider-creds \
@@ -976,7 +1157,7 @@ To uninstall Confidential Containers from GKE cluster, use the following command
 7. Delete the GKE cluster by running the following command and confirming the deletion when prompted:
 
    ```bash
-   gcloud container clusters delete "${GKE_CLUSTER_NAME}" \
+   gcloud container clusters delete "${CLUSTER_NAME}" \
      --zone "${GCP_REGION}-a"
    ```
 
