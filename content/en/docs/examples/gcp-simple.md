@@ -624,7 +624,33 @@ EOF
    kubectl apply -f namespace.yaml
    ```
 
-3. Create a Kubernetes Secret that stores the GCP service-account credentials:
+3. Create ResourceQuota to allow system priority classes:
+
+   GKE enforces strict resource quota policies. The `kata-deploy` DaemonSet requires system
+   priority classes (`system-node-critical` or `system-cluster-critical`) to ensure proper
+   scheduling and execution. Create a ResourceQuota to allow these priority classes:
+
+   ```bash
+   kubectl apply -f - << EOF
+   apiVersion: v1
+   kind: ResourceQuota
+   metadata:
+     name: allow-system-priority-classes
+     namespace: confidential-containers-system
+   spec:
+     hard:
+       pods: "100"
+     scopeSelector:
+       matchExpressions:
+       - operator: In
+         scopeName: PriorityClass
+         values:
+         - system-node-critical
+         - system-cluster-critical
+   EOF
+   ```
+
+4. Create a Kubernetes Secret that stores the GCP service-account credentials:
 
    See [providers/gcp-secrets.yaml.template](https://github.com/confidential-containers/cloud-api-adaptor/blob/main/src/cloud-api-adaptor/install/charts/peerpods/providers/gcp-secrets.yaml.template) for required keys.
 
@@ -636,7 +662,7 @@ EOF
 
    The CAA Helm chart references this secret to authenticate to Google Cloud when provisioning PodVMs.
 
-4. Install helm chart:
+5. Install helm chart:
 
    Below command uses customization options `-f` and `--set` which are described [here](../../getting-started/installation/advanced_configuration).
 
