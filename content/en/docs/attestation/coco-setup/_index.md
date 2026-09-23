@@ -70,5 +70,5 @@ url = "http://<kbs-ip>:<kbs-port>"
 '''
 ```
 
-See [Init-Data](../features/initdata) page for instructions on how to attach
+See [Init-Data](../../features/initdata) page for instructions on how to attach
 the Init-Data to a workload.
