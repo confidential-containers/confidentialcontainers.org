@@ -47,57 +47,16 @@ Google Cloud Project:
     gcloud config set project "${GCP_PROJECT_ID}"
     ```
 
-3. Enable the GKE, Compute Engine, and IAM APIs:
+3. Enable the GKE API:
 
     ```bash
-    gcloud services enable container.googleapis.com compute.googleapis.com iam.googleapis.com \
+    gcloud services enable container.googleapis.com \
       --project="${GCP_PROJECT_ID}"
     ```
 
-   These APIs are required to:
+   This API is required to create and manage the GKE cluster.
 
-   - create and manage the GKE cluster,
-   - provision the confidential PodVM instances and related networking resources,
-   - create and authorize the service account that Cloud API Adaptor uses to access GCP.
-
-4. Create a service account for peer pods and grant it the required permissions:
-
-   ```bash
-   gcloud iam service-accounts create peerpods \
-     --description="Peerpods Service Account" \
-     --display-name="Peerpods Service Account"
-   
-   gcloud projects add-iam-policy-binding ${GCP_PROJECT_ID} \
-     --member="serviceAccount:peerpods@${GCP_PROJECT_ID}.iam.gserviceaccount.com" \
-     --role="roles/compute.instanceAdmin.v1"
-   
-   gcloud projects add-iam-policy-binding ${GCP_PROJECT_ID} \
-     --member="serviceAccount:peerpods@${GCP_PROJECT_ID}.iam.gserviceaccount.com" \
-     --role="roles/iam.serviceAccountUser"
-   ```
-
-   These roles allow the Cloud API Adaptor to:
-
-   - create, start/stop, and delete the Compute Engine instances used as **PodVMs** (`roles/compute.instanceAdmin.v1`),
-   - run actions as the `peerpods` service account when provisioning those resources (service-account impersonation via `roles/iam.serviceAccountUser`).
-
-   > **Note**: IAM policy updates can take a few minutes to propagate. If later steps fail with permission errors, wait briefly and retry.
-
-5. Set the `GOOGLE_APP_CREDENTIALS` environment variable to point to the credentials file that will be generated in the next step:
-
-    ```bash
-    export GOOGLE_APP_CREDENTIALS=~/.config/gcloud/peerpods_application_key.json
-    ```
-
-6. Generate and save the credentials file:
-
-    ```bash
-    gcloud iam service-accounts keys create \
-      "${GOOGLE_APP_CREDENTIALS}" \
-      --iam-account="peerpods@${GCP_PROJECT_ID}.iam.gserviceaccount.com"
-    ```
-
-7. Set the `GCP_REGION` environment variable to the desired region for your GKE cluster with Intel® TDX supported instances:
+4. Set the `GCP_REGION` environment variable to the desired region for your GKE cluster with Intel® TDX supported instances:
 
     ```bash
     export GCP_REGION="us-central1"
@@ -107,44 +66,6 @@ Google Cloud Project:
     "us-central1" was chosen because supports Confidential VMs.<br> 
     For a complete list of supported regions visit [supported-configurations](https://cloud.google.com/confidential-computing/confidential-vm/docs/supported-configurations#supported-zones).
     {{% /alert %}}
-
-8. Set TEE platform and PodVM instance type for your workload:
-
-   {{< tabpane text=true right=true persist=header >}}
-
-{{% tab header="AMD SEV-SNP" %}}
-```bash
-export PODVM_INSTANCE_TYPE="n2d-standard-4"
-export DISABLECVM=false
-export GCP_CONFIDENTIAL_TYPE="SEV" # SEV or SEV_SNP
-export GCP_DISK_TYPE="pd-standard"
-```
-{{% /tab %}}
-
-{{% tab header="Intel® TDX" %}}
-```bash
-export PODVM_INSTANCE_TYPE="c3-standard-4"
-export DISABLECVM=false
-export GCP_CONFIDENTIAL_TYPE="TDX"
-export GCP_DISK_TYPE="pd-balanced"
-```
-
-For the purposes of this example, we use a C3 machine type that supports Intel® TDX.
-
-> **Note**: Choose a C3 machine type that fits your workload from the list of supported options in the [Google Cloud C3 machine types documentation](https://docs.cloud.google.com/compute/docs/general-purpose-machines#c3_machine_types).
-
-{{% /tab %}}
-
-{{% tab header="Non-Confidential" %}}
-```bash
-export PODVM_INSTANCE_TYPE="e2-medium"
-export DISABLECVM=true
-export GCP_CONFIDENTIAL_TYPE=""
-export GCP_DISK_TYPE="pd-standard"
-```
-{{% /tab %}}
-
-{{< /tabpane >}}
 
 ## Deploy Kubernetes Using GKE
 
@@ -199,7 +120,7 @@ If you encounter problem with VM's not running check [Troubleshooting](#troubles
 
 {{% /alert %}}
 
-### Configure VPC network
+## Configure VPC network
 
 We need to make sure port 15150 is open under the default VPC network:
 
@@ -221,6 +142,61 @@ gcloud compute firewall-rules create allow-port-15150-restricted \
    --allow=tcp:15150 \
    --source-ranges=[YOUR_EXTERNAL_IP]
 ```
+
+## Setup CAA Requirements
+
+### Enable Additional APIs
+
+Enable the Compute Engine and IAM APIs required for CAA:
+
+```bash
+gcloud services enable compute.googleapis.com iam.googleapis.com \
+  --project="${GCP_PROJECT_ID}"
+```
+
+These APIs are required to:
+
+- provision the confidential PodVM instances and related networking resources,
+- create and authorize the service account that Cloud API Adaptor uses to access GCP.
+
+### Create Service Account and Credentials
+
+1. Create a service account for peer pods and grant it the required permissions:
+
+   ```bash
+   gcloud iam service-accounts create peerpods \
+     --description="Peerpods Service Account" \
+     --display-name="Peerpods Service Account"
+
+   gcloud projects add-iam-policy-binding ${GCP_PROJECT_ID} \
+     --member="serviceAccount:peerpods@${GCP_PROJECT_ID}.iam.gserviceaccount.com" \
+     --role="roles/compute.instanceAdmin.v1"
+
+   gcloud projects add-iam-policy-binding ${GCP_PROJECT_ID} \
+     --member="serviceAccount:peerpods@${GCP_PROJECT_ID}.iam.gserviceaccount.com" \
+     --role="roles/iam.serviceAccountUser"
+   ```
+
+   These roles allow the Cloud API Adaptor to:
+
+   - create, start/stop, and delete the Compute Engine instances used as **PodVMs** (`roles/compute.instanceAdmin.v1`),
+   - run actions as the `peerpods` service account when provisioning those resources (service-account impersonation via `roles/iam.serviceAccountUser`).
+
+   > **Note**: IAM policy updates can take a few minutes to propagate. If later steps fail with permission errors, wait briefly and retry.
+
+2. Set the `GOOGLE_APP_CREDENTIALS` environment variable to point to the credentials file that will be generated in the next step:
+
+    ```bash
+    export GOOGLE_APP_CREDENTIALS=~/.config/gcloud/peerpods_application_key.json
+    ```
+
+3. Generate and save the credentials file:
+
+    ```bash
+    gcloud iam service-accounts keys create \
+      "${GOOGLE_APP_CREDENTIALS}" \
+      --iam-account="peerpods@${GCP_PROJECT_ID}.iam.gserviceaccount.com"
+    ```
 
 ## Build and publish the PodVM image
 
@@ -418,7 +394,71 @@ Above commands will produce `./build/system.raw` (~1.6GB), a disk image that can
        
    {{< /tabpane >}}
 
-## Deploy the CAA Helm chart
+### Export PodVM image id
+
+Export the PodVM image id to be used in the provider configuration. This is the name of the image created in the previous step.
+
+```bash
+export PODVM_IMAGE_ID="podvm-image-00754585-release"
+```
+
+<details>
+   <summary><strong>Show command how to retrieve latest published image from GCP</strong></summary>
+
+   Run below command to retrieve the latest published image from GCP:
+
+   ```bash
+   gcloud compute images list \
+     --project="${GCP_PROJECT_ID}" \
+     --filter="name ~ ^${IMAGE_BASE_NAME}-" \
+     --sort-by=~creationTimestamp \
+     --limit=1 \
+     --format="value(name)"
+   ```
+
+   </details>
+
+## Deploy
+
+### Set TEE Platform Configuration
+
+Set TEE platform and PodVM instance type for your workload:
+
+{{< tabpane text=true right=true persist=header >}}
+
+{{% tab header="AMD SEV-SNP" %}}
+```bash
+export PODVM_INSTANCE_TYPE="n2d-standard-4"
+export DISABLECVM=false
+export GCP_CONFIDENTIAL_TYPE="SEV" # SEV or SEV_SNP
+export GCP_DISK_TYPE="pd-standard"
+```
+{{% /tab %}}
+
+{{% tab header="Intel® TDX" %}}
+```bash
+export PODVM_INSTANCE_TYPE="c3-standard-4"
+export DISABLECVM=false
+export GCP_CONFIDENTIAL_TYPE="TDX"
+export GCP_DISK_TYPE="pd-balanced"
+```
+
+For the purposes of this example, we use a C3 machine type that supports Intel® TDX.
+
+> **Note**: Choose a C3 machine type that fits your workload from the list of supported options in the [Google Cloud C3 machine types documentation](https://docs.cloud.google.com/compute/docs/general-purpose-machines#c3_machine_types).
+
+{{% /tab %}}
+
+{{% tab header="Non-Confidential" %}}
+```bash
+export PODVM_INSTANCE_TYPE="e2-medium"
+export DISABLECVM=true
+export GCP_CONFIDENTIAL_TYPE=""
+export GCP_DISK_TYPE="pd-standard"
+```
+{{% /tab %}}
+
+{{< /tabpane >}}
 
 ### Download the CAA Helm deployment artifacts
 
@@ -458,31 +498,7 @@ On your terminal change directory to the Cloud API Adaptor's code base.
 
 {{< /tabpane >}}
 
-### Export PodVM image id
-
-Export the PodVM image id to be used in the provider configuration. This is the name of the image created in the previous step.
-
-```bash
-export PODVM_IMAGE_ID="podvm-image-00754585-release"
-```
-
-<details>
-   <summary><strong>Show command how to retrieve latest published image from GCP</strong></summary>
-
-   Run below command to retrieve the latest published image from GCP:
-
-   ```bash
-   gcloud compute images list \
-     --project="${GCP_PROJECT_ID}" \
-     --filter="name ~ ^${IMAGE_BASE_NAME}-" \
-     --sort-by=~creationTimestamp \
-     --limit=1 \
-     --format="value(name)"
-   ```
-
-   </details>
-
-#### Set the CAA container image and tag
+### Set the CAA container image and tag
 
 Define the Cloud API Adaptor (CAA) container image to deploy.
 These variables tell the deployment tooling which CAA image and architecture-specific tag to pull and run.
@@ -561,7 +577,7 @@ providerConfigs:
 EOF
 ```
 
-### Deploy helm chart
+### Deploy the CAA Helm chart
 
 1. Create file `namespace.yaml` with the following content:
 
