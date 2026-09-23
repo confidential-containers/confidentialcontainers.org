@@ -420,6 +420,29 @@ export PODVM_IMAGE_ID="podvm-image-00754585-release"
 
 ## Deploy
 
+### Install cert-manager
+
+The Peer Pods Helm chart requires cert-manager for webhook certificates. Install it first:
+
+```bash
+# Add the Jetstack Helm repository
+helm repo add jetstack https://charts.jetstack.io
+helm repo update
+
+# Install cert-manager with CRDs
+helm install cert-manager jetstack/cert-manager \
+  --namespace cert-manager \
+  --create-namespace \
+  --version v1.19.1 \
+  --set crds.enabled=true
+```
+
+Wait for cert-manager to be ready:
+
+```bash
+kubectl wait --for=condition=ready pod -l app.kubernetes.io/instance=cert-manager -n cert-manager --timeout=300s
+```
+
 ### Set TEE Platform Configuration
 
 Set TEE platform and PodVM instance type for your workload:
