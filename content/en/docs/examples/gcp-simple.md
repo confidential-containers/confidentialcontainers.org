@@ -145,9 +145,14 @@ gcloud compute firewall-rules create allow-port-15150-restricted \
 
 ## Build and publish the PodVM image
 
-### Pre-requisites
+### Build the PodVM image
 
-This section describes the prerequisites that we assume for the following steps regarding installed software and access to Google Cloud.
+{{< tabpane text=true right=true persist=header >}}
+{{% tab header="**Build methods**:" disabled=true /%}}
+
+{{% tab header="Release" %}}
+
+**Prerequisites:**
 
 Install Required Tools:
 
@@ -162,13 +167,12 @@ Install Required Tools:
   sudo curl -fsSL -o /usr/local/bin/yq "https://github.com/mikefarah/yq/releases/latest/download/yq_linux_${ARCH}"
   sudo chmod +x /usr/local/bin/yq
   ```
-- Install `gcloud` CLI [tool](https://cloud.google.com/sdk/docs/install)
 
 Clone repository: [Cloud API Adaptor repository](https://github.com/confidential-containers/cloud-api-adaptor.git).
 
 This repository contains the necessary scripts and configurations to build the PodVM image.
 
-### Build the PodVM image
+**Build Steps:**
 
 1. Navigate to the `cloud-api-adaptor/src/cloud-api-adaptor/podvm` directory.
 
@@ -197,24 +201,73 @@ This repository contains the necessary scripts and configurations to build the P
 
 3. Build the **image**:
 
-{{< tabpane text=true right=true persist=header >}}
-{{% tab header="**Build types**:" disabled=true /%}}
+   ```bash
+   make image
+   ```
 
-{{% tab header="Release" %}}
+   > **Note**: This will build the pod VM image **without** SSH access.
 
-Run below command to build the release image:
+   Above command will produce `./build/system.raw` (~1.6GB), a disk image that can be booted with an ESP/UEFI partition.
 
-```bash
-make image
-```
+4. Prepare the raw disk image and package it as `build/disk.tar.gz`:
 
-> **Note**: This will only build the pod VM image **without** SSH access.
+   ```bash
+   cp build/system.raw build/disk.raw && \
+     tar -cvzf build/disk.tar.gz -C build disk.raw
+   ```
 
 {{% /tab %}}
 
 {{% tab header="Debug" %}}
 
-1. Prepare SSH key to build debug image
+**Prerequisites:**
+
+Install Required Tools:
+
+- Install [Docker](https://docs.docker.com/engine/install/) with `buildx`
+- Install packages:
+   - `make`
+   - `qemu-utils`
+   - `git`
+- Install `yq`:
+  ```bash
+  ARCH=amd64
+  sudo curl -fsSL -o /usr/local/bin/yq "https://github.com/mikefarah/yq/releases/latest/download/yq_linux_${ARCH}"
+  sudo chmod +x /usr/local/bin/yq
+  ```
+
+Clone repository: [Cloud API Adaptor repository](https://github.com/confidential-containers/cloud-api-adaptor.git).
+
+This repository contains the necessary scripts and configurations to build the PodVM image.
+
+**Build Steps:**
+
+1. Navigate to the `cloud-api-adaptor/src/cloud-api-adaptor/podvm` directory.
+
+2. Build the **binaries** using below command:
+
+   ```bash
+   ARCH=amd64 TEE_PLATFORM=tdx \
+     make podvm-binaries
+   ```
+
+   The `ARCH` parameter can be:
+   - `amd64` / `x86_64`: 64-bit x86 systems using Intel® or AMD processors
+   - `arm64` / `aarch64`: 64-bit Arm systems
+   - `s390x`: 64-bit IBM systems
+   - `ppc64le`: 64-bit IBM Power systems
+
+   The `TEE_PLATFORM` parameter can be:
+   - `none`: for tests with non-confidential guests
+   - `all`: for all following platforms
+   - `fs`: for platforms with encrypted root filesystems (i.e. s390x)
+   - `tdx`: for Intel® TDX
+   - `az-tdx-vtpm`: for Intel® TDX with Azure vTPM
+   - `snp`/`amd`: for AMD SEV-SNP
+   - `az-snp-vtpm`: for AMD SEV-SNP with Azure vTPM
+   - `se`: for IBM Secure Execution (SE)
+
+3. Prepare SSH key to build debug image:
 
    For using SSH, create a file `resources/authorized_keys` with your SSH public key.
    Ensure the permissions are set to `0400` for the `authorized_keys` file.
@@ -230,7 +283,7 @@ make image
       chmod 400 resources/authorized_keys
       ```
 
-   2. Add credentials to google using CLI
+   2. Add credentials to google using CLI:
 
        ```bash
        gcloud compute os-login ssh-keys add \
@@ -242,47 +295,83 @@ make image
       > **Note**: TTL (time to live) is set to 0, which means that the key will not expire. 
       > You can set it to any value you want, for example `1h` for 1 hour or `30m` for 30 minutes.
 
-2. Run command to build debug image
+4. Build the **debug image**:
     
    ```bash
    make image-debug
    ```
 
-   > **Note**: This will only build the pod VM image **with** SSH access.
+   > **Note**: This will build the pod VM image **with** SSH access.
 
-{{% /tab %}}
+   Above command will produce `./build/system.raw` (~1.6GB), a disk image that can be booted with an ESP/UEFI partition.
 
-{{< /tabpane >}} 
-
-Above commands will produce `./build/system.raw` (~1.6GB), a disk image that can be booted with an ESP/UEFI partition.
-
-### Publish image to Google Storage
-
-1. Prepare the raw disk image and package it as `build/disk.tar.gz`:
+5. Prepare the raw disk image and package it as `build/disk.tar.gz`:
 
    ```bash
    cp build/system.raw build/disk.raw && \
      tar -cvzf build/disk.tar.gz -C build disk.raw
    ```
 
-2. Export the following environment variables:
+{{% /tab %}}
+
+{{% tab header="Pre-built" %}}
+
+**Prerequisites:**
+
+Install the required tools:
+
+1. Install the [ORAS](https://oras.land/docs/installation) CLI tool for pulling OCI artifacts
+
+2. Install `qemu-img` for image conversion
+
+**Import Steps:**
+
+1. Get the latest CAA version:
+   ```bash
+   CAA_VERSION="$(
+     curl -fsSL \
+       "https://api.github.com/repos/confidential-containers/cloud-api-adaptor/releases/latest" |
+       jq -er '.tag_name | sub("^v"; "")'
+   )"
+   ```
+
+2. Pull the PodVM image from the registry:
+   ```bash
+   oras pull ghcr.io/confidential-containers/podvm-amd64:v${CAA_VERSION}
+   ```
+
+3. Extract the qcow2 image from the downloaded tar.xz:
+   ```bash
+   tar -xf podvm.tar.xz
+   ```
+
+4. Convert the qcow2 image to raw format:
+   ```bash
+   mkdir -p build
+   qemu-img convert -O raw podvm-ubuntu-amd64.qcow2 build/disk.raw
+   ```
+
+5. Package the raw disk image as `build/disk.tar.gz`:
+   ```bash
+   tar -cvzf build/disk.tar.gz -C build disk.raw
+   ```
+
+{{% /tab %}}
+
+{{< /tabpane >}}
+
+### Publish image to Google Storage
+
+1. Export the bucket name:
 
    ```bash
-   export GCP_PROJECT_ID="YOUR_PROJECT_ID"
-   export GCP_REGION="us-central1"
    export BUCKET_NAME="peerpods-bucket"
    ```
 
-   > **Note**: Above values should be set according to your Google Cloud project and region set in previous steps.<br>
+   > **Note**: `GCP_PROJECT_ID` and `GCP_REGION` should already be set from the GCP Preparation section.<br>
    > The `BUCKET_NAME` should be globally unique across all of Google Cloud, so consider adding a random suffix if needed.
 
-3. Login to Google account and follow instructions in command line to authenticate:
-
-    ```bash
-    gcloud init
-    ```
-
-4. Create a GCS bucket for images:
+2. Create a GCS bucket for images:
 
    ```bash
    gcloud storage buckets create "gs://${BUCKET_NAME}" \
@@ -290,17 +379,17 @@ Above commands will produce `./build/system.raw` (~1.6GB), a disk image that can
      --location="${GCP_REGION}"
    ```
 
-5. Upload the disk image to a bucket and create the image:
+3. Upload the disk image to a bucket and create the image:
 
    1. Prepare image name:
 
       ```bash
       export IMAGE_BASE_NAME="podvm-image"
-      export CAA_HASH=$(git rev-parse --short HEAD)
-      export IMAGE_NAME="${IMAGE_BASE_NAME}-${CAA_HASH}-release"
+      export CAA_HASH=$(git rev-parse --short HEAD 2>/dev/null || echo "")
+      export IMAGE_NAME="${IMAGE_BASE_NAME}-${CAA_HASH:-$(date +%s)}-release"
       ```
 
-      > **Note**: For consistency, the git commit hash is part of image name and release type (debug/release) to differentiate between development and production builds.
+      > **Note**: The image name uses the git commit hash if available (for Release/Debug builds), or falls back to a Unix timestamp (for Pre-built images).
 
    2. Upload image to GCS bucket:
       ```bash
