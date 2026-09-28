@@ -813,9 +813,10 @@ echo "GSA Email: ${GSA_EMAIL}"
 
 ### Deploy the CAA Helm chart
 
-1. Create file `namespace.yaml` with the following content:
+1. Create namespace managed by Helm:
 
-   ```yaml
+   ```bash
+   kubectl apply -f - << EOF
    apiVersion: v1
    kind: Namespace
    metadata:
@@ -825,17 +826,12 @@ echo "GSA Email: ${GSA_EMAIL}"
      annotations:
        meta.helm.sh/release-name: peerpods
        meta.helm.sh/release-namespace: confidential-containers-system
+   EOF
    ```
 
    This namespace will be used to deploy CAA and related components, and it is labeled and annotated to be managed by Helm.
 
-2. Create namespace managed by Helm:
-
-   ```bash
-   kubectl apply -f namespace.yaml
-   ```
-
-3. Create ResourceQuota to allow system priority classes:
+2. Create ResourceQuota to allow system priority classes:
 
    GKE enforces strict resource quota policies. The `kata-deploy` DaemonSet requires system
    priority classes (`system-node-critical` or `system-cluster-critical`) to ensure proper
@@ -861,7 +857,7 @@ echo "GSA Email: ${GSA_EMAIL}"
    EOF
    ```
 
-4. Create credentials and install the Helm chart:
+3. Create credentials and install the Helm chart:
 
    Below commands use customization options `-f` and `--set` which are described [here](../../getting-started/installation/advanced_configuration).
 
