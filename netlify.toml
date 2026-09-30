@@ -1,5 +1,6 @@
 [build]
-command = "hugo"
+# Hugo's TOCSS-DART transform requires the Sass embedded protocol
+command = 'npm install --include=dev && ln -sf ../sass-embedded/dist/bin/sass.js node_modules/.bin/sass && PATH="$PWD/node_modules/.bin:$PATH" hugo'
 publish = "public"
 
 [build.environment]
