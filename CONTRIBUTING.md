@@ -9,13 +9,13 @@ This repository follows the usual Github workflow of pull request to make change
 - Make sure You have installed:
   - GO [here](https://go.dev/doc/install) and include it in PATH
   - NodeJS [here](https://nodejs.org/en/download/package-manager) and include it in PATH
-  - PostCSS plugin [here](https://gohugo.io/functions/css/postcss/#setup)
+  - Dart Sass plugin [here](https://gohugo.io//functions/css/sass/#dart-sass)
 - Install Hugo by following the instructions [here](https://gohugo.io/installation/).
 
 > [!NOTE]
 > Currently recommended versions are:
-> - hugo: **0.155.0+** 
-> - docsy: **0.13.0+**
+> - hugo: **0.167.0+**
+> - docsy: **0.17.0+**
 
 ### Using Hugo
 
@@ -25,18 +25,6 @@ Start a local server from the root of this repository:
 hugo server
 ```
 
-### Using Docker
-
-1. Create a cache directory for Hugo:
-    ```bash
-    mkdir -p $HOME/.cache/hugo_cache
-    ```
-
-2. Start a local server from the root of this repository:
-    ```bash
-    docker run --rm -v .:/site -v $HOME/.cache/hugo_cache:/cache -u $(id -u):$(id -g) -w /site -p 1313:1313 ghcr.io/gohugoio/hugo:latest server --bind="0.0.0.0"
-    ```
-
 ### Using Docker Compose
 
 1. Install docker-compose by following the instructions [here](https://docs.docker.com/compose/install/).
@@ -44,8 +32,8 @@ hugo server
 2. Export variables for user and group id:
 
     ```bash
-    export UID=$(id -u)
-    export GID=$(id -g)
+    export LOCAL_UID=$(id -u)
+    export LOCAL_GID=$(id -g)
     ```
 
 3. Create a cache directory for Hugo:
@@ -60,7 +48,7 @@ hugo server
 4. Start a local server from the root of this repository:
 
     ```bash
-    docker-compose up -d
+    docker compose up -d
     ```
 
 Now go to [http://localhost:1313](http://localhost:1313) on your browser. Once you make any changes to the code the

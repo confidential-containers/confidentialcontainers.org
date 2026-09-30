@@ -1,14 +1,28 @@
 services:
   site:
-    image: ghcr.io/gohugoio/hugo:v0.155.0
-    build:
-      context: .
-    command: server --bind=0.0.0.0
-    environment:
-      HTTP_PROXY: "${HTTP_PROXY}"
-      HTTPS_PROXY: "${HTTPS_PROXY}"
-      NO_PROXY: "${NO_PROXY}"
-    user: "${UID}:${GID}"
+    image: ghcr.io/gohugoio/hugo:v0.167.0
+    network_mode: host
+    entrypoint: [ "/bin/sh", "-c" ]
+    command:
+      - |
+        case "$$(uname -m)" in
+          x86_64) arch=x64 ;;
+          aarch64|arm64) arch=arm64 ;;
+          *) echo "Unsupported architecture: $$(uname -m)" >&2; exit 1 ;;
+        esac
+        if ldd --version 2>&1 | grep -qi musl; then
+          platform=linux-musl
+        else
+          platform=linux
+        fi
+        sass_dir="/src/node_modules/sass-embedded-$${platform}-$${arch}/dart-sass"
+        if [ ! -x "$${sass_dir}/sass" ]; then
+          echo "Dart Sass is missing; run npm install in the project directory." >&2
+          exit 1
+        fi
+        export PATH="$${sass_dir}:$${PATH}"
+        exec hugo server --bind=0.0.0.0
+    user: "${LOCAL_UID}:${LOCAL_GID}"
     ports:
       - "1313:1313"
     volumes:
