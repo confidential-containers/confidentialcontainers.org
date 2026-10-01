@@ -8,6 +8,7 @@ tags:
   - caa
   - gcp
   - gke
+  - wif
 ---
 
 This documentation will walk you through setting up Cloud API Adaptor (CAA) (a.k.a. Peer Pods) on 
@@ -47,60 +48,20 @@ Google Cloud Project:
     gcloud config set project "${GCP_PROJECT_ID}"
     ```
 
-3. Enable the GKE, Compute Engine, and IAM APIs:
+3. Enable the GKE API:
 
     ```bash
-    gcloud services enable container.googleapis.com compute.googleapis.com iam.googleapis.com \
+    gcloud services enable container.googleapis.com \
       --project="${GCP_PROJECT_ID}"
     ```
 
-   These APIs are required to:
+   This API is required to create and manage the GKE cluster.
 
-   - create and manage the GKE cluster,
-   - provision the confidential PodVM instances and related networking resources,
-   - create and authorize the service account that Cloud API Adaptor uses to access GCP.
-
-4. Create a service account for peer pods and grant it the required permissions:
-
-   ```bash
-   gcloud iam service-accounts create peerpods \
-     --description="Peerpods Service Account" \
-     --display-name="Peerpods Service Account"
-   
-   gcloud projects add-iam-policy-binding ${GCP_PROJECT_ID} \
-     --member="serviceAccount:peerpods@${GCP_PROJECT_ID}.iam.gserviceaccount.com" \
-     --role="roles/compute.instanceAdmin.v1"
-   
-   gcloud projects add-iam-policy-binding ${GCP_PROJECT_ID} \
-     --member="serviceAccount:peerpods@${GCP_PROJECT_ID}.iam.gserviceaccount.com" \
-     --role="roles/iam.serviceAccountUser"
-   ```
-
-   These roles allow the Cloud API Adaptor to:
-
-   - create, start/stop, and delete the Compute Engine instances used as **PodVMs** (`roles/compute.instanceAdmin.v1`),
-   - run actions as the `peerpods` service account when provisioning those resources (service-account impersonation via `roles/iam.serviceAccountUser`).
-
-   > **Note**: IAM policy updates can take a few minutes to propagate. If later steps fail with permission errors, wait briefly and retry.
-
-5. Set the `GOOGLE_APP_CREDENTIALS` environment variable to point to the credentials file that will be generated in the next step:
-
-    ```bash
-    export GOOGLE_APP_CREDENTIALS=~/.config/gcloud/peerpods_application_key.json
-    ```
-
-6. Generate and save the credentials file:
-
-    ```bash
-    gcloud iam service-accounts keys create \
-      "${GOOGLE_APP_CREDENTIALS}" \
-      --iam-account="peerpods@${GCP_PROJECT_ID}.iam.gserviceaccount.com"
-    ```
-
-7. Set the `GCP_REGION` environment variable to the desired region for your GKE cluster with Intel® TDX supported instances:
+4. Set the region and cluster name:
 
     ```bash
     export GCP_REGION="us-central1"
+    export CLUSTER_NAME="caa-gke"
     ```
 
     {{% alert title="Note" color="primary" %}}
@@ -108,52 +69,12 @@ Google Cloud Project:
     For a complete list of supported regions visit [supported-configurations](https://cloud.google.com/confidential-computing/confidential-vm/docs/supported-configurations#supported-zones).
     {{% /alert %}}
 
-8. Set TEE platform and PodVM instance type for your workload:
-
-   {{< tabpane text=true right=true persist=header >}}
-
-{{% tab header="AMD SEV-SNP" %}}
-```bash
-export PODVM_INSTANCE_TYPE="n2d-standard-4"
-export DISABLECVM=false
-export GCP_CONFIDENTIAL_TYPE="SEV" # SEV or SEV_SNP
-export GCP_DISK_TYPE="pd-standard"
-```
-{{% /tab %}}
-
-{{% tab header="Intel® TDX" %}}
-```bash
-export PODVM_INSTANCE_TYPE="c3-standard-4"
-export DISABLECVM=false
-export GCP_CONFIDENTIAL_TYPE="TDX"
-export GCP_DISK_TYPE="pd-balanced"
-```
-
-For the purposes of this example, we use a C3 machine type that supports Intel® TDX.
-
-> **Note**: Choose a C3 machine type that fits your workload from the list of supported options in the [Google Cloud C3 machine types documentation](https://docs.cloud.google.com/compute/docs/general-purpose-machines#c3_machine_types).
-
-{{% /tab %}}
-
-{{% tab header="Non-Confidential" %}}
-```bash
-export PODVM_INSTANCE_TYPE="e2-medium"
-export DISABLECVM=true
-export GCP_CONFIDENTIAL_TYPE=""
-export GCP_DISK_TYPE="pd-standard"
-```
-{{% /tab %}}
-
-{{< /tabpane >}}
-
 ## Deploy Kubernetes Using GKE
 
 Deploy a single node Kubernetes cluster using GKE:
 
 ```bash
-export GKE_CLUSTER_NAME="caa-gke"
-
-gcloud container clusters create "${GKE_CLUSTER_NAME}" \
+gcloud container clusters create "${CLUSTER_NAME}" \
   --zone ${GCP_REGION}-a \
   --machine-type "e2-standard-4" \
   --image-type UBUNTU_CONTAINERD \
@@ -166,7 +87,7 @@ The `UBUNTU_CONTAINERD` image type is specified to ensure compatibility with the
 Get cluster credentials:
 
 ```bash
-gcloud container clusters get-credentials "${GKE_CLUSTER_NAME}" \
+gcloud container clusters get-credentials "${CLUSTER_NAME}" \
   --zone "${GCP_REGION}-a" \
   --project "${GCP_PROJECT_ID}"
 ```
@@ -199,7 +120,7 @@ If you encounter problem with VM's not running check [Troubleshooting](#troubles
 
 {{% /alert %}}
 
-### Configure VPC network
+## Configure VPC network
 
 We need to make sure port 15150 is open under the default VPC network:
 
@@ -224,9 +145,14 @@ gcloud compute firewall-rules create allow-port-15150-restricted \
 
 ## Build and publish the PodVM image
 
-### Pre-requisites
+### Build the PodVM image
 
-This section describes the prerequisites that we assume for the following steps regarding installed software and access to Google Cloud.
+{{< tabpane text=true right=true persist=header >}}
+{{% tab header="**Build methods**:" disabled=true /%}}
+
+{{% tab header="Release" %}}
+
+**Prerequisites:**
 
 Install Required Tools:
 
@@ -241,13 +167,12 @@ Install Required Tools:
   sudo curl -fsSL -o /usr/local/bin/yq "https://github.com/mikefarah/yq/releases/latest/download/yq_linux_${ARCH}"
   sudo chmod +x /usr/local/bin/yq
   ```
-- Install `gcloud` CLI [tool](https://cloud.google.com/sdk/docs/install)
 
 Clone repository: [Cloud API Adaptor repository](https://github.com/confidential-containers/cloud-api-adaptor.git).
 
 This repository contains the necessary scripts and configurations to build the PodVM image.
 
-### Build the PodVM image
+**Build Steps:**
 
 1. Navigate to the `cloud-api-adaptor/src/cloud-api-adaptor/podvm` directory.
 
@@ -276,24 +201,73 @@ This repository contains the necessary scripts and configurations to build the P
 
 3. Build the **image**:
 
-{{< tabpane text=true right=true persist=header >}}
-{{% tab header="**Build types**:" disabled=true /%}}
+   ```bash
+   make image
+   ```
 
-{{% tab header="Release" %}}
+   > **Note**: This will build the pod VM image **without** SSH access.
 
-Run below command to build the release image:
+   Above command will produce `./build/system.raw` (~1.6GB), a disk image that can be booted with an ESP/UEFI partition.
 
-```bash
-make image
-```
+4. Prepare the raw disk image and package it as `build/disk.tar.gz`:
 
-> **Note**: This will only build the pod VM image **without** SSH access.
+   ```bash
+   cp build/system.raw build/disk.raw && \
+     tar -cvzf build/disk.tar.gz -C build disk.raw
+   ```
 
 {{% /tab %}}
 
 {{% tab header="Debug" %}}
 
-1. Prepare SSH key to build debug image
+**Prerequisites:**
+
+Install Required Tools:
+
+- Install [Docker](https://docs.docker.com/engine/install/) with `buildx`
+- Install packages:
+   - `make`
+   - `qemu-utils`
+   - `git`
+- Install `yq`:
+  ```bash
+  ARCH=amd64
+  sudo curl -fsSL -o /usr/local/bin/yq "https://github.com/mikefarah/yq/releases/latest/download/yq_linux_${ARCH}"
+  sudo chmod +x /usr/local/bin/yq
+  ```
+
+Clone repository: [Cloud API Adaptor repository](https://github.com/confidential-containers/cloud-api-adaptor.git).
+
+This repository contains the necessary scripts and configurations to build the PodVM image.
+
+**Build Steps:**
+
+1. Navigate to the `cloud-api-adaptor/src/cloud-api-adaptor/podvm` directory.
+
+2. Build the **binaries** using below command:
+
+   ```bash
+   ARCH=amd64 TEE_PLATFORM=tdx \
+     make podvm-binaries
+   ```
+
+   The `ARCH` parameter can be:
+   - `amd64` / `x86_64`: 64-bit x86 systems using Intel® or AMD processors
+   - `arm64` / `aarch64`: 64-bit Arm systems
+   - `s390x`: 64-bit IBM systems
+   - `ppc64le`: 64-bit IBM Power systems
+
+   The `TEE_PLATFORM` parameter can be:
+   - `none`: for tests with non-confidential guests
+   - `all`: for all following platforms
+   - `fs`: for platforms with encrypted root filesystems (i.e. s390x)
+   - `tdx`: for Intel® TDX
+   - `az-tdx-vtpm`: for Intel® TDX with Azure vTPM
+   - `snp`/`amd`: for AMD SEV-SNP
+   - `az-snp-vtpm`: for AMD SEV-SNP with Azure vTPM
+   - `se`: for IBM Secure Execution (SE)
+
+3. Prepare SSH key to build debug image:
 
    For using SSH, create a file `resources/authorized_keys` with your SSH public key.
    Ensure the permissions are set to `0400` for the `authorized_keys` file.
@@ -309,7 +283,7 @@ make image
       chmod 400 resources/authorized_keys
       ```
 
-   2. Add credentials to google using CLI
+   2. Add credentials to google using CLI:
 
        ```bash
        gcloud compute os-login ssh-keys add \
@@ -321,47 +295,83 @@ make image
       > **Note**: TTL (time to live) is set to 0, which means that the key will not expire. 
       > You can set it to any value you want, for example `1h` for 1 hour or `30m` for 30 minutes.
 
-2. Run command to build debug image
+4. Build the **debug image**:
     
    ```bash
    make image-debug
    ```
 
-   > **Note**: This will only build the pod VM image **with** SSH access.
+   > **Note**: This will build the pod VM image **with** SSH access.
 
-{{% /tab %}}
+   Above command will produce `./build/system.raw` (~1.6GB), a disk image that can be booted with an ESP/UEFI partition.
 
-{{< /tabpane >}} 
-
-Above commands will produce `./build/system.raw` (~1.6GB), a disk image that can be booted with an ESP/UEFI partition.
-
-### Publish image to Google Storage
-
-1. Prepare the raw disk image and package it as `build/disk.tar.gz`:
+5. Prepare the raw disk image and package it as `build/disk.tar.gz`:
 
    ```bash
    cp build/system.raw build/disk.raw && \
      tar -cvzf build/disk.tar.gz -C build disk.raw
    ```
 
-2. Export the following environment variables:
+{{% /tab %}}
+
+{{% tab header="Pre-built" %}}
+
+**Prerequisites:**
+
+Install the required tools:
+
+1. Install the [ORAS](https://oras.land/docs/installation) CLI tool for pulling OCI artifacts
+
+2. Install `qemu-img` for image conversion
+
+**Import Steps:**
+
+1. Get the latest CAA version:
+   ```bash
+   CAA_VERSION="$(
+     curl -fsSL \
+       "https://api.github.com/repos/confidential-containers/cloud-api-adaptor/releases/latest" |
+       jq -er '.tag_name | sub("^v"; "")'
+   )"
+   ```
+
+2. Pull the PodVM image from the registry:
+   ```bash
+   oras pull ghcr.io/confidential-containers/podvm-amd64:v${CAA_VERSION}
+   ```
+
+3. Extract the qcow2 image from the downloaded tar.xz:
+   ```bash
+   tar -xf podvm.tar.xz
+   ```
+
+4. Convert the qcow2 image to raw format:
+   ```bash
+   mkdir -p build
+   qemu-img convert -O raw podvm-ubuntu-amd64.qcow2 build/disk.raw
+   ```
+
+5. Package the raw disk image as `build/disk.tar.gz`:
+   ```bash
+   tar -cvzf build/disk.tar.gz -C build disk.raw
+   ```
+
+{{% /tab %}}
+
+{{< /tabpane >}}
+
+### Publish image to Google Storage
+
+1. Export the bucket name:
 
    ```bash
-   export GCP_PROJECT_ID="YOUR_PROJECT_ID"
-   export GCP_REGION="us-central1"
    export BUCKET_NAME="peerpods-bucket"
    ```
 
-   > **Note**: Above values should be set according to your Google Cloud project and region set in previous steps.<br>
+   > **Note**: `GCP_PROJECT_ID` and `GCP_REGION` should already be set from the GCP Preparation section.<br>
    > The `BUCKET_NAME` should be globally unique across all of Google Cloud, so consider adding a random suffix if needed.
 
-3. Login to Google account and follow instructions in command line to authenticate:
-
-    ```bash
-    gcloud init
-    ```
-
-4. Create a GCS bucket for images:
+2. Create a GCS bucket for images:
 
    ```bash
    gcloud storage buckets create "gs://${BUCKET_NAME}" \
@@ -369,17 +379,17 @@ Above commands will produce `./build/system.raw` (~1.6GB), a disk image that can
      --location="${GCP_REGION}"
    ```
 
-5. Upload the disk image to a bucket and create the image:
+3. Upload the disk image to a bucket and create the image:
 
    1. Prepare image name:
 
       ```bash
       export IMAGE_BASE_NAME="podvm-image"
-      export CAA_HASH=$(git rev-parse --short HEAD)
-      export IMAGE_NAME="${IMAGE_BASE_NAME}-${CAA_HASH}-release"
+      export CAA_HASH=$(git rev-parse --short HEAD 2>/dev/null || echo "")
+      export IMAGE_NAME="${IMAGE_BASE_NAME}-${CAA_HASH:-$(date +%s)}-release"
       ```
 
-      > **Note**: For consistency, the git commit hash is part of image name and release type (debug/release) to differentiate between development and production builds.
+      > **Note**: The image name uses the git commit hash if available (for Release/Debug builds), or falls back to a Unix timestamp (for Pre-built images).
 
    2. Upload image to GCS bucket:
       ```bash
@@ -418,7 +428,94 @@ Above commands will produce `./build/system.raw` (~1.6GB), a disk image that can
        
    {{< /tabpane >}}
 
-## Deploy the CAA Helm chart
+### Export PodVM image id
+
+Export the PodVM image id to be used in the provider configuration. This is the name of the image created in the previous step.
+
+```bash
+export PODVM_IMAGE_ID="podvm-image-00754585-release"
+```
+
+<details>
+   <summary><strong>Show command how to retrieve latest published image from GCP</strong></summary>
+
+   Run below command to retrieve the latest published image from GCP:
+
+   ```bash
+   gcloud compute images list \
+     --project="${GCP_PROJECT_ID}" \
+     --filter="name ~ ^${IMAGE_BASE_NAME}-" \
+     --sort-by=~creationTimestamp \
+     --limit=1 \
+     --format="value(name)"
+   ```
+
+   </details>
+
+## Deploy
+
+### Install cert-manager
+
+The Peer Pods Helm chart requires cert-manager for webhook certificates. Install it first:
+
+```bash
+# Add the Jetstack Helm repository
+helm repo add jetstack https://charts.jetstack.io
+helm repo update
+
+# Install cert-manager with CRDs
+helm install cert-manager jetstack/cert-manager \
+  --namespace cert-manager \
+  --create-namespace \
+  --version v1.19.1 \
+  --set crds.enabled=true
+```
+
+Wait for cert-manager to be ready:
+
+```bash
+kubectl wait --for=condition=ready pod -l app.kubernetes.io/instance=cert-manager -n cert-manager --timeout=300s
+```
+
+### Set TEE Platform Configuration
+
+Set TEE platform and PodVM instance type for your workload:
+
+{{< tabpane text=true right=true persist=header >}}
+
+{{% tab header="AMD SEV-SNP" %}}
+```bash
+export PODVM_INSTANCE_TYPE="n2d-standard-4"
+export DISABLECVM=false
+export GCP_CONFIDENTIAL_TYPE="SEV" # SEV or SEV_SNP
+export GCP_DISK_TYPE="pd-standard"
+```
+{{% /tab %}}
+
+{{% tab header="Intel® TDX" %}}
+```bash
+export PODVM_INSTANCE_TYPE="c3-standard-4"
+export DISABLECVM=false
+export GCP_CONFIDENTIAL_TYPE="TDX"
+export GCP_DISK_TYPE="pd-balanced"
+```
+
+For the purposes of this example, we use a C3 machine type that supports Intel® TDX.
+
+> **Note**: Choose a C3 machine type that fits your workload from the list of supported options in the [Google Cloud C3 machine types documentation](https://docs.cloud.google.com/compute/docs/general-purpose-machines#c3_machine_types).
+
+{{% /tab %}}
+
+{{% tab header="Non-Confidential" %}}
+```bash
+export PODVM_INSTANCE_TYPE="e2-medium"
+export DISABLECVM=true
+export GCP_CONFIDENTIAL_TYPE=""
+export GCP_DISK_TYPE="pd-standard"
+```
+{{% /tab %}}
+
+{{< /tabpane >}}
 
 ### Download the CAA Helm deployment artifacts
 
@@ -458,31 +555,7 @@ On your terminal change directory to the Cloud API Adaptor's code base.
 
 {{< /tabpane >}}
 
-### Export PodVM image id
-
-Export the PodVM image id to be used in the provider configuration. This is the name of the image created in the previous step.
-
-```bash
-export PODVM_IMAGE_ID="podvm-image-00754585-release"
-```
-
-<details>
-   <summary><strong>Show command how to retrieve latest published image from GCP</strong></summary>
-
-   Run below command to retrieve the latest published image from GCP:
-
-   ```bash
-   gcloud compute images list \
-     --project="${GCP_PROJECT_ID}" \
-     --filter="name ~ ^${IMAGE_BASE_NAME}-" \
-     --sort-by=~creationTimestamp \
-     --limit=1 \
-     --format="value(name)"
-   ```
-
-   </details>
-
-#### Set the CAA container image and tag
+### Set the CAA container image and tag
 
 Define the Cloud API Adaptor (CAA) container image to deploy.
 These variables tell the deployment tooling which CAA image and architecture-specific tag to pull and run.
@@ -561,11 +634,189 @@ providerConfigs:
 EOF
 ```
 
-### Deploy helm chart
+### Configure Authentication
 
-1. Create file `namespace.yaml` with the following content:
+Choose how CAA authenticates with GCP. You can use either static credentials (service account key file)
+or [Workload Identity Federation (WIF)](https://cloud.google.com/iam/docs/workload-identity-federation).
 
-   ```yaml
+> **Note:** Workload Identity Federation (WIF) is the recommended authentication method for GKE deployments.
+> With WIF, the CAA pods authenticate via OIDC — no static GCP credentials are stored in Kubernetes secrets.
+
+#### Create GCP Service Account
+
+Create a GCP service account with the necessary permissions for CAA to manage peer pod VMs:
+
+```bash
+export GSA_NAME="cloud-api-adaptor"
+export GSA_EMAIL="${GSA_NAME}@${GCP_PROJECT_ID}.iam.gserviceaccount.com"
+
+gcloud iam service-accounts create ${GSA_NAME} \
+  --description="Cloud API Adaptor Service Account" \
+  --display-name="Cloud API Adaptor Service Account" \
+  --project=${GCP_PROJECT_ID}
+
+gcloud projects add-iam-policy-binding ${GCP_PROJECT_ID} \
+  --member="serviceAccount:${GSA_EMAIL}" \
+  --role="roles/compute.instanceAdmin.v1"
+
+gcloud projects add-iam-policy-binding ${GCP_PROJECT_ID} \
+  --member="serviceAccount:${GSA_EMAIL}" \
+  --role="roles/iam.serviceAccountUser"
+```
+
+These roles allow the Cloud API Adaptor to:
+- create, start/stop, and delete the Compute Engine instances used as **PodVMs** (`roles/compute.instanceAdmin.v1`)
+- run actions as the service account when provisioning those resources (`roles/iam.serviceAccountUser`)
+
+> **Note**: IAM policy updates can take a few minutes to propagate. If later steps fail with permission errors, wait briefly and retry.
+
+#### Choose Authentication Method
+
+{{< tabpane text=true right=true persist=header >}}
+
+{{% tab header="Static Credentials" %}}
+
+Generate and save the service account key file:
+
+```bash
+export GOOGLE_APPLICATION_CREDENTIALS=~/.config/gcloud/peerpods_application_key.json
+
+gcloud iam service-accounts keys create \
+  ${GOOGLE_APPLICATION_CREDENTIALS} \
+  --iam-account=${GSA_EMAIL}
+
+```
+
+{{% /tab %}}
+
+{{% tab header="Workload Identity Federation (GKE)" %}}
+
+Workload Identity Federation eliminates the need for long-lived service account key files stored in Kubernetes secrets,
+and is the recommended authentication method for GKE.
+
+**Enable Required APIs**
+
+```bash
+gcloud services enable compute.googleapis.com iam.googleapis.com iamcredentials.googleapis.com sts.googleapis.com \
+  --project=${GCP_PROJECT_ID}
+```
+
+**Set Variables**
+
+```bash
+export CAA_K8S_SERVICE_ACCOUNT="cloud-api-adaptor"
+export GKE_WORKLOAD_POOL="${GCP_PROJECT_ID}.svc.id.goog"
+```
+
+> **Note:** `CLUSTER_NAME`, `GCP_REGION`, `GSA_NAME`, and `GSA_EMAIL` were already set in previous sections.
+
+**Enable GKE Workload Identity**
+
+Check if Workload Identity is already enabled on your cluster:
+
+```bash
+gcloud container clusters describe ${CLUSTER_NAME} \
+  --zone=${GCP_REGION}-a \
+  --format="value(workloadIdentityConfig.workloadPool)"
+```
+
+If the output is empty, enable Workload Identity:
+
+```bash
+gcloud container clusters update ${CLUSTER_NAME} \
+  --zone=${GCP_REGION}-a \
+  --workload-pool=${GKE_WORKLOAD_POOL}
+```
+
+> **Note:** This operation may take several minutes.
+
+**Get Cluster OIDC Issuer and Project Number**
+
+```bash
+# Note: Use 'locations' instead of 'zones' for the OIDC issuer URL
+export OIDC_ISSUER="https://container.googleapis.com/v1/projects/${GCP_PROJECT_ID}/locations/${GCP_REGION}-a/clusters/${CLUSTER_NAME}"
+
+export PROJECT_NUMBER=$(gcloud projects describe ${GCP_PROJECT_ID} \
+  --format="value(projectNumber)")
+
+echo "OIDC Issuer: ${OIDC_ISSUER}"
+echo "Project Number: ${PROJECT_NUMBER}"
+
+# Verify the OIDC endpoint is accessible
+curl -s "${OIDC_ISSUER}/.well-known/openid-configuration" | jq .issuer
+```
+
+**Create Workload Identity Pool and OIDC Provider**
+
+Create a custom workload identity pool for direct token exchange:
+
+```bash
+export WI_POOL_NAME="caa-direct-wif-pool"
+
+gcloud iam workload-identity-pools create ${WI_POOL_NAME} \
+  --location=global \
+  --description="Workload Identity pool for cloud-api-adaptor with hostNetwork true" \
+  --display-name="CAA Direct WIF Pool" \
+  --project=${GCP_PROJECT_ID}
+```
+
+> **Note**: If you get an error that the pool already exists, it may be in a soft-deleted state (GCP delays actual deletion for 30 days). Either use a different pool name or undelete it.
+
+Create an OIDC provider for your GKE cluster:
+
+```bash
+export OIDC_PROVIDER_NAME="${CLUSTER_NAME}-oidc-provider"
+
+gcloud iam workload-identity-pools providers create-oidc ${OIDC_PROVIDER_NAME} \
+  --project=${GCP_PROJECT_ID} \
+  --location=global \
+  --workload-identity-pool=${WI_POOL_NAME} \
+  --issuer-uri="${OIDC_ISSUER}" \
+  --allowed-audiences="${GKE_WORKLOAD_POOL}" \
+  --attribute-mapping="google.subject=assertion.sub,attribute.namespace=assertion['kubernetes.io']['namespace'],attribute.service_account_name=assertion['kubernetes.io']['serviceaccount']['name']" \
+  --attribute-condition="assertion.sub.startsWith('system:serviceaccount:')"
+```
+
+**Bind Kubernetes Service Account to GCP Service Account**
+
+Allow the Kubernetes service account to impersonate the GCP service account:
+
+```bash
+gcloud iam service-accounts add-iam-policy-binding ${GSA_EMAIL} \
+  --member="principalSet://iam.googleapis.com/projects/${PROJECT_NUMBER}/locations/global/workloadIdentityPools/${WI_POOL_NAME}/attribute.service_account_name/${CAA_K8S_SERVICE_ACCOUNT}" \
+  --role="roles/iam.workloadIdentityUser" \
+  --project=${GCP_PROJECT_ID}
+
+gcloud iam service-accounts add-iam-policy-binding ${GSA_EMAIL} \
+  --member="principalSet://iam.googleapis.com/projects/${PROJECT_NUMBER}/locations/global/workloadIdentityPools/${WI_POOL_NAME}/attribute.service_account_name/${CAA_K8S_SERVICE_ACCOUNT}" \
+  --role="roles/iam.serviceAccountTokenCreator" \
+  --project=${GCP_PROJECT_ID}
+```
+
+**Save the WIF Configuration**
+
+> **Note:** Include the //iam.googleapis.com/ prefix
+
+```bash
+export PROVIDER_NAME="//iam.googleapis.com/projects/${PROJECT_NUMBER}/locations/global/workloadIdentityPools/${WI_POOL_NAME}/providers/${OIDC_PROVIDER_NAME}"
+
+echo "Provider Name: ${PROVIDER_NAME}"
+echo "GSA Email: ${GSA_EMAIL}"
+```
+
+> **Note:** For more detailed configuration options and troubleshooting, see the
+> [GCP WIF documentation](https://github.com/confidential-containers/cloud-api-adaptor/blob/main/src/cloud-api-adaptor/docs/gcp-wif.md).
+
+{{% /tab %}}
+
+{{< /tabpane >}}
+
+### Deploy the CAA Helm chart
+
+1. Create namespace managed by Helm:
+
+   ```bash
+   kubectl apply -f - << EOF
    apiVersion: v1
    kind: Namespace
    metadata:
@@ -575,40 +826,120 @@ EOF
      annotations:
        meta.helm.sh/release-name: peerpods
        meta.helm.sh/release-namespace: confidential-containers-system
+   EOF
    ```
 
    This namespace will be used to deploy CAA and related components, and it is labeled and annotated to be managed by Helm.
 
-2. Create namespace managed by Helm:
+2. Create ResourceQuota to allow system priority classes:
+
+   GKE enforces strict resource quota policies. The `kata-deploy` DaemonSet requires system
+   priority classes (`system-node-critical` or `system-cluster-critical`) to ensure proper
+   scheduling and execution. Create a ResourceQuota to allow these priority classes:
 
    ```bash
-   kubectl apply -f namespace.yaml
+   kubectl apply -f - << EOF
+   apiVersion: v1
+   kind: ResourceQuota
+   metadata:
+     name: allow-system-priority-classes
+     namespace: confidential-containers-system
+   spec:
+     hard:
+       pods: "100"
+     scopeSelector:
+       matchExpressions:
+       - operator: In
+         scopeName: PriorityClass
+         values:
+         - system-node-critical
+         - system-cluster-critical
+   EOF
    ```
 
-3. Create a Kubernetes Secret that stores the GCP service-account credentials:
+3. Create credentials and install the Helm chart:
 
-   See [providers/gcp-secrets.yaml.template](https://github.com/confidential-containers/cloud-api-adaptor/blob/main/src/cloud-api-adaptor/install/charts/peerpods/providers/gcp-secrets.yaml.template) for required keys.
+   Below commands use customization options `-f` and `--set` which are described [here](../../getting-started/installation/advanced_configuration).
 
-   ```bash
-   kubectl create secret generic my-provider-creds \
-     -n confidential-containers-system \
-     --from-file=GCP_CREDENTIALS="${GOOGLE_APP_CREDENTIALS}"
-   ```
+{{< tabpane text=true right=true persist=header >}}
 
-   The CAA Helm chart references this secret to authenticate to Google Cloud when provisioning PodVMs.
+{{% tab header="Static Credentials" %}}
 
-4. Install helm chart:
+Create the secret using `kubectl`. See [providers/gcp-secrets.yaml.template](https://github.com/confidential-containers/cloud-api-adaptor/blob/main/src/cloud-api-adaptor/install/charts/peerpods/providers/gcp-secrets.yaml.template) for required keys.
 
-   Below command uses customization options `-f` and `--set` which are described [here](../../getting-started/installation/advanced_configuration).
+```bash
+kubectl create secret generic my-provider-creds \
+  -n confidential-containers-system \
+  --from-file=GCP_CREDENTIALS="${GOOGLE_APPLICATION_CREDENTIALS}"
+```
 
-    ```bash
-    helm install peerpods . \
-      -f providers/gcp.yaml \
-      --set secrets.mode=reference \
-      --set secrets.existingSecretName=my-provider-creds \
-      --dependency-update \
-      -n confidential-containers-system
-    ```
+Install the Helm chart:
+
+```bash
+helm install peerpods . \
+  -f providers/gcp.yaml \
+  --set secrets.mode=reference \
+  --set secrets.existingSecretName=my-provider-creds \
+  --dependency-update \
+  -n confidential-containers-system
+```
+
+{{% /tab %}}
+
+{{% tab header="Workload Identity Federation (GKE)" %}}
+
+When using WIF, no GCP credentials secret is needed. The CAA pods authenticate via the
+GCP service account configured in the [Configure Authentication](#configure-authentication) section.
+
+Create a WIF-specific values file:
+
+```bash
+cat > providers/gcp-wif-values.yaml <<EOF
+# WIF-specific configuration
+gcp:
+  workloadIdentityFederation:
+    enable: true
+    serviceAccount: "${GSA_EMAIL}"
+    workloadPool: "${GKE_WORKLOAD_POOL}"
+    cluster: "${PROVIDER_NAME}"
+EOF
+```
+
+Install the Helm chart with both the provider configuration and WIF configuration:
+
+```bash
+helm install peerpods . \
+  -f providers/gcp.yaml \
+  -f providers/gcp-wif-values.yaml \
+  --dependency-update \
+  -n confidential-containers-system
+```
+
+To verify WIF is working, check the secret contains the WIF credentials JSON:
+
+```bash
+kubectl get secret peer-pods-secret \
+  -n confidential-containers-system \
+  -o jsonpath='{.data.GCP_WIF_CREDENTIALS}' | base64 -d | jq
+```
+
+Expected output should show a credentials JSON with `"type": "external_account"`.
+
+Check the CAA pod logs to verify authentication:
+
+```bash
+CAA_POD=$(kubectl get pods -n confidential-containers-system \
+  -l app=cloud-api-adaptor \
+  -o jsonpath='{.items[0].metadata.name}')
+
+kubectl logs -n confidential-containers-system ${CAA_POD} | grep "GCP_WIF_CREDENTIALS"
+```
+
+The output should show `$GCP_WIF_CREDENTIALS is SET`.
+
+{{% /tab %}}
+
+{{< /tabpane >}}
 
 Generic Peer pods Helm charts deployment instructions are also described 
 [here](https://github.com/confidential-containers/cloud-api-adaptor/tree/main/src/cloud-api-adaptor/install/charts/peerpods/README.md).
@@ -895,7 +1226,7 @@ To uninstall Confidential Containers from GKE cluster, use the following command
      --namespace confidential-containers-system
    ```
 
-5. Delete secret with provider credentials `my-provider-creds`:
+5. Delete secret with provider credentials `my-provider-creds` (if exist):
 
    ```bash
    kubectl delete secret my-provider-creds \
@@ -911,7 +1242,7 @@ To uninstall Confidential Containers from GKE cluster, use the following command
 7. Delete the GKE cluster by running the following command and confirming the deletion when prompted:
 
    ```bash
-   gcloud container clusters delete "${GKE_CLUSTER_NAME}" \
+   gcloud container clusters delete "${CLUSTER_NAME}" \
      --zone "${GCP_REGION}-a"
    ```
 
