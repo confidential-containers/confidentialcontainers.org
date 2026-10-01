@@ -1,2 +1,24 @@
 $primary: #1C1C1C;
 $secondary: #464646;
+
+.td-home {
+  .navbar-brand {
+    --bs-navbar-brand-color: #ffffff;
+
+    &:hover, &:focus {
+      --bs-navbar-brand-hover-color: #ffffff;
+    }
+  }
+
+  .nav-link {
+    --bs-nav-link-color: #ffffff8c;
+
+    &:hover, &:focus {
+      --bs-nav-link-hover-color: #ffffff;
+    }
+  }
+
+  .td-search:not(:focus-within) {
+    --bs-secondary-color: #dee2e6bf;
+  }
+}
