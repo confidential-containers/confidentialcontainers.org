@@ -1,7 +1,7 @@
 {
     "devDependencies": {
         "autoprefixer": "^10.6.1",
-        "sass-embedded": "1.102.0"
+        "sass-embedded": "1.105.0"
     },
     "workspaces": [
         "packages/hugoautogen"
