@@ -928,7 +928,19 @@ creates a temporary Docker config for `nvcr.io` in the `genpolicy` work director
 `genpolicy` at it. If the trusted build environment already has suitable Docker credentials, you
 can use those instead.
 
-Fetch the official Kata tools release asset that matches the installed Kata runtime.
+Fetch the complete `genpolicy` tools bundle from the latest stable Kata release.
+Before using it, check compatibility with your installed guest against NVIDIA's
+[component matrix](https://docs.nvidia.com/datacenter/cloud-native/confidential-containers/latest/supported-platforms.html#supported-software-components).
+The generator version need not match the runtime version.
+
+Kata's [GHSA-fmg6-v47x-52wr
+advisory](https://github.com/kata-containers/kata-containers/security/advisories/GHSA-fmg6-v47x-52wr)
+affects policies generated with the rules shipped in 4.0.0 and earlier.
+Regenerate existing policies with corrected rules before using them.
+Keep the binary, `rules.rego`, settings and drop-ins from the same tools bundle,
+as required by the [4.1.0 release notes](https://kata-containers.github.io/kata-containers/releases/4.1.0/).
+The following download selects the amd64 tools asset and its published SHA-256
+from the latest release metadata.
 
 ```bash
 GENPOLICY_WORKDIR="${KBS_WORKDIR}/genpolicy"
@@ -937,13 +949,22 @@ INITDATA_FILE="${INITDATA_FILE:-${KBS_WORKDIR}/nim-initdata.toml}"
 NIM_POLICY_MANIFEST="${GENPOLICY_WORKDIR}/nvidia-nim-llama-3-1-8b-instruct-tee-policy.yaml"
 GENPOLICY_INITDATA="${GENPOLICY_WORKDIR}/nim-initdata.toml"
 GENPOLICY_DOCKER_CONFIG="${GENPOLICY_WORKDIR}/docker-config"
-KATA_RUNTIME_VERSION="$(/opt/kata/bin/kata-runtime --version \
-  | awk '/kata-runtime/ {print $3}')"
+KATA_RELEASE_API="https://api.github.com/repos/kata-containers/kata-containers/releases/latest"
+KATA_RELEASE_JSON="$(curl -fsSL "${KATA_RELEASE_API}")" || exit 1
+KATA_TOOLS_VERSION="$(printf '%s\n' "${KATA_RELEASE_JSON}" \
+  | jq -er '.tag_name')" || exit 1
 KATA_TOOLS_ARCH="amd64"
-KATA_TOOLS_NAME="kata-tools-static-${KATA_RUNTIME_VERSION}-${KATA_TOOLS_ARCH}"
+KATA_TOOLS_NAME="kata-tools-static-${KATA_TOOLS_VERSION}-${KATA_TOOLS_ARCH}"
 KATA_TOOLS_TARBALL="${KATA_TOOLS_NAME}.tar.zst"
-KATA_RELEASE_BASE="https://github.com/kata-containers/kata-containers/releases/download"
-KATA_TOOLS_URL="${KATA_RELEASE_BASE}/${KATA_RUNTIME_VERSION}/${KATA_TOOLS_TARBALL}"
+KATA_TOOLS_ASSET="$(printf '%s\n' "${KATA_RELEASE_JSON}" \
+  | jq -ce --arg name "${KATA_TOOLS_TARBALL}" \
+    '.assets | map(select(.name == $name)) |
+     if length == 1 then .[0] else error("Expected one Kata tools asset") end')" || exit 1
+KATA_TOOLS_URL="$(printf '%s\n' "${KATA_TOOLS_ASSET}" \
+  | jq -er '.browser_download_url')" || exit 1
+KATA_TOOLS_SHA256="$(printf '%s\n' "${KATA_TOOLS_ASSET}" \
+  | jq -er '.digest | select(test("^sha256:[0-9a-f]{64}$")) |
+            sub("^sha256:"; "")')" || exit 1
 KATA_TOOLS_EXTRACT_DIR="${GENPOLICY_WORKDIR}/kata-tools"
 KATA_TOOLS_DIR="${KATA_TOOLS_EXTRACT_DIR}/opt/kata"
 GENPOLICY_BIN="${KATA_TOOLS_DIR}/bin/genpolicy"
@@ -956,6 +977,10 @@ mkdir -p "${GENPOLICY_WORKDIR}/genpolicy-settings.d" \
 curl -fL \
   -o "${GENPOLICY_WORKDIR}/${KATA_TOOLS_TARBALL}" \
   "${KATA_TOOLS_URL}"
+
+printf '%s  %s\n' "${KATA_TOOLS_SHA256}" \
+  "${GENPOLICY_WORKDIR}/${KATA_TOOLS_TARBALL}" \
+  | sha256sum -c - || exit 1
 
 tar --zstd \
   -xf "${GENPOLICY_WORKDIR}/${KATA_TOOLS_TARBALL}" \
