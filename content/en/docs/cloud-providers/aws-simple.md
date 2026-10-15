@@ -15,19 +15,13 @@ This documentation will walk you through setting up CAA (a.k.a. Peer Pods) on AW
 
 - A single worker node Kubernetes cluster using Elastic Kubernetes Service (EKS)
 - CAA on that Kubernetes cluster
-- An Nginx pod backed by CAA pod VM
+- A Nginx pod backed by CAA pod VM
 
-## Pre-requisites
+## Before you begin
 
-Install Required Tools:
+Complete the [common prerequisites]({{< relref "common-setup.md#prerequisites" >}}), including the AWS-specific tools. Then return here to prepare AWS.
 
-- Install [kubectl](https://kubernetes.io/docs/tasks/tools/#kubectl),
-- Install [Helm](https://helm.sh/docs/intro/install),
-- Install `aws` CLI [tool](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html),
-- Install `eksctl` CLI [tool](https://eksctl.io/installation/),
-- Ensure that the tools `curl`, `git` and `jq` are installed.
-
-## AWS Preparation
+## EKS Preparation
 
 - Set `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` (or `AWS_PROFILE`) and `AWS_REGION` for AWS CLI access
 
@@ -60,7 +54,7 @@ export AWS_REGION="us-east-2"
 {{% /tab %}}
 {{< /tabpane >}}
 
-### Deploy Kubernetes using EKS
+### Setup cluster
 
 Make changes to the following environment variable as you see fit:
 
@@ -245,7 +239,7 @@ export CAA_ROLE_ARN=$(aws iam get-role \
 echo "CAA Role ARN: ${CAA_ROLE_ARN}"
 ```
 
-**Create IAM Role for Peerpod-ctrl (optional)**
+#### Create IAM Role for Peerpod-ctrl (optional)
 
 This step is only required if you are deploying Peerpod-ctrl.
 
@@ -312,45 +306,15 @@ echo "Controller Role ARN: ${CTRL_ROLE_ARN}"
 
 {{< /tabpane >}}
 
-## Deploy the CAA Helm chart
+## Deploy
 
-### Download the CAA Helm deployment artifacts
+### Preparation
 
-{{< tabpane text=true right=true persist=header >}}
-{{% tab header="**Versions**:" disabled=true /%}}
+Complete [Prepare the CAA deployment]({{< relref "common-setup.md#prepare-the-caa-deployment" >}}).
 
-{{% tab header="Last Release" %}}
+This downloads the Helm artifacts, selects the CAA image, installs cert-manager, and creates the installation namespace.
 
-```bash
-CAA_VERSION="$(
-  curl -fsSL \
-    "https://api.github.com/repos/confidential-containers/cloud-api-adaptor/releases/latest" |
-    jq -er '.tag_name | sub("^v"; "")'
-)"
-curl -LO "https://github.com/confidential-containers/cloud-api-adaptor/archive/refs/tags/v${CAA_VERSION}.tar.gz"
-tar -xvzf "v${CAA_VERSION}.tar.gz"
-cd "cloud-api-adaptor-${CAA_VERSION}/src/cloud-api-adaptor/install/charts/peerpods"
-```
-
-{{% /tab %}}
-
-{{% tab header="Latest Build" %}}
-
-```bash
-export CAA_BRANCH="main"
-curl -LO "https://github.com/confidential-containers/cloud-api-adaptor/archive/refs/heads/${CAA_BRANCH}.tar.gz"
-tar -xvzf "${CAA_BRANCH}.tar.gz"
-cd "cloud-api-adaptor-${CAA_BRANCH}/src/cloud-api-adaptor/install/charts/peerpods"
-```
-
-{{% /tab %}}
-
-{{% tab header="DIY" %}}
-This assumes that you already have the code ready to use. 
-On your terminal change directory to the Cloud API Adaptor's code base.
-{{% /tab %}}
-
-{{< /tabpane >}}
+> **Note**: Keep the resulting `CAA_VERSION`, `CAA_IMAGE`, and `CAA_TAG` values in your terminal, then return here.
 
 ### Export PodVM image version
 
@@ -400,52 +364,6 @@ Once image build is finished, export image id to the environment variable `PODVM
 
 {{< /tabpane >}}
 
-### Export CAA container image path
-
-Define the Cloud API Adaptor (CAA) container image to deploy.
-These variables tell the deployment tooling which CAA image and architecture-specific tag to pull and run.
-The tag is derived from the CAA release version to ensure compatibility with the selected PodVM image and configuration.
-
-{{< tabpane text=true right=true persist=header >}}
-{{% tab header="**Versions**:" disabled=true /%}}
-
-{{% tab header="Last Release" %}}
-
-Export the following environment variable to use the latest release image of CAA:
-
-```bash
-export CAA_IMAGE="quay.io/confidential-containers/cloud-api-adaptor"
-export CAA_TAG="v${CAA_VERSION}-amd64"
-```
-
-{{% /tab %}}
-
-{{% tab header="Latest Build" %}}
-
-Export the following environment variable to use the image built by the CAA CI on each merge to main:
-
-```bash
-export CAA_IMAGE="quay.io/confidential-containers/cloud-api-adaptor"
-```
-
-Find an appropriate tag of pre-built image suitable to your needs [here](https://quay.io/repository/confidential-containers/cloud-api-adaptor?tab=tags&tag=latest).
-
-```bash
-export CAA_TAG=""
-```
-
-> **Caution**: You can also use the `latest` tag but it is **not** recommended, because of its lack of version control and potential for unpredictable updates, impacting stability and reproducibility in deployments.
-
-{{% /tab %}}
-
-{{% tab header="DIY" %}}
-
-If you have made changes to the CAA code and you want to deploy those changes then follow [these instructions](https://github.com/confidential-containers/cloud-api-adaptor/blob/main/src/cloud-api-adaptor/install/README.md#building-custom-cloud-api-adaptor-image) to build the container image. Once the image is built export the environment variables `CAA_IMAGE` and `CAA_TAG`.
-
-{{% /tab %}}
-
-{{< /tabpane >}}
-
 ### Select peer-pods machine type
 
 {{< tabpane text=true right=true persist=header >}}
@@ -470,7 +388,7 @@ export DISABLECVM="true"
 {{% /tab %}}
 {{< /tabpane >}}
 
-### Populate the `providers/aws.yaml` file
+### Populate the provider file
 
 List of all available configuration options can be found in two places:
 - [Main charts values](https://github.com/confidential-containers/cloud-api-adaptor/blob/main/src/cloud-api-adaptor/install/charts/peerpods/values.yaml)
@@ -493,41 +411,9 @@ providerConfigs:
 EOF
 ```
 
-### Install cert-manager
+### Deploy helm chart
 
-CAA requires cert-manager to be installed. Unless you already have it
-installed deploy it via:
-
-```bash
-helm repo add jetstack https://charts.jetstack.io
-helm install cert-manager jetstack/cert-manager \
-  --namespace cert-manager \
-  --create-namespace \
-  --set crds.enabled=true \
-  --wait \
-  --timeout 5m
-```
-
-### Deploy helm chart on the Kubernetes cluster
-
-1. Create namespace managed by Helm:
-    ```bash
-   kubectl apply -f - << EOF
-   apiVersion: v1
-   kind: Namespace
-   metadata:
-     name: confidential-containers-system
-     labels:
-       app.kubernetes.io/managed-by: Helm
-     annotations:
-       meta.helm.sh/release-name: peerpods
-       meta.helm.sh/release-namespace: confidential-containers-system
-   EOF
-    ```
-
-2. Create credentials and install the Helm chart:
-
-   Below commands use customization options `-f` and `--set` which are described [here](../../getting-started/installation/advanced_configuration).
+Create credentials and install the Helm chart. The `-f` and `--set` customization options are described in [advanced configuration]({{< relref "../getting-started/installation/advanced_configuration.md" >}}).
 
 {{< tabpane text=true right=true persist=header >}}
 
@@ -576,7 +462,7 @@ helm install peerpods . \
 ```
 
 > **Note:** The `resourceCtrl.serviceAccount.annotations` line is only required if you are deploying Peerpod-ctrl.
-> If not, omit that `--set` flag and skip the [Peerpod-ctrl IAM role](#create-iam-role-for-peerpod-ctrl-optional) step above.
+> If not, omit that `--set` flag and skip the optional Peerpod-ctrl IAM role step above.
 
 To verify IRSA is working, check the service account annotation and pod environment:
 
@@ -603,60 +489,9 @@ The output should include `AWS_WEB_IDENTITY_TOKEN_FILE` and `AWS_ROLE_ARN` varia
 Generic Peer pods Helm charts deployment instructions are also described
 [here](https://github.com/confidential-containers/cloud-api-adaptor/tree/main/src/cloud-api-adaptor/install/charts/peerpods/README.md).
 
-## Run sample application
+### Verify deployment
 
-### Ensure runtimeclass is present
-
-Verify that the `runtimeclass` is created after deploying CAA:
-
-```bash
-kubectl get runtimeclass
-```
-
-Once you can find a `runtimeclass` named `kata-remote` then you can be sure that the deployment was successful. A successful deployment will look like this:
-
-```console
-$ kubectl get runtimeclass
-NAME          HANDLER       AGE
-kata-remote   kata-remote   7m18s
-```
-
-### Deploy workload
-
-Create an `nginx` deployment:
-
-```bash
-cat <<EOF | kubectl apply -f -
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: nginx
-  namespace: default
-spec:
-  selector:
-    matchLabels:
-      app: nginx
-  replicas: 1
-  template:
-    metadata:
-      labels:
-        app: nginx
-    spec:
-      runtimeClassName: kata-remote
-      containers:
-      - name: nginx
-        image: nginx
-        ports:
-        - containerPort: 80
-        imagePullPolicy: Always
-EOF
-```
-
-Ensure that the pod is up and running:
-
-```bash
-kubectl get pods -n default
-```
+Follow [Verify the installation and run a sample workload]({{< relref "verify-cleanup.md#verify-the-installation" >}}), then confirm that AWS created the PodVM:
 
 You can verify that the peer pod VM was created by running the following command:
 
@@ -665,20 +500,15 @@ aws ec2 describe-instances --filters "Name=tag:Name,Values=podvm*" \
    --query 'Reservations[*].Instances[*].[InstanceId, Tags[?Key==`Name`].Value | [0]]' --output table
 ```
 
-Here you should see the VM associated with the pod `nginx`.
+The output should include the VM associated with the `nginx` pod.
 
-> **Note**: If you run into problems then check the troubleshooting guide [here](../troubleshooting/).
+> **Note**: If you run into problems, see the [troubleshooting guide]({{< relref "../troubleshooting/_index.md" >}}).
 
-## Cleanup
+## Uninstall
 
-Delete all running pods using the runtimeclass `kata-remote`. You can use the following command for the same:
+First [remove the workloads and uninstall CAA]({{< relref "verify-cleanup.md#remove-the-sample-workload" >}}).
 
-```bash
-kubectl get pods -A -o custom-columns='NAME:.metadata.name,NAMESPACE:.metadata.namespace,RUNTIMECLASS:.spec.runtimeClassName' | grep kata-remote | awk '{print $1, $2}'
-```
-
-Verify that all peer-pod VMs are deleted. You can use the following command to list all the peer-pod VMs
-(VMs having prefix `podvm`) and status:
+Verify that all peer-pod VMs are deleted. This command lists VMs whose name starts with `podvm` and their status:
 
 ```bash
 aws ec2 describe-instances --filters "Name=tag:Name,Values=podvm*" \

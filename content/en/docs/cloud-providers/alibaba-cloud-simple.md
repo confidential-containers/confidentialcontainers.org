@@ -21,81 +21,13 @@ This documentation will walk you through setting up CAA (a.k.a. Peer Pods) on Al
 
 > **Note:** Official document from Alibaba Cloud can be found [here](https://help.aliyun.com/zh/ack/ack-managed-and-ack-dedicated/user-guide/implement-caa-confidential-container-solution-using-confidential-vms).
 
-## Prerequisites
+## Before you begin
 
-Install Required Tools:
+Complete the [common prerequisites]({{< relref "common-setup.md#prerequisites" >}}), including the Alibaba Cloud CLI, and [configure its credentials](https://www.alibabacloud.com/help/en/cli/configure-credentials). To build a custom PodVM image, you also need an OSS bucket.
 
-- Install `aliyun` CLI [tool](https://www.alibabacloud.com/help/en/cli/installation-guide/?spm=a2c63.p38356.help-menu-29991.d_2.28f346a6IMqkop) and [configure credentials](https://www.alibabacloud.com/help/en/cli/configure-credentials),
-- Have an `aliyun` OSS storage with a bucket.
+## ACK Preparation
 
-## Create pod VM Image
-
-> **Note:**
-> There is a pre-built Community Image (id:`m-j6c3kfz2vhu6ze04wacb`) for version `0.22.0` in `cn-hongkong` that you can use for testing.
-> You can also use the region-specific image IDs listed under [Export PodVM image version](#export-podvm-image-version) below.
-
-If you want to build a pod VM image yourself, follow the steps below. The current PodVM build uses [mkosi](https://github.com/systemd/mkosi) and targets **Ubuntu 26.04** (`resolute`). See the [PodVM README](https://github.com/confidential-containers/cloud-api-adaptor/blob/main/src/cloud-api-adaptor/podvm/README.md) for prerequisites and customization options.
-
-1. Build the Ubuntu 26.04 PodVM image.
-  ```bash
-  cd podvm
-  make
-  ```
-
-  This builds the PodVM binaries and the OS image. The resulting qcow2 file is:
-
-  ```text
-  podvm/build/podvm-ubuntu-amd64.qcow2
-  ```
-
-  To rebuild only the OS image after binaries are already present:
-
-  ```bash
-  cd podvm
-  make image
-  ```
-
-2. Upload to OSS storage and create an ECS Image.
-
-  From `src/cloud-api-adaptor`, upload the qcow2 file to OSS (Object Storage Service):
-  ```bash
-  cd ..
-  export REGION_ID=<region-id>
-  export IMAGE_FILE=podvm/build/podvm-ubuntu-amd64.qcow2
-  export BUCKET=<OSS-bucket-name>
-  export OBJECT=<object-name>
-
-  aliyun oss cp ${IMAGE_FILE} oss://${BUCKET}/${OBJECT}
-  ```
-
-  Then import it as an ECS image:
-  ```bash
-  export IMAGE_NAME=$(basename ${IMAGE_FILE%.*})
-  aliyun ecs ImportImage --ImageName ${IMAGE_NAME} \
-      --region ${REGION_ID} --RegionId ${REGION_ID} \
-      --BootMode UEFI \
-      --DiskDeviceMapping.1.OSSBucket ${BUCKET} --DiskDeviceMapping.1.OSSObject ${OBJECT} \
-      --Features.NvmeSupport supported \
-      --method POST --force
-
-  export POD_IMAGE_ID=<ImageId>
-  ```
-
-## Build CAA development image
-
-If you want to build CAA DaemonSet image yourself:
-
-```bash
-export registry=<registry-address>
-export RELEASE_BUILD=true
-export CLOUD_PROVIDER=alibabacloud
-make image
-```
-
-After that you should take note of the tag used for this image, we will use it
-later.
-
-## Deploy Kubernetes using ACK Managed Cluster
+### Setup cluster
 
 1. Create ACK Managed Cluster.
   ```bash
@@ -167,45 +99,68 @@ later.
 3. Grant role permissions
   Give role permission to the cluster to allow the worker to create ECS instances.
 
-## Deploy the CAA Helm Chart
+## Create the PodVM image
 
-### Download the CAA Helm deployment artifacts
+> **Note:**
+> There is a pre-built Community Image (id:`m-j6c3kfz2vhu6ze04wacb`) for version `0.22.0` in `cn-hongkong` that you can use for testing.
+> You can also use the region-specific image IDs listed under [Export PodVM image version](#export-podvm-image-version) below.
 
-{{< tabpane text=true right=true persist=header >}}
-{{% tab header="**Versions**:" disabled=true /%}}
+If you want to build a pod VM image yourself, follow the steps below. The current PodVM build uses [mkosi](https://github.com/systemd/mkosi) and targets **Ubuntu 26.04** (`resolute`). See the [PodVM README](https://github.com/confidential-containers/cloud-api-adaptor/blob/main/src/cloud-api-adaptor/podvm/README.md) for prerequisites and customization options.
 
-{{% tab header="Last Release" %}}
+1. Build the Ubuntu 26.04 PodVM image.
+  ```bash
+  cd podvm
+  make
+  ```
 
-```bash
-CAA_VERSION="$(
-  curl -fsSL \
-    "https://api.github.com/repos/confidential-containers/cloud-api-adaptor/releases/latest" |
-    jq -er '.tag_name | sub("^v"; "")'
-)"
-curl -LO "https://github.com/confidential-containers/cloud-api-adaptor/archive/refs/tags/v${CAA_VERSION}.tar.gz"
-tar -xvzf "v${CAA_VERSION}.tar.gz"
-cd "cloud-api-adaptor-${CAA_VERSION}/src/cloud-api-adaptor/install/charts/peerpods"
-```
+This builds the PodVM binaries and the OS image. The resulting qcow2 file is:
 
-{{% /tab %}}
+  ```text
+  podvm/build/podvm-ubuntu-amd64.qcow2
+  ```
 
-{{% tab header="Latest Build" %}}
+To rebuild only the OS image after binaries are already present:
 
-```bash
-export CAA_BRANCH="main"
-curl -LO "https://github.com/confidential-containers/cloud-api-adaptor/archive/refs/heads/${CAA_BRANCH}.tar.gz"
-tar -xvzf "${CAA_BRANCH}.tar.gz"
-cd "cloud-api-adaptor-${CAA_BRANCH}/src/cloud-api-adaptor/install/charts/peerpods"
-```
+  ```bash
+  cd podvm
+  make image
+  ```
 
-{{% /tab %}}
+2. Upload to OSS storage and create an ECS Image.
 
-{{% tab header="DIY" %}}
-This assumes that you already have the code ready to use. 
-On your terminal change directory to the Cloud API Adaptor's code base.
-{{% /tab %}}
+From `src/cloud-api-adaptor`, upload the qcow2 file to OSS (Object Storage Service):
+  ```bash
+  cd ..
+  export REGION_ID=<region-id>
+  export IMAGE_FILE=podvm/build/podvm-ubuntu-amd64.qcow2
+  export BUCKET=<OSS-bucket-name>
+  export OBJECT=<object-name>
 
-{{< /tabpane >}}
+  aliyun oss cp ${IMAGE_FILE} oss://${BUCKET}/${OBJECT}
+  ```
+
+Then import it as an ECS image:
+  ```bash
+  export IMAGE_NAME=$(basename ${IMAGE_FILE%.*})
+  aliyun ecs ImportImage --ImageName ${IMAGE_NAME} \
+      --region ${REGION_ID} --RegionId ${REGION_ID} \
+      --BootMode UEFI \
+      --DiskDeviceMapping.1.OSSBucket ${BUCKET} --DiskDeviceMapping.1.OSSObject ${OBJECT} \
+      --Features.NvmeSupport supported \
+      --method POST --force
+
+  export POD_IMAGE_ID=<ImageId>
+  ```
+
+## Deploy
+
+### Preparation
+
+Complete [Prepare the CAA deployment]({{< relref "common-setup.md#prepare-the-caa-deployment" >}}).
+
+This downloads the Helm artifacts, selects the CAA image, installs cert-manager, and creates the installation namespace.
+
+> **Note**: Keep the resulting `CAA_VERSION`, `CAA_IMAGE`, and `CAA_TAG` values in your terminal, then return here.
 
 ### Export PodVM image version
 
@@ -225,52 +180,6 @@ export IMAGEID="m-j6c3kfz2vhu6ze04wacb"
 > | cn-hangzhou | m-bp146ws6x3iyuwjvbdw2 |
 > | ap-southeast-1 | m-t4ng1w8ipua3c0o57hor |
 
-### Export CAA container image path
-
-Define the Cloud API Adaptor (CAA) container image to deploy.
-These variables tell the deployment tooling which CAA image and architecture-specific tag to pull and run.
-The tag is derived from the CAA release version to ensure compatibility with the selected PodVM image and configuration.
-
-{{< tabpane text=true right=true persist=header >}}
-{{% tab header="**Versions**:" disabled=true /%}}
-
-{{% tab header="Last Release" %}}
-
-Export the following environment variable to use the latest release image of CAA:
-
-```bash
-export CAA_IMAGE="quay.io/confidential-containers/cloud-api-adaptor"
-export CAA_TAG="v${CAA_VERSION}-amd64"
-```
-
-{{% /tab %}}
-
-{{% tab header="Latest Build" %}}
-
-Export the following environment variable to use the image built by the CAA CI on each merge to main:
-
-```bash
-export CAA_IMAGE="quay.io/confidential-containers/cloud-api-adaptor"
-```
-
-Find an appropriate tag of pre-built image suitable to your needs [here](https://quay.io/repository/confidential-containers/cloud-api-adaptor?tab=tags&tag=latest).
-
-```bash
-export CAA_TAG=""
-```
-
-> **Caution**: You can also use the `latest` tag but it is **not** recommended, because of its lack of version control and potential for unpredictable updates, impacting stability and reproducibility in deployments.
-
-{{% /tab %}}
-
-{{% tab header="DIY" %}}
-
-If you have made changes to the CAA code and you want to deploy those changes then follow [these instructions](https://github.com/confidential-containers/cloud-api-adaptor/blob/main/src/cloud-api-adaptor/install/README.md#building-custom-cloud-api-adaptor-image) to build the container image. Once the image is built export the environment variables `CAA_IMAGE` and `CAA_TAG`.
-
-{{% /tab %}}
-
-{{< /tabpane >}}
-
 ### Select peer-pods machine type
 
 ```bash
@@ -281,7 +190,7 @@ export DISABLECVM="false"
 > **Note:** See [the official document](https://help.aliyun.com/en/ecs/user-guide/build-a-tdx-confidential-computing-environment?spm=a2c4g.11186623.0.0.219e6187iTmYIJ#31e97c05ee64f) for more instance types that supports confidential computing.
 
 
-### Populate the `providers/alibabacloud.yaml` file
+### Populate the provider file
 
 List of all available configuration options can be found in two places:
 - [Main charts values](https://github.com/confidential-containers/cloud-api-adaptor/blob/main/src/cloud-api-adaptor/install/charts/peerpods/values.yaml)
@@ -311,24 +220,9 @@ EOF
 > **Note:** If you are not using RRSA for auth, please change the `alibabacloud.rrsa.enable` to `false`
 > in the yaml.
 
-### Deploy helm chart on the Kubernetes cluster
+### Deploy helm chart
 
-1. Create namespace managed by Helm:
-    ```bash
-   kubectl apply -f - << EOF
-   apiVersion: v1
-   kind: Namespace
-   metadata:
-     name: confidential-containers-system
-     labels:
-       app.kubernetes.io/managed-by: Helm
-     annotations:
-       meta.helm.sh/release-name: peerpods
-       meta.helm.sh/release-namespace: confidential-containers-system
-   EOF
-    ```
-
-2. Create the secret using `kubectl`:
+1. Create the secret using `kubectl`:
 
     See [providers/alibabacloud-secrets.yaml.template](https://github.com/confidential-containers/cloud-api-adaptor/blob/main/src/cloud-api-adaptor/install/charts/peerpods/providers/alibabacloud-secrets.yaml.template) for required keys.
 
@@ -344,9 +238,9 @@ EOF
     --from-literal=ALIBABA_CLOUD_OIDC_TOKEN_FILE=/var/run/secrets/ack.alibabacloud.com/rrsa-tokens/token
     ```
    
-3. Install helm chart:
+2. Install the Helm chart:
 
-   Below command uses customization options `-f` and `--set` which are described [here](../../getting-started/installation/advanced_configuration).
+   The `-f` and `--set` customization options are described in [advanced configuration]({{< relref "../getting-started/installation/advanced_configuration.md" >}}).
 
     ```bash
     helm install peerpods . \
@@ -360,47 +254,9 @@ EOF
 Generic Peer pods Helm charts deployment instructions are also described 
 [here](https://github.com/confidential-containers/cloud-api-adaptor/tree/main/src/cloud-api-adaptor/install/charts/peerpods/README.md).
 
-## Run sample application
+### Verify deployment
 
-### Ensure runtimeclass is present
-
-Verify that the `runtimeclass` is created after deploying CAA:
-
-```bash
-kubectl get runtimeclass
-```
-
-Once you can find a `runtimeclass` named `kata-remote` then you can be sure that the deployment was successful. A successful deployment will look like this:
-
-```console
-$ kubectl get runtimeclass
-NAME          HANDLER       AGE
-kata-remote   kata-remote   7m18s
-```
-
-### Deploy workload
-
-Create an `nginx` deployment:
-
-```bash
-echo '
-apiVersion: v1
-kind: Pod
-metadata:
-  name: nginx
-spec:
-  runtimeClassName: kata-remote
-  containers:
-  - name: nginx
-    image: registry.openanolis.cn/openanolis/nginx:1.14.1-8.6
-' | kubectl apply -f -
-```
-
-Ensure that the pod is up and running:
-
-```bash
-kubectl get pods -n default
-```
+Follow [Verify the installation and run a sample workload]({{< relref "verify-cleanup.md#verify-the-installation" >}}), then confirm that Alibaba Cloud created the PodVM:
 
 You can verify that the peer-pod VM was created by running the following command:
 
@@ -408,19 +264,14 @@ You can verify that the peer-pod VM was created by running the following command
 aliyun ecs DescribeInstances --RegionId ${REGION_ID} --InstanceName 'podvm-*'
 ```
 
-Here you should see the VM associated with the pod `nginx`. 
-If you run into problems then check the troubleshooting guide [here](../docs/troubleshooting/README.md).
+The output should include the VM associated with the `nginx` pod.
+If you run into problems, see the [troubleshooting guide]({{< relref "../troubleshooting/_index.md" >}}).
 
-## Attestation
+## Uninstall
 
-TODO
+First [remove the workloads and uninstall CAA]({{< relref "verify-cleanup.md#remove-the-sample-workload" >}}).
 
-## Cleanup
-
-Delete all running pods using the `runtimeClass` `kata-remote`.
-
-Verify that all peer-pod VMs are deleted. You can use the following command to list all the peer-pod VMs
-(VMs having prefix `podvm`) and status:
+Verify that all peer-pod VMs are deleted:
 
 ```bash
 aliyun ecs DescribeInstances --RegionId ${REGION_ID} --InstanceName 'podvm-*'
