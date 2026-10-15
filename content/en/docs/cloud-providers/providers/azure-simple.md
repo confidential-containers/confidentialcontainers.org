@@ -20,7 +20,7 @@ It explains how to deploy:
 - A sample application deployed using CAA to verify that everything is working as expected.
 
 Confidential Containers also supports using Azure Key Vault as a resource backend for Trustee.
-[More info]({{< relref "../attestation/resources/kbs-backed-by-akv.md" >}})
+[More info]({{< relref "../../attestation/resources/kbs-backed-by-akv.md" >}})
 
 ## Before you begin
 
@@ -431,7 +431,7 @@ This repository contains the necessary scripts and configurations to build the P
 
 ##### Build the PodVM image
 
-1. Navigate to the `cloud-api-adaptor/src/cloud-api-adaptor/podvm` directory.
+1. Navigate to the `../../../../../../cloud-api-adaptor/src/cloud-api-adaptor/podvm` directory.
 
 2. Build the **binaries** using below command:
 
@@ -752,7 +752,7 @@ EOF
 
 2. Install the Helm chart:
 
-   The `-f` and `--set` customization options are described in [advanced configuration]({{< relref "../getting-started/installation/advanced_configuration.md" >}}).
+   The `-f` and `--set` customization options are described in [advanced configuration]({{< relref "../../getting-started/installation/advanced_configuration.md" >}}).
 
     ```bash
     helm install peerpods . \
@@ -772,7 +772,7 @@ Generic Peer pods Helm charts deployment instructions are also described
 
 ### Verify deployment
 
-Follow [Verify the installation and run a sample workload]({{< relref "verify-cleanup.md#verify-the-installation" >}}), then confirm that Azure created the PodVM:
+Follow [Verify the installation and run a sample workload]({{< relref "../verify-cleanup.md#verify-the-installation" >}}), then confirm that Azure created the PodVM:
 
    ```bash
    az vm list \
@@ -782,7 +782,7 @@ Follow [Verify the installation and run a sample workload]({{< relref "verify-cl
 
 The output should include the VM associated with the `nginx` pod.
 
-> **Note**: If you run into problems, see the [troubleshooting guide]({{< relref "../troubleshooting/_index.md" >}}).
+> **Note**: If you run into problems, see the [troubleshooting guide]({{< relref "../../troubleshooting/_index.md" >}}).
 
 ## Pod VM reference values
 
@@ -817,7 +817,7 @@ $ jq -r .measurements.sha256.pcr11 < measurements.json
 
 ## Uninstall
 
-First [remove the workloads and uninstall CAA]({{< relref "verify-cleanup.md#remove-the-sample-workload" >}}). 
+First [remove the workloads and uninstall CAA]({{< relref "../verify-cleanup.md#remove-the-sample-workload" >}}). 
 Then delete the resource group, including the AKS cluster and the Azure resources created by this guide:
 
    ```bash
