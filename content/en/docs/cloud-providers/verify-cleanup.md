@@ -7,7 +7,7 @@ categories:
 tags:
   - helm
   - caa
-weight: 2
+weight: 3
 ---
 
 Use these steps after installing the Cloud API Adaptor (CAA) with any cloud-provider guide.

@@ -413,7 +413,7 @@ EOF
 
 ### Deploy helm chart
 
-Create credentials and install the Helm chart. The `-f` and `--set` customization options are described in [advanced configuration]({{< relref "../getting-started/installation/advanced_configuration.md" >}}).
+Create credentials and install the Helm chart. The `-f` and `--set` customization options are described in [advanced configuration]({{< relref "../../getting-started/installation/advanced_configuration.md" >}}).
 
 {{< tabpane text=true right=true persist=header >}}
 
@@ -491,7 +491,7 @@ Generic Peer pods Helm charts deployment instructions are also described
 
 ### Verify deployment
 
-Follow [Verify the installation and run a sample workload]({{< relref "verify-cleanup.md#verify-the-installation" >}}), then confirm that AWS created the PodVM:
+Follow [Verify the installation and run a sample workload]({{< relref "../verify-cleanup.md#verify-the-installation" >}}), then confirm that AWS created the PodVM:
 
 You can verify that the peer pod VM was created by running the following command:
 
@@ -502,11 +502,11 @@ aws ec2 describe-instances --filters "Name=tag:Name,Values=podvm*" \
 
 The output should include the VM associated with the `nginx` pod.
 
-> **Note**: If you run into problems, see the [troubleshooting guide]({{< relref "../troubleshooting/_index.md" >}}).
+> **Note**: If you run into problems, see the [troubleshooting guide]({{< relref "../../troubleshooting/_index.md" >}}).
 
 ## Uninstall
 
-First [remove the workloads and uninstall CAA]({{< relref "verify-cleanup.md#remove-the-sample-workload" >}}).
+First [remove the workloads and uninstall CAA]({{< relref "../verify-cleanup.md#remove-the-sample-workload" >}}).
 
 Verify that all peer-pod VMs are deleted. This command lists VMs whose name starts with `podvm` and their status:
 

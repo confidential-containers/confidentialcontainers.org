@@ -240,7 +240,7 @@ EOF
    
 2. Install the Helm chart:
 
-   The `-f` and `--set` customization options are described in [advanced configuration]({{< relref "../getting-started/installation/advanced_configuration.md" >}}).
+   The `-f` and `--set` customization options are described in [advanced configuration]({{< relref "../../getting-started/installation/advanced_configuration.md" >}}).
 
     ```bash
     helm install peerpods . \
@@ -256,7 +256,7 @@ Generic Peer pods Helm charts deployment instructions are also described
 
 ### Verify deployment
 
-Follow [Verify the installation and run a sample workload]({{< relref "verify-cleanup.md#verify-the-installation" >}}), then confirm that Alibaba Cloud created the PodVM:
+Follow [Verify the installation and run a sample workload]({{< relref "../verify-cleanup.md#verify-the-installation" >}}), then confirm that Alibaba Cloud created the PodVM:
 
 You can verify that the peer-pod VM was created by running the following command:
 
@@ -265,11 +265,11 @@ aliyun ecs DescribeInstances --RegionId ${REGION_ID} --InstanceName 'podvm-*'
 ```
 
 The output should include the VM associated with the `nginx` pod.
-If you run into problems, see the [troubleshooting guide]({{< relref "../troubleshooting/_index.md" >}}).
+If you run into problems, see the [troubleshooting guide]({{< relref "../../troubleshooting/_index.md" >}}).
 
 ## Uninstall
 
-First [remove the workloads and uninstall CAA]({{< relref "verify-cleanup.md#remove-the-sample-workload" >}}).
+First [remove the workloads and uninstall CAA]({{< relref "../verify-cleanup.md#remove-the-sample-workload" >}}).
 
 Verify that all peer-pod VMs are deleted:
 

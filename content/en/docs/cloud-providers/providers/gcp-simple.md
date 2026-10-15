@@ -172,7 +172,7 @@ This repository contains the necessary scripts and configurations to build the P
 
 **Build Steps:**
 
-1. Navigate to the `cloud-api-adaptor/src/cloud-api-adaptor/podvm` directory.
+1. Navigate to the `../../../../../../cloud-api-adaptor/src/cloud-api-adaptor/podvm` directory.
 
 2. Build the **binaries** using below command:
 
@@ -240,7 +240,7 @@ This repository contains the necessary scripts and configurations to build the P
 
 **Build Steps:**
 
-1. Navigate to the `cloud-api-adaptor/src/cloud-api-adaptor/podvm` directory.
+1. Navigate to the `../../../../../../cloud-api-adaptor/src/cloud-api-adaptor/podvm` directory.
 
 2. Build the **binaries** using below command:
 
@@ -737,7 +737,7 @@ echo "GSA Email: ${GSA_EMAIL}"
 
 2. Create credentials and install the Helm chart:
 
-   The `-f` and `--set` customization options are described in [advanced configuration]({{< relref "../getting-started/installation/advanced_configuration.md" >}}).
+   The `-f` and `--set` customization options are described in [advanced configuration]({{< relref "../../getting-started/installation/advanced_configuration.md" >}}).
 
 {{< tabpane text=true right=true persist=header >}}
 
@@ -824,7 +824,7 @@ Generic Peer pods Helm charts deployment instructions are also described
 
 ### Verify deployment
 
-Follow the shared [installation verification]({{< relref "verify-cleanup.md#verify-the-installation" >}}). You can then use either sample below.
+Follow the shared [installation verification]({{< relref "../verify-cleanup.md#verify-the-installation" >}}). You can then use either sample below.
 
 ## Run sample application
 
@@ -1000,7 +1000,7 @@ kubectl exec -it example-pod -- curl http://127.0.0.1:8006/cdh/resource/default/
 
 {{% tab header="Basic nginx" %}}
 
-Follow the shared [nginx sample workload]({{< relref "verify-cleanup.md#run-a-sample-workload" >}}).
+Follow the shared [nginx sample workload]({{< relref "../verify-cleanup.md#run-a-sample-workload" >}}).
 
 {{% /tab %}}
 
@@ -1022,7 +1022,7 @@ Here you should see the VM associated with the pod used by the example above.
 
 ## Uninstall
 
-First [remove all `kata-remote` workloads]({{< relref "verify-cleanup.md#remove-the-sample-workload" >}}), then verify that all peer-pod VMs are deleted:
+First [remove all `kata-remote` workloads]({{< relref "../verify-cleanup.md#remove-the-sample-workload" >}}), then verify that all peer-pod VMs are deleted:
 
    Use the following command to list all the peer pod VMs (VMs having prefix `podvm`) and status.
 
@@ -1032,7 +1032,7 @@ First [remove all `kata-remote` workloads]({{< relref "verify-cleanup.md#remove-
      --format="table(name,zone,status)"
    ```
 
-After the PodVMs are gone, [uninstall CAA]({{< relref "verify-cleanup.md#uninstall-caa" >}}).
+After the PodVMs are gone, [uninstall CAA]({{< relref "../verify-cleanup.md#uninstall-caa" >}}).
 
 Remove the GCP service account and its project-level IAM bindings:
 
@@ -1107,7 +1107,7 @@ After creating debug image with enabled SSH, deploy CoCo with sample pod and use
 
 ## Troubleshooting
 
-> **Note**: If your case is not covered below, see the [troubleshooting guide]({{< relref "../troubleshooting/_index.md" >}}).
+> **Note**: If your case is not covered below, see the [troubleshooting guide]({{< relref "../../troubleshooting/_index.md" >}}).
 
 ### VM Doesn't Start
 
