@@ -12,7 +12,7 @@ categories:
 weight: 53 
 ---
 
-# Introduction
+## Introduction
 
 This guide covers how to run Confidential Containers workloads across supported cloud and virtualization environments by using the Cloud API Adaptor (CAA) and the peer-pods runtime. 
 This deployment model provides strong workload isolation without tying the Kubernetes worker nodes to a particular virtualization or confidential-computing technology.
@@ -35,7 +35,24 @@ Provider-specific differences are handled during cluster setup and CAA configura
 The provider-specific sections describe these differences and identify compatible machine types and isolation technologies where available.
 
 
-## Cloud API Adaptor
+## Deployment workflow
+
+The guides separate reusable CAA operations from cloud-specific configuration. Follow them in this order:
+
+1. Start with [Common setup]({{< relref "common-setup.md" >}}) to install the required tools and understand the shared deployment steps.
+2. Follow one provider guide to create the cluster and configure its networking, identity, PodVM image, machine type, and Helm values:
+   - [AWS (EKS)]({{< relref "aws-simple.md" >}})
+   - [Azure Kubernetes Service (AKS)]({{< relref "azure-simple.md" >}})
+   - [Google Cloud Platform (GCP)]({{< relref "gcp-simple.md" >}})
+   - [Alibaba Cloud (ACK)]({{< relref "alibaba-cloud-simple.md" >}})
+3. Use [Verify and clean up]({{< relref "verify-cleanup.md" >}}) for the shared workload test and Kubernetes cleanup. The provider guide includes the commands to verify and remove cloud resources.
+
+Each provider guide links back to the relevant shared step, so you can also begin directly with your provider.
+
+
+## Core concepts
+
+### Cloud API Adaptor
 
 The Cloud API Adaptor is an implementation of the [remote hypervisor interface](https://github.com/kata-containers/kata-containers/blob/main/src/runtime/virtcontainers/remote.go) of [Kata Containers](https://github.com/kata-containers/kata-containers).
 The CAA provisions Kata Containers VMs through the configured infrastructure backend instead of starting them on the worker nodes.
@@ -43,7 +60,7 @@ The CAA provisions Kata Containers VMs through the configured infrastructure bac
 The background and description of the components involved in `peer pods` can be found in the [CoCo architecture documentation](https://github.com/confidential-containers/cloud-api-adaptor/blob/main/docs/architecture.md).
 
 
-## PodVM
+### PodVM
 
 In Confidential Containers, a **PodVM** is the *confidential virtual machine created to host a single Kubernetes Pod*.
 It is the VM boundary used by the peer-pods deployment model: when a pod is scheduled to a Confidential Containers runtime class, the runtime provisions a dedicated VM for that pod and then starts the pod’s containers **inside** the VM.
@@ -64,7 +81,7 @@ The PodVM is an implementation detail of the runtime that provides a stronger is
 In this guide, PodVMs are created on demand by the peer-pods runtime. The Cloud API Adaptor uses the configured infrastructure backend to provision and manage the VM instances that run those workloads.
 
 
-## Peer Pods
+### Peer Pods
 
 **Peer Pods** is a Confidential Containers deployment model where *each Kubernetes Pod runs inside its own dedicated confidential VM* (a PodVM).
 
@@ -82,5 +99,3 @@ Key properties of Peer Pods:
 - **Kubernetes-native workflow**: You deploy standard Kubernetes resources (Pods/Deployments/Jobs). The runtime handles VM lifecycle without changing application manifests.
 - **Attestation-ready**: When supported by the selected TEE and environment, the PodVM can be attested to verify platform and workload identity before sensitive data is released.
 - **Infrastructure-independent architecture**: Provider-specific provisioning is handled by the Cloud API Adaptor, allowing peer pods to use compatible VM types across supported environments.
-
-The following provider-specific sections cover cluster prerequisites, enabling Confidential Containers, selecting compatible VM types and images, configuring available isolation technologies, and deploying sample workloads using peer pods.

@@ -20,20 +20,16 @@ It explains how to deploy:
 - CAA on that Kubernetes cluster,
 - A sample application deployed using CAA to verify that everything is working as expected.
 
-## Pre-requisites
+## Before you begin
 
-Install Required Tools:
-
-- Install [kubectl](https://kubernetes.io/docs/tasks/tools/),
-- Install [Helm](https://helm.sh/docs/intro/install),
-- Install `gcloud` CLI [tool](https://cloud.google.com/sdk/docs/install).
+Complete the [common prerequisites]({{< relref "common-setup.md#prerequisites" >}}), including the Google Cloud CLI.
 
 Google Cloud Project:
 
 - Ensure you have a Google Cloud project created,
 - Note the Project ID (export it as `GCP_PROJECT_ID`).
 
-## GCP Preparation
+## GKE Preparation
 
 1. Set the environment variable `GCP_PROJECT_ID` to your Google Cloud project ID:
 
@@ -69,7 +65,7 @@ Google Cloud Project:
     For a complete list of supported regions visit [supported-configurations](https://cloud.google.com/confidential-computing/confidential-vm/docs/supported-configurations#supported-zones).
     {{% /alert %}}
 
-## Deploy Kubernetes Using GKE
+### Setup cluster
 
 Deploy a single node Kubernetes cluster using GKE:
 
@@ -120,7 +116,7 @@ If you encounter problem with VM's not running check [Troubleshooting](#troubles
 
 {{% /alert %}}
 
-## Configure VPC network
+### Configure VPC network
 
 We need to make sure port 15150 is open under the default VPC network:
 
@@ -143,7 +139,9 @@ gcloud compute firewall-rules create allow-port-15150-restricted \
    --source-ranges=[YOUR_EXTERNAL_IP]
 ```
 
-## Build and publish the PodVM image
+## Create the PodVM image
+
+This section describes how to create the PodVM image for your workload and publish it on Google Cloud Storage.
 
 ### Build the PodVM image
 
@@ -454,28 +452,13 @@ export PODVM_IMAGE_ID="$IMAGE_NAME"
 
 ## Deploy
 
-### Install cert-manager
+### Preparation
 
-The Peer Pods Helm chart requires cert-manager for webhook certificates. Install it first:
+Complete [Prepare the CAA deployment]({{< relref "common-setup.md#prepare-the-caa-deployment" >}}). 
 
-```bash
-# Add the Jetstack Helm repository
-helm repo add jetstack https://charts.jetstack.io
-helm repo update
+This downloads the Helm artifacts, selects the CAA image, installs cert-manager, and creates the installation namespace. 
 
-# Install cert-manager with CRDs
-helm install cert-manager jetstack/cert-manager \
-  --namespace cert-manager \
-  --create-namespace \
-  --version v1.19.1 \
-  --set crds.enabled=true
-```
-
-Wait for cert-manager to be ready:
-
-```bash
-kubectl wait --for=condition=ready pod -l app.kubernetes.io/instance=cert-manager -n cert-manager --timeout=300s
-```
+> **Note**: Keep the resulting `CAA_VERSION`, `CAA_IMAGE`, and `CAA_TAG` values in your terminal, then return here.
 
 ### Set TEE Platform Configuration
 
@@ -513,96 +496,6 @@ export DISABLECVM=true
 export GCP_CONFIDENTIAL_TYPE=""
 export GCP_DISK_TYPE="pd-standard"
 ```
-{{% /tab %}}
-
-{{< /tabpane >}}
-
-### Download the CAA Helm deployment artifacts
-
-{{< tabpane text=true right=true persist=header >}}
-{{% tab header="**Versions**:" disabled=true /%}}
-
-{{% tab header="Last Release" %}}
-
-```bash
-CAA_VERSION="$(
-  curl -fsSL \
-    "https://api.github.com/repos/confidential-containers/cloud-api-adaptor/releases/latest" |
-    jq -er '.tag_name | sub("^v"; "")'
-)"
-curl -LO "https://github.com/confidential-containers/cloud-api-adaptor/archive/refs/tags/v${CAA_VERSION}.tar.gz"
-tar -xvzf "v${CAA_VERSION}.tar.gz"
-cd "cloud-api-adaptor-${CAA_VERSION}/src/cloud-api-adaptor/install/charts/peerpods"
-```
-
-{{% /tab %}}
-
-{{% tab header="Latest Build" %}}
-
-```bash
-export CAA_BRANCH="main"
-curl -LO "https://github.com/confidential-containers/cloud-api-adaptor/archive/refs/heads/${CAA_BRANCH}.tar.gz"
-tar -xvzf "${CAA_BRANCH}.tar.gz"
-cd "cloud-api-adaptor-${CAA_BRANCH}/src/cloud-api-adaptor/install/charts/peerpods"
-```
-
-{{% /tab %}}
-
-{{% tab header="DIY" %}}
-This assumes that you already have the code ready to use.
-On your terminal change directory to the Cloud API Adaptor's code base.
-{{% /tab %}}
-
-{{< /tabpane >}}
-
-### Set the CAA container image and tag
-
-Define the Cloud API Adaptor (CAA) container image to deploy.
-These variables tell the deployment tooling which CAA image and architecture-specific tag to pull and run.
-The tag is derived from the CAA release version to ensure compatibility with the selected PodVM image and configuration.
-
-{{< tabpane text=true right=true persist=header >}}
-{{% tab header="**Versions**:" disabled=true /%}}
-
-{{% tab header="Last Release" %}}
-
-Export the following environment variable to use the latest release image of CAA:
-
-```bash
-export CAA_IMAGE="quay.io/confidential-containers/cloud-api-adaptor"
-export CAA_TAG="v${CAA_VERSION}-amd64"
-```
-
-{{% /tab %}}
-
-{{% tab header="Latest Build" %}}
-
-Export the following environment variable to use the image built by the CAA CI on each merge to main:
-
-```bash
-export CAA_IMAGE="quay.io/confidential-containers/cloud-api-adaptor"
-```
-
-Find an appropriate tag of pre-built image suitable to your needs [here](https://quay.io/repository/confidential-containers/cloud-api-adaptor?tab=tags&tag=latest).
-
-```bash
-export CAA_TAG=""
-```
-
-> **Caution**: You can also use the `latest` tag, but it is **not** recommended, 
-> because of its lack of version control and potential for unpredictable 
-> updates, impacting stability and reproducibility in deployments.
-
-{{% /tab %}}
-
-{{% tab header="DIY" %}}
-
-If you have made changes to the CAA code and you want to deploy those changes
-then follow [these
-instructions](https://github.com/confidential-containers/cloud-api-adaptor/blob/main/src/cloud-api-adaptor/install/README.md#building-custom-cloud-api-adaptor-image)
-to build the container image. Once the image is built export the environment
-variables `CAA_IMAGE` and `CAA_TAG`.
-
 {{% /tab %}}
 
 {{< /tabpane >}}
@@ -814,27 +707,9 @@ echo "GSA Email: ${GSA_EMAIL}"
 
 {{< /tabpane >}}
 
-### Deploy the CAA Helm chart
+### Deploy helm chart
 
-1. Create namespace managed by Helm:
-
-   ```bash
-   kubectl apply -f - << EOF
-   apiVersion: v1
-   kind: Namespace
-   metadata:
-     name: confidential-containers-system
-     labels:
-       app.kubernetes.io/managed-by: Helm
-     annotations:
-       meta.helm.sh/release-name: peerpods
-       meta.helm.sh/release-namespace: confidential-containers-system
-   EOF
-   ```
-
-   This namespace will be used to deploy CAA and related components, and it is labeled and annotated to be managed by Helm.
-
-2. Create ResourceQuota to allow system priority classes:
+1. Create a ResourceQuota to allow system priority classes:
 
    GKE enforces strict resource quota policies. The `kata-deploy` DaemonSet requires system
    priority classes (`system-node-critical` or `system-cluster-critical`) to ensure proper
@@ -860,9 +735,9 @@ echo "GSA Email: ${GSA_EMAIL}"
    EOF
    ```
 
-3. Create credentials and install the Helm chart:
+2. Create credentials and install the Helm chart:
 
-   Below commands use customization options `-f` and `--set` which are described [here](../../getting-started/installation/advanced_configuration).
+   The `-f` and `--set` customization options are described in [advanced configuration]({{< relref "../getting-started/installation/advanced_configuration.md" >}}).
 
 {{< tabpane text=true right=true persist=header >}}
 
@@ -949,20 +824,7 @@ Generic Peer pods Helm charts deployment instructions are also described
 
 ### Verify deployment
 
-Verify that the `runtimeclass` is created after deploying Peer Pods Helm Charts:
-
-```bash
-kubectl get runtimeclass
-```
-
-Once you can find a `runtimeclass` named `kata-remote` then you can be sure that the deployment was successful.
-A successful deployment will look like this:
-
-```console
-$ kubectl get runtimeclass
-NAME          HANDLER       AGE
-kata-remote   kata-remote   7m18s
-```
+Follow the shared [installation verification]({{< relref "verify-cleanup.md#verify-the-installation" >}}). You can then use either sample below.
 
 ## Run sample application
 
@@ -1138,37 +1000,7 @@ kubectl exec -it example-pod -- curl http://127.0.0.1:8006/cdh/resource/default/
 
 {{% tab header="Basic nginx" %}}
 
-This example demonstrates how to verify if Helm chart is successfully starting the PodVM within the cloud provider.
-It is the simplest example available for deployment.
-
-Create an `nginx` deployment:
-
-```bash
-cat <<EOF | kubectl apply -f -
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: nginx
-  namespace: default
-spec:
-  selector:
-    matchLabels:
-      app: nginx
-  replicas: 1
-  template:
-    metadata:
-      labels:
-        app: nginx
-    spec:
-      runtimeClassName: kata-remote
-      containers:
-      - name: nginx
-        image: nginx
-        ports:
-        - containerPort: 80
-        imagePullPolicy: Always
-EOF
-```
+Follow the shared [nginx sample workload]({{< relref "verify-cleanup.md#run-a-sample-workload" >}}).
 
 {{% /tab %}}
 
@@ -1190,18 +1022,7 @@ Here you should see the VM associated with the pod used by the example above.
 
 ## Uninstall
 
-To uninstall Confidential Containers from GKE cluster, use the following commands:
-
-1. Remove all pods with `kata-runtime` runtime class:
-
-    ```bash
-    kubectl get pods -A -o custom-columns='NAME:.metadata.name,NAMESPACE:.metadata.namespace,RUNTIMECLASS:.spec.runtimeClassName' \
-    | grep kata-remote \
-    | awk '{print $1, $2}' \
-    | xargs -n 2 sh -c 'kubectl delete pod -n "$2" "$1"' _
-    ```
-
-2. Verify that all peer pod VMs are deleted:
+First [remove all `kata-remote` workloads]({{< relref "verify-cleanup.md#remove-the-sample-workload" >}}), then verify that all peer-pod VMs are deleted:
 
    Use the following command to list all the peer pod VMs (VMs having prefix `podvm`) and status.
 
@@ -1211,38 +1032,9 @@ To uninstall Confidential Containers from GKE cluster, use the following command
      --format="table(name,zone,status)"
    ```
 
-3. List deployed Confidential Containers Helm chart:
+After the PodVMs are gone, [uninstall CAA]({{< relref "verify-cleanup.md#uninstall-caa" >}}).
 
-   > **Note**: This command assumes that only one Helm release is deployed in the `confidential-containers-system` namespace. 
-   > If there are multiple releases, you may need to adjust the command to select the correct one.
-
-   ```bash
-   export HELM_COCO_CHART_NAME=$(helm list \
-                                  -n confidential-containers-system \
-                                  --short)
-   ```
-
-4. Delete Confidential Containers related Helm chart:
-
-   ```bash
-   helm uninstall ${HELM_COCO_CHART_NAME} \
-     --namespace confidential-containers-system
-   ```
-
-5. Delete secret with provider credentials `my-provider-creds` (if exist):
-
-   ```bash
-   kubectl delete secret my-provider-creds \
-     -n confidential-containers-system
-   ```
-
-6. Delete Confidential Containers related namespace:
-
-   ```bash
-   kubectl delete namespace confidential-containers-system
-   ```
-
-7. Remove the GCP service account and its project-level IAM bindings:
+Remove the GCP service account and its project-level IAM bindings:
 
    ```bash
    gcloud projects remove-iam-policy-binding ${GCP_PROJECT_ID} \
@@ -1257,7 +1049,7 @@ To uninstall Confidential Containers from GKE cluster, use the following command
      --project=${GCP_PROJECT_ID}
    ```
 
-8. **(Workload Identity Federation only)** Delete the OIDC provider and workload identity pool created during setup:
+**Workload Identity Federation only:** Delete the OIDC provider and workload identity pool created during setup:
 
    ```bash
    gcloud iam workload-identity-pools providers delete ${OIDC_PROVIDER_NAME} \
@@ -1272,7 +1064,7 @@ To uninstall Confidential Containers from GKE cluster, use the following command
 
    > **Note**: Deleting a pool or provider is a soft delete; GCP retains the resource for 30 days before permanently removing it. During this window the name cannot be reused unless you undelete it.
 
-9. Delete the GKE cluster by running the following command and confirming the deletion when prompted:
+Delete the GKE cluster and confirm deletion when prompted:
 
    ```bash
    gcloud container clusters delete "${CLUSTER_NAME}" \
@@ -1315,7 +1107,7 @@ After creating debug image with enabled SSH, deploy CoCo with sample pod and use
 
 ## Troubleshooting
 
-> **Note**: If your case is not covered in section below check the troubleshooting guide [here](../troubleshooting/).
+> **Note**: If your case is not covered below, see the [troubleshooting guide]({{< relref "../troubleshooting/_index.md" >}}).
 
 ### VM Doesn't Start
 

@@ -20,18 +20,13 @@ It explains how to deploy:
 - A sample application deployed using CAA to verify that everything is working as expected.
 
 Confidential Containers also supports using Azure Key Vault as a resource backend for Trustee.
-[More info](../../attestation/resources/kbs-backed-by-akv)
+[More info]({{< relref "../attestation/resources/kbs-backed-by-akv.md" >}})
 
-## Pre-requisites
+## Before you begin
 
-Install Required Tools:
+Complete the [common prerequisites]({{< relref "common-setup.md#prerequisites" >}}), including the Azure-specific tools. Then return here to prepare Azure.
 
-- Install [kubectl](https://kubernetes.io/docs/tasks/tools/),
-- Install [Helm](https://helm.sh/docs/intro/install),
-- Install `az` CLI [tool](https://learn.microsoft.com/en-us/cli/azure/install-azure-cli),
-- Ensure that the tools `curl`, `git`, `jq` and `sipcalc` are installed.
-
-## Azure Preparation
+## AKS Preparation
 
 ### Azure login
 
@@ -117,7 +112,7 @@ Create an Azure resource group by running the following command:
      --location "${AZURE_REGION}"
    ```
 
-### Deploy Kubernetes using AKS
+### Setup cluster
 
 1. Export environment variables related to the AKS cluster deployment:
 
@@ -359,53 +354,16 @@ Create the federated credential for the CAA ServiceAccount using the OIDC endpoi
      --audience api://AzureADTokenExchange
    ```
 
-## Deploy the CAA Helm chart
+## Deploy
+
+### Preparation
 
 > **Note**: If you are using Calico Container Network Interface (CNI) on the Kubernetes cluster, then, [configure](https://projectcalico.docs.tigera.io/networking/vxlan-ipip#configure-vxlan-encapsulation-for-all-inter-workload-traffic) Virtual Extensible LAN (VXLAN) encapsulation for all inter workload traffic.
 
-### Download the CAA Helm chart
+Complete [Prepare the CAA deployment]({{< relref "common-setup.md#prepare-the-caa-deployment" >}}). 
+This downloads the Helm artifacts, selects the CAA image, installs cert-manager, and creates the installation namespace. 
 
-Currently, there are three options to choose from when downloading the CAA Helm chart:
-
-- using the latest release,
-- using the latest build from the main branch,
-- using your own helm build.
-
-{{< tabpane text=true right=true persist=header >}}
-{{% tab header="**Versions**:" disabled=true /%}}
-
-{{% tab header="Last Release" %}}
-
-```bash
-CAA_VERSION="$(
-  curl -fsSL \
-    "https://api.github.com/repos/confidential-containers/cloud-api-adaptor/releases/latest" |
-    jq -er '.tag_name | sub("^v"; "")'
-)"
-curl -LO "https://github.com/confidential-containers/cloud-api-adaptor/archive/refs/tags/v${CAA_VERSION}.tar.gz"
-tar -xvzf "v${CAA_VERSION}.tar.gz"
-cd "cloud-api-adaptor-${CAA_VERSION}/src/cloud-api-adaptor/install/charts/peerpods"
-```
-
-{{% /tab %}}
-
-{{% tab header="Latest Build" %}}
-
-```bash
-export CAA_BRANCH="main"
-curl -LO "https://github.com/confidential-containers/cloud-api-adaptor/archive/refs/heads/${CAA_BRANCH}.tar.gz"
-tar -xvzf "${CAA_BRANCH}.tar.gz"
-cd "cloud-api-adaptor-${CAA_BRANCH}/src/cloud-api-adaptor/install/charts/peerpods"
-```
-
-{{% /tab %}}
-
-{{% tab header="DIY" %}}
-This assumes that you already have the code ready to use. 
-On your terminal change directory to the Cloud API Adaptor's code base.
-{{% /tab %}}
-
-{{< /tabpane >}}
+> **Note**: Keep the resulting `CAA_VERSION`, `CAA_IMAGE`, and `CAA_TAG` values in your terminal, then return here.
 
 ### Export PodVM image version
 
@@ -711,54 +669,6 @@ This repository contains the necessary scripts and configurations to build the P
 
 {{< /tabpane >}}
 
-### Set the CAA container image and tag
-
-Define the Cloud API Adaptor (CAA) container image to deploy.
-These variables tell the deployment tooling which CAA image and architecture-specific tag to pull and run.
-The tag is derived from the CAA release version to ensure compatibility with the selected PodVM image and configuration.
-
-{{< tabpane text=true right=true persist=header >}}
-{{% tab header="**Versions**:" disabled=true /%}}
-
-{{% tab header="Last Release" %}}
-
-Export the following environment variable to use the latest release image of CAA:
-
-```bash
-export CAA_IMAGE="quay.io/confidential-containers/cloud-api-adaptor"
-export CAA_TAG="v${CAA_VERSION}-amd64"
-```
-
-{{% /tab %}}
-
-{{% tab header="Latest Build" %}}
-
-Export the following environment variable to use the image built by the CAA CI on each merge to main:
-
-```bash
-export CAA_IMAGE="quay.io/confidential-containers/cloud-api-adaptor"
-```
-
-Find an appropriate tag of pre-built image suitable to your needs [here](https://quay.io/repository/confidential-containers/cloud-api-adaptor?tab=tags&tag=latest).
-
-```bash
-export CAA_TAG=""
-```
-
-> **Caution**: You can also use the `latest` tag, but it is **not** recommended, 
-> because of its lack of version control and potential for unpredictable 
-> updates, impacting stability and reproducibility in deployments.
-
-{{% /tab %}}
-
-{{% tab header="DIY" %}}
-
-If you have made changes to the CAA code and you want to deploy those changes then follow [these instructions](https://github.com/confidential-containers/cloud-api-adaptor/blob/main/src/cloud-api-adaptor/install/README.md#building-custom-cloud-api-adaptor-image) to build the container image. Once the image is built export the environment variables `CAA_IMAGE` and `CAA_TAG`.
-
-{{% /tab %}}
-
-{{< /tabpane >}}
-
 ### Select peer-pods machine type
 
 {{< tabpane text=true right=true persist=header >}}
@@ -823,29 +733,7 @@ EOF
 
 ### Deploy helm chart
 
-1. Create file `namespace.yaml` with the following content:
-
-   ```yaml
-   apiVersion: v1
-   kind: Namespace
-   metadata:
-     name: confidential-containers-system
-     labels:
-       app.kubernetes.io/managed-by: Helm
-     annotations:
-       meta.helm.sh/release-name: peerpods
-       meta.helm.sh/release-namespace: confidential-containers-system
-   ```
-
-   This namespace will be used to deploy CAA and related components, and it is labeled and annotated to be managed by Helm.
-
-2. Create namespace managed by Helm:
-
-   ```bash
-   kubectl apply -f namespace.yaml
-   ```
-
-3. Create a Kubernetes Secret that stores the Azure service-account credentials:
+1. Create a Kubernetes Secret that stores the Azure service-account credentials:
 
    See [providers/azure-secrets.yaml.template](https://github.com/confidential-containers/cloud-api-adaptor/blob/main/src/cloud-api-adaptor/install/charts/peerpods/providers/azure-secrets.yaml.template) for required keys.
 
@@ -862,9 +750,9 @@ EOF
    > **Note**: `--from-file=id_rsa.pub=${SSH_KEY}` is optional. It allows user to SSH into the pod VMs for troubleshooting purposes.
    > This option works only for custom debug enabled pod VM images. The prebuilt pod VM images do not have SSH connection enabled.
 
-4. Install helm chart:
+2. Install the Helm chart:
 
-   Below command uses customization options `-f` and `--set` which are described [here](../../getting-started/installation/advanced_configuration).
+   The `-f` and `--set` customization options are described in [advanced configuration]({{< relref "../getting-started/installation/advanced_configuration.md" >}}).
 
     ```bash
     helm install peerpods . \
@@ -884,65 +772,7 @@ Generic Peer pods Helm charts deployment instructions are also described
 
 ### Verify deployment
 
-Verify that the `runtimeclass` is created after deploying Peer Pods Helm Charts:
-
-```bash
-kubectl get runtimeclass
-```
-
-Once you can find a `runtimeclass` named `kata-remote` then you can be sure that the deployment was successful.
-A successful deployment will look like this:
-
-```console
-$ kubectl get runtimeclass
-NAME          HANDLER       AGE
-kata-remote   kata-remote   7m18s
-```
-
-## Run sample application
-
-To verify that everything is working as expected, you can deploy a sample application using the `kata-remote` runtime class provided by CAA.
-
-1. Create a deployment file `nginx-deployment.yaml` for a sample nginx application:
-
-   ```yaml
-   apiVersion: apps/v1
-   kind: Deployment
-   metadata:
-     name: nginx
-     namespace: default
-   spec:
-     selector:
-       matchLabels:
-         app: nginx
-     replicas: 1
-     template:
-       metadata:
-         labels:
-           app: nginx
-       spec:
-         runtimeClassName: kata-remote
-         containers:
-         - name: nginx
-           image: nginx
-           ports:
-           - containerPort: 80
-           imagePullPolicy: Always
-   ```
-
-2. Apply created configuration to the cluster
-
-   ```bash
-   kubectl apply -f nginx-deployment.yaml
-   ```
-
-3. Ensure that the pod is up and running:
-
-   ```bash
-   kubectl get pods -n default
-   ```
-
-4. Verify that the PodVM was created by running the following command:
+Follow [Verify the installation and run a sample workload]({{< relref "verify-cleanup.md#verify-the-installation" >}}), then confirm that Azure created the PodVM:
 
    ```bash
    az vm list \
@@ -950,10 +780,9 @@ To verify that everything is working as expected, you can deploy a sample applic
      --output table
    ```
 
-   In command output there should be the VM associated with the pod `nginx`.
+The output should include the VM associated with the `nginx` pod.
 
-
-> **Note**: If you run into problems then check the troubleshooting guide [here](../troubleshooting/).
+> **Note**: If you run into problems, see the [troubleshooting guide]({{< relref "../troubleshooting/_index.md" >}}).
 
 ## Pod VM reference values
 
@@ -988,49 +817,8 @@ $ jq -r .measurements.sha256.pcr11 < measurements.json
 
 ## Uninstall
 
-To uninstall Confidential Containers from Azure AKS cluster, use the following commands:
-
-1. Remove all pods with `kata-runtime` runtime class:
-
-    ```bash
-    kubectl get pods -A -o custom-columns='NAME:.metadata.name,NAMESPACE:.metadata.namespace,RUNTIMECLASS:.spec.runtimeClassName' \
-    | grep kata-remote \
-    | awk '{print $1, $2}' \
-    | xargs -n 2 sh -c 'kubectl delete pod -n "$2" "$1"' _
-    ```
-
-2. List deployed Confidential Containers Helm chart:
-
-   > **Note**: This command assumes that only one Helm release is deployed in the `confidential-containers-system` namespace. 
-   > If there are multiple releases, you may need to adjust the command to select the correct one.
-
-   ```bash
-   export HELM_COCO_CHART_NAME=$(helm list \
-                                  -n confidential-containers-system \
-                                  --short)
-   ```
-
-3. Delete Confidential Containers related Helm chart:
-
-   ```bash
-   helm uninstall ${HELM_COCO_CHART_NAME} \
-     --namespace confidential-containers-system
-   ```
-
-4. Delete secret with provider credentials `my-provider-creds`:
-
-   ```bash
-   kubectl delete secret my-provider-creds \
-     -n confidential-containers-system
-   ```
-
-5. Delete Confidential Containers related namespace:
-
-   ```bash
-   kubectl delete namespace confidential-containers-system
-   ```
-
-6. Delete the AKS cluster by running the following command:
+First [remove the workloads and uninstall CAA]({{< relref "verify-cleanup.md#remove-the-sample-workload" >}}). 
+Then delete the resource group, including the AKS cluster and the Azure resources created by this guide:
 
    ```bash
    az group delete \
