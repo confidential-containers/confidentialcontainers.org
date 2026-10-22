@@ -14,7 +14,7 @@ tags:
 
 本文展示如何在 Pod 中配置 NVIDIA 设备直通。
 
-配置前提是你已经按照 [NVIDIA Confidential Containers Reference Architecture](https://docs.nvidia.com/datacenter/cloud-native/confidential-containers/latest/) 部署了 CoCo，并且所用组件版本与下文的直通模式相匹配。若你想看一个把 GPU runtime class、Trustee/KBS、sealed secret、guest pull 和与之对应生成的 agent policy 串成完整 NIM 场景，可参考 带 GPU 远程证明的 NVIDIA NIM 部署场景]({{< relref "/en/docs/examples/nvidia-nim-confidential-gpu-attestation.md" >}})。
+配置前提是你已经按照 [NVIDIA Confidential Containers Reference Architecture](https://docs.nvidia.com/datacenter/cloud-native/confidential-containers/latest/) 部署了 CoCo，并且所用组件版本与下文的直通模式相匹配。若你想看一个把 GPU runtime class、Trustee/KBS、sealed secret、guest pull 和与之对应生成的 agent policy 串成完整 NIM 场景，可参考 [带 GPU 远程证明的 NVIDIA NIM 部署场景]({{< relref "nvidia-nim-confidential-gpu-attestation.md" >}})。
 
 简要说明如下：NVIDIA Hopper、NVIDIA Blackwell 和 NVIDIA RTX Pro 6000 都支持单 GPU 直通（SPT）。Hopper 和 Blackwell 另外支持多 GPU 场景（ PPCIE 和 MPT ）。Protected PCIe（PPCIE）只用于 Hopper 多 GPU，并且要求 NVLink switch 进入 PPCIE 模式，注意这里 CoCo 会帮你实现。多 GPU 直通（Multi-GPU Passthrough, MPT）用于 Blackwell GPU 之间的端到端加密。NVIDIA RTX Pro 不支持多 GPU 配置。下面分别给出各场景下 Pod 的配置。
 
