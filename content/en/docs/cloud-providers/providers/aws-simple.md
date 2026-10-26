@@ -80,6 +80,12 @@ eksctl create cluster --name "$CLUSTER_NAME" \
 
 Wait for the cluster to be created.
 
+Use the kubeconfig file created by `eksctl` for the remaining commands:
+
+```bash
+export KUBECONFIG="$(pwd)/${CLUSTER_NAME}-kubeconfig"
+```
+
 Label the cluster nodes with `node.kubernetes.io/worker=`
 
 ```bash
@@ -133,7 +139,7 @@ OIDC federation so the pods assume an IAM role directly — no static keys neede
 Ensure `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` (or `AWS_PROFILE`) are set in your environment.
 These will be stored in a Kubernetes secret and used by the CAA pods.
 
-No additional setup is needed here — the secret is created during the [Helm chart deployment](#deploy-helm-chart-on-the-kubernetes-cluster) step.
+No additional setup is needed here — the secret is created during the [Helm chart deployment](#deploy-helm-chart) step.
 
 {{% /tab %}}
 
@@ -182,7 +188,7 @@ export OIDC_PROVIDER=$(aws eks describe-cluster \
 ```bash
 export NAMESPACE="confidential-containers-system"
 export CAA_SERVICE_ACCOUNT="cloud-api-adaptor"
-export CAA_ROLE_NAME="CAA-IRSA-Role"
+export CAA_ROLE_NAME="CAA-IRSA-Role-${CLUSTER_NAME}"
 ```
 
 Create the trust policy:
@@ -241,11 +247,11 @@ echo "CAA Role ARN: ${CAA_ROLE_ARN}"
 
 #### Create IAM Role for Peerpod-ctrl (optional)
 
-This step is only required if you are deploying Peerpod-ctrl.
+In case you disabled Peerpod-ctrl (`--set resourceCtrl.enabled=false`) you can skip this step.
 
 ```bash
 export CTRL_SERVICE_ACCOUNT="peerpodctrl-controller-manager"
-export CTRL_ROLE_NAME="PeerpodCtrl-IRSA-Role"
+export CTRL_ROLE_NAME="PeerpodCtrl-IRSA-Role-${CLUSTER_NAME}"
 ```
 
 Create the trust policy:
@@ -338,6 +344,8 @@ export PODVM_AMI_ID=$(aws ec2 describe-images \
 
 echo $PODVM_AMI_ID
 ```
+
+The AMI must be available to your account in `AWS_REGION`.
 
 {{% /tab %}}
 
@@ -462,7 +470,8 @@ helm install peerpods . \
 ```
 
 > **Note:** The `resourceCtrl.serviceAccount.annotations` line is only required if you are deploying Peerpod-ctrl.
-> If not, omit that `--set` flag and skip the optional Peerpod-ctrl IAM role step above.
+> The chart enables it by default. To disable it, add `--set resourceCtrl.enabled=false`, omit its annotation flag,
+> and skip the optional Peerpod-ctrl IAM role step above.
 
 To verify IRSA is working, check the service account annotation and pod environment:
 
