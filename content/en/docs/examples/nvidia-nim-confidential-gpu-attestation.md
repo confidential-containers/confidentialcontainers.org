@@ -362,8 +362,7 @@ host port:
 # Local paths.
 KBS_WORKDIR="${HOME}/nim-kbs"
 KBS_TRUSTEE_DIR="${KBS_WORKDIR}/trustee"
-KBS_CONFIG_DIR="${KBS_TRUSTEE_DIR}/kbs/config"
-KBS_COMPOSE_CONFIG_DIR="${KBS_CONFIG_DIR}/docker-compose"
+KBS_CONFIG_DIR="${KBS_TRUSTEE_DIR}/kbs/config/docker-compose"
 KBS_DATA_DIR="${KBS_TRUSTEE_DIR}/kbs/data"
 KBS_STORAGE_DIR="${KBS_DATA_DIR}/kbs-storage"
 
@@ -383,9 +382,8 @@ Most paths are derived from `KBS_WORKDIR`; normally you only choose `KBS_WORKDIR
 optionally `KBS_CLIENT_ARCH`:
 
 - `KBS_TRUSTEE_DIR` holds the downloaded Trustee source tree.
-- `KBS_CONFIG_DIR` is mounted into the Compose services as the demo configuration and identity
-  directory.
-- `KBS_COMPOSE_CONFIG_DIR` contains the KBS TOML configuration used by the Compose deployment.
+- `KBS_CONFIG_DIR` is mounted into the docker compose services. Configuration files and certificates
+  for the services are here.
 - `KBS_DATA_DIR` is the Compose-managed demo state root. RVPS reference values and AS state are
   stored in sibling directories under this tree.
 - `KBS_STORAGE_DIR` is the KBS resource and resource-policy repository under `KBS_DATA_DIR`.
@@ -502,9 +500,9 @@ The Compose input files used by this checkpoint are:
   demo admin and AS token-signing keys.
 - `kbs/config/docker-compose/kbs-config.toml`, which configures the KBS endpoint, admin
   authentication, and resource storage.
-- `kbs/config/as-config.json`, which configures AS, including how AS reaches RVPS and the NVIDIA
-  verifier.
-- `kbs/config/rvps.json`, which configures RVPS.
+- `kbs/config/docker-compose/as-config.json`, which configures AS, including how AS reaches RVPS
+  and the NVIDIA verifier.
+- `kbs/config/docker-compose/rvps.json`, which configures RVPS.
 
 The full files are intentionally not reproduced here. Review the selected source tree, or the same
 paths in the Trustee repository, if you want to inspect every default.
@@ -543,10 +541,13 @@ sed -i \
   -e 's#insecure_http = true#insecure_http = false\
 private_key = "/opt/confidential-containers/kbs/user-keys/kbs-https.key"\
 certificate = "/opt/confidential-containers/kbs/user-keys/kbs-https.crt"#' \
-  "${KBS_COMPOSE_CONFIG_DIR}/kbs-config.toml"
+  "${KBS_CONFIG_DIR}/kbs-config.toml"
 
-grep -q 'insecure_http = false' "${KBS_COMPOSE_CONFIG_DIR}/kbs-config.toml"
-grep -q 'type = "Simple"' "${KBS_COMPOSE_CONFIG_DIR}/kbs-config.toml"
+grep -q 'insecure_http = false' "${KBS_CONFIG_DIR}/kbs-config.toml"
+grep -q 'authorization_mode = "AuthenticatedAuthorization"' \
+  "${KBS_CONFIG_DIR}/kbs-config.toml"
+grep -q '\[admin.authentication.bearer_jwt\]' \
+  "${KBS_CONFIG_DIR}/kbs-config.toml"
 jq -e '.verifier_config.nvidia_verifier.type == "Remote"' \
   "${KBS_CONFIG_DIR}/as-config.json" >/dev/null
 ```
@@ -554,9 +555,10 @@ jq -e '.verifier_config.nvidia_verifier.type == "Remote"' \
 The demo uses three sets of identity material:
 
 - `kbs-https.key` and `kbs-https.crt` identify the KBS HTTPS endpoint.
-- `private.key` and `public.pub` authenticate admin API calls from `kbs-client`. KBS is configured
-  with the public key, and `kbs-client` signs admin requests with the private key. The Compose setup
-  service creates this demo keypair.
+- `private.key` and `public.pub` sign and verify the token for admin access.
+  At startup, the docker compose deployment creates an admin token signed by `private.key`.
+  The admin can then use this token with the KBS Client to make admin requests.
+  The public key, specified in the KBS configuration, validates the token for these requests.
 - `ca.key`, `ca-cert.pem`, `token.key`, `token-cert.pem`, and `token-cert-chain.pem` let AS sign
   attestation tokens that KBS can verify. The Compose setup service creates this demo token-signing
   material. In this single-node showcase, KBS and AS are started together, so this material is not
@@ -1368,7 +1370,7 @@ This checkpoint installs into KBS:
   digest
 
 If you opened a new shell after checkpoint 2, restore `KBS_CLIENT`, `KBS_WORKDIR`,
-`KBS_ADMIN_PRIVATE_KEY_FILE`, `KBS_CERT_FILE`, and `KBS_URL` before running this checkpoint.
+`KBS_ADMIN_TOKEN_FILE`, `KBS_CERT_FILE`, and `KBS_URL` before running this checkpoint.
 
 Load the reference values recorded in checkpoint 6, or the approved values supplied in the same
 format:
