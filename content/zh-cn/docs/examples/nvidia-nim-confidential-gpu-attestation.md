@@ -31,7 +31,7 @@ NVIDIA NIM 将基础模型封装成容器，并提供针对 GPU 优化的运行�
 
 开始前请准备：
 
-- 一个已经部署好 Confidential Containers、Kata、NVIDIA GPU Operator，并提供机密 GPU runtime class（例如 `kata-qemu-nvidia-gpu-snp`）的 Kubernetes 集群。可参考 [NVIDIA Confidential Containers deployment guide](https://docs.nvidia.com/datacenter/cloud-native/confidential-containers/latest/confidential-containers-deploy.html)
+- 一个已经部署好 Confidential Containers、Kata、NVIDIA GPU Operator，并提供机密 GPU runtime class（例如 `kata-qemu-nvidia-gpu-snp`）的 Kubernetes 集群。可参考 [NVIDIA Confidential Containers deployment guide](https://docs.nvidia.com/confidential-computing/containers/confidential-containers-deploy)
 - 可访问 Kubernetes 工作节点，因为本文需要从在线 QEMU 进程中收集 SNP 启动输入
 - 一个可拉取 NIM 镜像的 [NGC API key](https://docs.nvidia.com/ngc/latest/ngc-catalog-user-guide.html#generating-a-personal-api-key)
 - 工作节点上安装好 `kubectl`、`curl`、`jq`、`openssl`、`oras`、`skopeo`、`envsubst`、`base64`、`tar`、`zstd` 和 `cargo`
@@ -302,7 +302,7 @@ mkdir -p "${KBS_WORKDIR}"
 
 ### 选择 Trustee 部署制品
 
-这一步要选定 Trustee 源码、Compose 服务镜像，以及与之匹配的 `kbs-client` 软件制品。原则上，应使用与你当前 CoCo 版本和 Guest 组件匹配、已经验证过的 Trustee 版本。NVIDIA 的 supported-platforms 文档通常是查这个映射关系的权威来源，可参考 [NVIDIA supported platforms](https://docs.nvidia.com/datacenter/cloud-native/confidential-containers/latest/supported-platforms.html)。
+这一步要选定 Trustee 源码、Compose 服务镜像，以及与之匹配的 `kbs-client` 软件制品。原则上，应使用与你当前 CoCo 版本和 Guest 组件匹配、已经验证过的 Trustee 版本。NVIDIA 的 supported-platforms 文档通常是查这个映射关系的权威来源，可参考 [NVIDIA supported platforms](https://docs.nvidia.com/confidential-computing/containers/supported-platforms)。
 
 如果你的 Kata 是通过 `kata-deploy` Helm chart 安装的，通常会在 `/opt/kata/versions.yaml` 中携带发布元数据。下面的命令会自动读取其中的 `coco-trustee` 项并解析出匹配的 Trustee 版本。如果这个文件不可用，则需要到对应 Kata 版本的上游 [`versions.yaml`](https://github.com/kata-containers/kata-containers/blob/main/versions.yaml) 查找 `externals.coco-trustee.version`。按当前版本约定，Trustee 的版本号通常比 CoCo 小一个 minor，例如 CoCo `v0.18.0` 对应 Trustee `v0.17.0`。如果仍然无法解析，请手工设置 `KBS_TRUSTEE_REF`。
 
@@ -1515,7 +1515,7 @@ kubectl logs nvidia-nim-llama-3-1-8b-instruct
 
 | 职责项 | 本教程 | 生产角色 | 生产职责 |
 | --- | --- | --- | --- |
-| 支持 CoCo 的 Kata runtime 与 GPU `RuntimeClass` | 前提条件及 [NVIDIA Confidential Containers 部署指南](https://docs.nvidia.com/datacenter/cloud-native/confidential-containers/latest/confidential-containers-deploy.html) | 集群平台团队或云运维 | 安装并升级 Kata、kata-deploy 或 Helm、GPU Operator，并注册 `kata-qemu-nvidia-gpu-snp` |
+| 支持 CoCo 的 Kata runtime 与 GPU `RuntimeClass` | 前提条件及 [NVIDIA Confidential Containers 部署指南](https://docs.nvidia.com/confidential-computing/containers/confidential-containers-deploy) | 集群平台团队或云运维 | 安装并升级 Kata、kata-deploy 或 Helm、GPU Operator，并注册 `kata-qemu-nvidia-gpu-snp` |
 | Trustee 服务 | Checkpoint 2：在教程节点上用 Docker Compose 部署 Trustee | Trustee 运维方 | 在可信环境中运行 Trustee，使用持久化存储并审计管理访问 |
 | KBS 资源、镜像策略、仓库凭据 | Checkpoint 7：在 worker 上用 `kbs-client` | KBS 管理员 | 通过受批准的管理工具配置资源；变更需版本化与评审 |
 | 密封运行时密钥（sealed runtime secrets） | Checkpoint 3、7、9：生成 sealed secret、写入 KBS 资源、再应用到 Kubernetes | 发布工程或可信发布流水线 | 使用集群 CoCo 密封密钥进行密封，仅通过受批准发布路径发布密封对象 |

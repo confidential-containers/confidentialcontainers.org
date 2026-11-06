@@ -55,7 +55,7 @@ Before starting, prepare:
 - a Kubernetes cluster with Confidential Containers, Kata, the NVIDIA GPU Operator, and a GPU
   confidential runtime class such as `kata-qemu-nvidia-gpu-snp`. This setup can be prepared by
   following the [NVIDIA Confidential Containers deployment
-  guide](https://docs.nvidia.com/datacenter/cloud-native/confidential-containers/latest/confidential-containers-deploy.html)
+  guide](https://docs.nvidia.com/confidential-computing/containers/confidential-containers-deploy)
 - access to the Kubernetes worker node, because this tutorial collects SNP launch inputs from the
   live QEMU process
 - an [NGC API key](https://docs.nvidia.com/ngc/latest/ngc-catalog-user-guide.html#generating-a-personal-api-key)
@@ -403,7 +403,7 @@ The next step selects the Trustee source tree, the Compose service images, and t
 `kbs-client` artifact. In general, use the Trustee version validated for the CoCo release and
 guest components in your cluster. The NVIDIA supported-platforms documentation is intended to be
 the source that tells you which Trustee version to use for a given platform. See the
-[NVIDIA supported platforms](https://docs.nvidia.com/datacenter/cloud-native/confidential-containers/latest/supported-platforms.html)
+[NVIDIA supported platforms](https://docs.nvidia.com/confidential-computing/containers/supported-platforms)
 page for that version mapping. Kata deployments installed using the `kata-deploy` Helm chart usually
 provide release metadata in `/opt/kata/versions.yaml`. The commands below use the `coco-trustee`
 entry in that file to resolve the matching Trustee source reference automatically. If the file is
@@ -1781,7 +1781,7 @@ combine roles, but each responsibility should still have an owner:
 
 | Responsibility | Tutorial | Production actor | Production responsibility |
 | --- | --- | --- | --- |
-| CoCo-capable Kata runtime and GPU `RuntimeClass` | Prerequisites and [NVIDIA Confidential Containers deployment guide](https://docs.nvidia.com/datacenter/cloud-native/confidential-containers/latest/confidential-containers-deploy.html) | Cluster platform team or cloud operator | Install and upgrade Kata, kata-deploy or Helm, GPU Operator, and register `kata-qemu-nvidia-gpu-snp` |
+| CoCo-capable Kata runtime and GPU `RuntimeClass` | Prerequisites and [NVIDIA Confidential Containers deployment guide](https://docs.nvidia.com/confidential-computing/containers/confidential-containers-deploy) | Cluster platform team or cloud operator | Install and upgrade Kata, kata-deploy or Helm, GPU Operator, and register `kata-qemu-nvidia-gpu-snp` |
 | Trustee services | Checkpoint 2: Trustee deployed with Docker Compose on the tutorial node | Trustee operator | Run Trustee in a trusted environment with durable storage and audited admin access |
 | KBS resources, image policy, registry credentials | Checkpoint 7: `kbs-client` on the worker | KBS administrator | Provision resources through approved admin tooling; changes are versioned and reviewed |
 | Sealed runtime secrets | Checkpoints 3, 7, and 9: sealed secret generated, backed by KBS resources, then applied to Kubernetes | Release engineering or trusted release pipeline | Seal secrets with the cluster's CoCo sealing key and publish only the sealed object through the approved release path |
