@@ -13,7 +13,7 @@ tags:
 These examples show how to request NVIDIA passthrough devices in pod specs.
 
 They require that you have deployed CoCo following the
-[NVIDIA Confidential Containers Reference Architecture](https://docs.nvidia.com/datacenter/cloud-native/confidential-containers/latest/)
+[NVIDIA Confidential Containers Reference Architecture](https://docs.nvidia.com/confidential-computing/containers/overview)
 which documents supported component versions and the passthrough modes used below.
 For an end-to-end NIM workload that combines the GPU runtime class with Trustee/KBS,
 sealed secrets, guest pull, and generated agent policy, see
