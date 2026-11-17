@@ -1550,7 +1550,7 @@ Seed the SNP reference values used by the default Trustee sample policy:
 exposes the same bytes as the hex string `init_data` in the CPU attestation token after verifying
 the supplied initdata against the reported `HOST_DATA` value. This checkpoint does not seed
 `SNP_HOST_DATA_HEX` through `set-sample-reference-value`; instead, the KBS resource policy
-checks `annotated_evidence["init_data"]` directly. This pins the full initdata document
+checks `attester_claims["init_data"]` directly. This pins the full initdata document
 byte-for-byte.
 
 Install the resource policy. It requires both CPU and GPU attestation submodules to be
@@ -1565,14 +1565,14 @@ default allow = false
 
 cpu0 := input["submods"]["cpu0"]
 gpu0 := input["submods"]["gpu0"]
-annotated_evidence := cpu0["ear.veraison.annotated-evidence"]
+attester_claims := cpu0["ear_attester_claims"]
 expected_init_data := "${SNP_HOST_DATA_HEX}"
 
 allow if {
-    cpu0["ear.status"] == "affirming"
-    gpu0["ear.status"] == "affirming"
+    cpu0["ear_status"] == "affirming"
+    gpu0["ear_status"] == "affirming"
 
-    annotated_evidence["init_data"] == expected_init_data
+    attester_claims["init_data"] == expected_init_data
 }
 EOF
 

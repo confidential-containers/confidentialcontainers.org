@@ -1318,7 +1318,7 @@ curl -fsSL \
   snp_tee_svn "${SNP_TEE_SVN}"
 ```
 
-`SNP_HOST_DATA_BASE64` 是 initdata 摘要写入 SNP `HOST_DATA` 后的 base64 值。Trustee 在完成 initdata 与 `HOST_DATA` 的校验后，会把相同字节内容以十六进制字符串 `init_data` 暴露在 CPU attestation token 中。这里不会用 `set-sample-reference-value` 去种 `SNP_HOST_DATA_HEX`，而是直接在 KBS 资源策略中检查 `annotated_evidence["init_data"]`，这样可以把整份 initdata 逐字节固定下来。
+`SNP_HOST_DATA_BASE64` 是 initdata 摘要写入 SNP `HOST_DATA` 后的 base64 值。Trustee 在完成 initdata 与 `HOST_DATA` 的校验后，会把相同字节内容以十六进制字符串 `init_data` 暴露在 CPU attestation token 中。这里不会用 `set-sample-reference-value` 去种 `SNP_HOST_DATA_HEX`，而是直接在 KBS 资源策略中检查 `attester_claims["init_data"]`，这样可以把整份 initdata 逐字节固定下来。
 
 安装资源策略。它要求 CPU 和 GPU attestation submodule 都为 affirming，同时检查Guest启动时使用的 initdata 摘要是否等于批准值：
 
@@ -1331,14 +1331,14 @@ default allow = false
 
 cpu0 := input["submods"]["cpu0"]
 gpu0 := input["submods"]["gpu0"]
-annotated_evidence := cpu0["ear.veraison.annotated-evidence"]
+attester_claims := cpu0["ear_attester_claims"]
 expected_init_data := "${SNP_HOST_DATA_HEX}"
 
 allow if {
-    cpu0["ear.status"] == "affirming"
-    gpu0["ear.status"] == "affirming"
+    cpu0["ear_status"] == "affirming"
+    gpu0["ear_status"] == "affirming"
 
-    annotated_evidence["init_data"] == expected_init_data
+    attester_claims["init_data"] == expected_init_data
 }
 EOF
 

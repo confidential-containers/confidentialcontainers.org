@@ -151,9 +151,9 @@ default allow = false
 
 # Only release secrets to workloads with the expected Init-Data hash
 allow if {
-	input["submods"]["cpu0"]["ear.status"] == "affirming"
+	input["submods"]["cpu0"]["ear_status"] == "affirming"
 	# Verify the specific Init-Data hash (includes kata agent policy + config)
-	input["submods"]["cpu0"]["ear.veraison.annotated-evidence"]["init_data"] == "expected-hash-here"
+	input["submods"]["cpu0"]["ear_attester_claims"]["init_data"] == "expected-hash-here"
 }
 ```
 
