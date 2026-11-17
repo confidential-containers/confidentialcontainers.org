@@ -97,7 +97,7 @@ the default policy will block all of your requests.
 
 Usually the KBS resource policy should check if the attestation token represents a valid TCB.
 The attestation token is an EAR token, so we can check if it is contraindicated.
-The `status` field in the EAR token represents an AR4SI Trustworthiness Tier.
+The `ear_status` field in the EAR token represents an AR4SI Trustworthiness Tier.
 There are 4 tiers: Contraindicated, Warning, Affirming,
 and None.
 Ideally secrets should only be released when the token affirms the guest TCB.
@@ -109,7 +109,7 @@ import rego.v1
 default allow = false
 
 allow if {
-	input["submods"]["cpu0"]["ear.status"] == "affirming"
+	input["submods"]["cpu0"]["ear_status"] == "affirming"
 }
 ```
 
@@ -126,8 +126,8 @@ import rego.v1
 default allow = false
 
 allow if {
-	input["submods"]["cpu0"]["ear.status"] == "affirming"
-	input["submods"]["cpu0"]["ear.veraison.annotated-evidence"]["snp"]
+	input["submods"]["cpu0"]["ear_status"] == "affirming"
+	input["submods"]["cpu0"]["ear_attester_claims"]["tee"] == "snp"
 }
 ```
 
@@ -137,8 +137,8 @@ The EAR attestation token offers a generic but specific description of the guest
 In addition to whether or not a module (such as the CPU) is contraindicated, an EAR appraisal
 can address eight different facets of the TCB.
 
-These are `instance_identity`, `configuration`, `executables`, `file_system`, `hardware`,
-`runtime_opaque`, `storage_opaque`, `sourced_data`.
+These are `instance-identity`, `configuration`, `executables`, `file-system`, `hardware`,
+`runtime-opaque`, `storage-opaque`, `sourced-data`.
 
 Not all of these vectors is in scope for confidential containers.
 See the next section for how these vectors are calculated.
@@ -153,9 +153,9 @@ import rego.v1
 default allow = false
 
 allow if {
-	input["submods"]["cpu0"]["ear.status"] == "affirming"
-	input["submods"]["cpu0"]["ear.veraison.annotated-evidence"]["snp"]
-	input["submods"]["cpu0"]["ear.status.executables"] == 2
+	input["submods"]["cpu0"]["ear_status"] == "affirming"
+	input["submods"]["cpu0"]["ear_attester_claims"]["tee"] == "snp"
+	input["submods"]["cpu0"]["ear_trustworthiness_vector"]["executables"] == 2
 }
 ```
 
@@ -195,16 +195,16 @@ allowed if {
 	data.plugin == "resource"
 	count(data["resource-path"]) == 3
 	data["resource-path"][1] == "red"
-	input["submods"]["cpu0"]["ear.status"] == "affirming"
-	input["submods"]["cpu0"]["ear.veraison.annotated-evidence"]["snp"]
+	input["submods"]["cpu0"]["ear_status"] == "affirming"
+	input["submods"]["cpu0"]["ear_attester_claims"]["tee"] == "snp"
 }
 
 allowed if {
 	data.plugin == "resource"
 	count(data["resource-path"]) == 3
 	data["resource-path"][1] == "blue"
-	input["submods"]["cpu0"]["ear.status"] == "affirming"
-	input["submods"]["cpu0"]["ear.veraison.annotated-evidence"]["tdx"]
+	input["submods"]["cpu0"]["ear_status"] == "affirming"
+	input["submods"]["cpu0"]["ear_attester_claims"]["tee"] == "tdx"
 }
 ```
 
@@ -212,7 +212,7 @@ Finally, policies can access guest init-data if it has been specified.
 Init-data is a measured field set by the host on boot.
 Init-data allows dynamic, measured configurations to be propagated to a guest.
 Those configurations can also be provided to Trustee as part of the KBS protocol.
-If they are, policies can check the init-data, which is located at `submods.cpu.ear.veraison.annotated-evidence.init_data_claims`.
+If they are, policies can check the init-data, which is located at `submods.cpu0.ear_verifier_claims.init_data`.
 This is only supported on platforms that have a hardware init-data field
 (such as `HostData` on SEV-SNP or `mrconfigid/mrowner/mrownerconfig` on TDX).
 
